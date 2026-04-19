@@ -9,8 +9,7 @@ app.use(
   cors({
     // origin: "https://campus-schedule-portal-project.onrender.com",
     origin: [
-    'http://localhost:3000',
-    'https://campus-schedule-portal-project.onrender.com'
+    
   ],
     credentials: true,
   })
