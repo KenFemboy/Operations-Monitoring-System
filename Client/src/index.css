@@ -224,6 +224,16 @@ body {
   overflow-x: auto;
 }
 
+.inline-link {
+  color: var(--brand);
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.inline-link:hover {
+  text-decoration: underline;
+}
+
 table {
   width: 100%;
   border-collapse: collapse;
@@ -250,6 +260,10 @@ thead th {
   font-size: 0.88rem;
   font-weight: 600;
   cursor: pointer;
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .btn-primary {
@@ -319,6 +333,100 @@ thead th {
   padding: 0.58rem 0.7rem;
 }
 
+.inline-select {
+  border: 1px solid #e2cdb9;
+  border-radius: 0.45rem;
+  padding: 0.3rem 0.5rem;
+}
+
+.time-input {
+  border: 1px solid #e2cdb9;
+  border-radius: 0.45rem;
+  padding: 0.28rem 0.4rem;
+  min-width: 110px;
+}
+
+.filter-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 0.8rem;
+  margin-bottom: 1rem;
+}
+
+.recent-list {
+  margin: 0;
+  padding-left: 1.1rem;
+  color: var(--text-secondary);
+}
+
+.recent-list li {
+  margin: 0.4rem 0;
+}
+
+.branch-grid,
+.feedback-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 1rem;
+}
+
+.branch-card,
+.feedback-card {
+  background: var(--bg-panel);
+  border: 1px solid var(--border-color);
+  border-radius: 0.85rem;
+  padding: 1rem;
+  box-shadow: var(--shadow);
+}
+
+.branch-card h3,
+.feedback-card h3 {
+  margin-top: 0;
+}
+
+.status-positive,
+.status-warning,
+.status-neutral {
+  display: inline-block;
+  border-radius: 999px;
+  padding: 0.2rem 0.6rem;
+  font-size: 0.78rem;
+  font-weight: 600;
+  margin-top: 0.35rem;
+  margin-bottom: 0.7rem;
+}
+
+.status-positive {
+  background: #e7f7ef;
+  color: #167a4e;
+}
+
+.status-warning {
+  background: #fff2e0;
+  color: #a96012;
+}
+
+.status-neutral {
+  background: #f0f1f4;
+  color: #4b5162;
+}
+
+.feedback-stars {
+  margin: 0;
+  color: #d58a2a;
+  font-size: 1.05rem;
+}
+
+.feedback-comment {
+  margin: 0.5rem 0;
+}
+
+.feedback-meta {
+  margin: 0;
+  color: var(--text-secondary);
+  font-size: 0.88rem;
+}
+
 .chart-placeholder {
   min-height: 220px;
   border: 1px dashed #d8b89b;
@@ -376,6 +484,15 @@ thead th {
   .grid-2 {
     grid-template-columns: 1fr;
   }
+
+  .filter-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .branch-grid,
+  .feedback-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
 }
 
 @media (max-width: 720px) {
@@ -400,6 +517,12 @@ thead th {
   }
 
   .grid-4 {
+    grid-template-columns: 1fr;
+  }
+
+  .filter-grid,
+  .branch-grid,
+  .feedback-grid {
     grid-template-columns: 1fr;
   }
 

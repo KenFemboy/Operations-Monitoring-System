@@ -4,7 +4,7 @@ import { navigationItems } from '../utils/navigation'
 function Sidebar({ isOpen, onNavigate }) {
   return (
     <aside className={`sidebar ${isOpen ? 'is-open' : ''}`}>
-      <h2>Ally's</h2>
+      <h2>Ally's SA</h2>
       <nav className="nav-list">
         {navigationItems.map((item) => (
           <NavLink

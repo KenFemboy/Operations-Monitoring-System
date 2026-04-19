@@ -8,7 +8,7 @@ function SettingsPage() {
     <section>
       <header className="page-header">
         <h1>Settings</h1>
-        <p>Configure company profile and payroll cycle</p>
+        <p>Manage Superadmin system preferences</p>
       </header>
       <section className="card" style={{ maxWidth: '540px' }}>
         <SettingsForm form={form} onChange={onChange} />

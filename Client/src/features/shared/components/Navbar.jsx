@@ -26,8 +26,8 @@ function Navbar({ onToggleSidebar }) {
           Menu
         </button>
         <div>
-          <h1 className="navbar-title">Ally's</h1>
-          <p className="navbar-subtitle">Manage your daily operations with ease</p>
+          <h1 className="navbar-title">Ally's Monitoring System</h1>
+          <p className="navbar-subtitle">Superadmin Command Center</p>
         </div>
       </div>
       <div className="navbar-right">

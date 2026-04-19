@@ -4,10 +4,10 @@ import { formatCurrency } from '../utils/formatCurrency'
 function SummaryCards({ summary }) {
   return (
     <div className="grid-4">
-      <Card title="Total Staff" value={summary.totalStaff} />
-      <Card title="Daily Sales" value={formatCurrency(summary.dailySales)} />
-      <Card title="Inventory Items" value={summary.inventoryItems} />
-      <Card title="Active Shift" value="Lunch Service" />
+      <Card title="Total Branches" value={summary.totalBranches} />
+      <Card title="Total Employees" value={summary.totalEmployees} />
+      <Card title="Total Sales" value={formatCurrency(summary.totalSales)} />
+      <Card title="Active Branches" value="2" />
     </div>
   )
 }

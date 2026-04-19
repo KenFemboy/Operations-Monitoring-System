@@ -1,5 +1,4 @@
 export const reportActions = [
-  { id: 1, label: 'Export Payroll' },
-  { id: 2, label: 'Sales Report' },
-  { id: 3, label: 'Inventory Report' },
+  { id: 1, label: 'View Branch Report' },
+  { id: 2, label: 'Export Data' },
 ]

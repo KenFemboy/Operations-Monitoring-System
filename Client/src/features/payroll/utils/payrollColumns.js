@@ -1,7 +1,7 @@
 export const payrollColumns = [
-  { key: 'name', label: 'Employee Name' },
-  { key: 'role', label: 'Role' },
-  { key: 'basicSalary', label: 'Basic Salary' },
+  { key: 'employee', label: 'Employee' },
+  { key: 'branch', label: 'Branch' },
+  { key: 'salary', label: 'Salary' },
   { key: 'deductions', label: 'Deductions' },
   { key: 'netPay', label: 'Net Pay' },
 ]
