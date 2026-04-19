@@ -1,7 +1,10 @@
 import { contributionRows } from '../services/contributionsMockService'
+import { useBranchContext } from '../../shared/store/branchContext'
 
 function useContributions() {
-  return contributionRows
+  const { activeBranch } = useBranchContext()
+
+  return contributionRows.filter((item) => item.branch === activeBranch)
 }
 
 export default useContributions

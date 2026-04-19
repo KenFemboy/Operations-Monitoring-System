@@ -3,9 +3,11 @@ import Button from '../../shared/components/Button'
 import Table from '../../shared/components/Table'
 import useAttendance from '../hooks/useAttendance'
 import { attendanceColumns } from '../utils/attendanceColumns'
+import { useBranchContext } from '../../shared/store/branchContext'
 
 function AttendancePage() {
   const rows = useAttendance()
+  const { activeBranch, isReadOnly } = useBranchContext()
   const [department, setDepartment] = useState('All')
   const [shift, setShift] = useState('All')
   const [selectedDate, setSelectedDate] = useState('2026-04-19')
@@ -27,10 +29,10 @@ function AttendancePage() {
 
   const tableRows = filteredRows.map((row) => ({
     ...row,
-    timeIn: <input type="time" defaultValue={row.timeIn} className="time-input" />,
-    timeOut: <input type="time" defaultValue={row.timeOut} className="time-input" />,
+    timeIn: <input type="time" defaultValue={row.timeIn} className="time-input" disabled={isReadOnly} />,
+    timeOut: <input type="time" defaultValue={row.timeOut} className="time-input" disabled={isReadOnly} />,
     status: (
-      <select defaultValue={row.status} className="inline-select">
+      <select defaultValue={row.status} className="inline-select" disabled={isReadOnly}>
         <option value="Present">Present</option>
         <option value="Late">Late</option>
         <option value="Absent">Absent</option>
@@ -69,7 +71,8 @@ function AttendancePage() {
     <section>
       <header className="page-header">
         <h1>Attendance</h1>
-        <p>Daily and monthly attendance monitoring for all branches</p>
+        <p>Daily and monthly attendance monitoring for {activeBranch}</p>
+        {isReadOnly ? <p className="readonly-label">View Only Mode</p> : null}
       </header>
 
       <section className="card" style={{ marginBottom: '1rem' }}>
@@ -80,6 +83,7 @@ function AttendancePage() {
             <select
               id="department"
               value={department}
+              disabled={isReadOnly}
               onChange={(event) => setDepartment(event.target.value)}
             >
               <option value="All">All</option>
@@ -94,6 +98,7 @@ function AttendancePage() {
             <select
               id="shift"
               value={shift}
+              disabled={isReadOnly}
               onChange={(event) => setShift(event.target.value)}
             >
               <option value="All">All</option>
@@ -108,6 +113,7 @@ function AttendancePage() {
               id="attendanceDate"
               type="date"
               value={selectedDate}
+              disabled={isReadOnly}
               onChange={(event) => setSelectedDate(event.target.value)}
             />
           </div>
@@ -116,12 +122,12 @@ function AttendancePage() {
             <input
               id="searchAttendance"
               value={searchText}
+              disabled={isReadOnly}
               onChange={(event) => setSearchText(event.target.value)}
               placeholder="Search employee"
             />
           </div>
         </div>
-        <Button>Submit</Button>
       </section>
 
       <section className="table-card">
@@ -131,7 +137,7 @@ function AttendancePage() {
         <Table
           columns={attendanceColumns}
           rows={tableRows}
-          renderActions={() => <Button variant="outline">Time In / Time Out</Button>}
+          renderActions={() => <Button variant="outline" disabled={isReadOnly}>Time In / Time Out</Button>}
         />
       </section>
 

@@ -1,23 +1,26 @@
 export const incidentRows = [
   {
     id: 1,
+    branch: 'Panabo City',
     employeeName: 'Mark Dela Rosa',
-    incidentType: 'Cash Handling Error',
+    incident: 'Cash Handling Error',
     date: '2026-04-17',
-    description: 'Mismatch in end-of-shift cash count.',
+    status: 'Under Review',
   },
   {
     id: 2,
+    branch: 'Tagum City',
     employeeName: 'Paolo Luna',
-    incidentType: 'Safety Violation',
+    incident: 'Safety Violation',
     date: '2026-04-18',
-    description: 'Did not use non-slip footwear in wet area.',
+    status: 'Open',
   },
   {
     id: 3,
+    branch: 'Pantukan',
     employeeName: 'Mia Torres',
-    incidentType: 'Customer Complaint',
+    incident: 'Customer Complaint',
     date: '2026-04-19',
-    description: 'Delayed table clearing during peak period.',
+    status: 'Closed',
   },
 ]

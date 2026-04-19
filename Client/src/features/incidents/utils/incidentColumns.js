@@ -1,6 +1,6 @@
 export const incidentColumns = [
-  { key: 'employeeName', label: 'Employee Name' },
-  { key: 'incidentType', label: 'Incident Type' },
+  { key: 'employeeName', label: 'Employee' },
+  { key: 'incident', label: 'Incident' },
   { key: 'date', label: 'Date' },
-  { key: 'description', label: 'Description' },
+  { key: 'status', label: 'Status' },
 ]

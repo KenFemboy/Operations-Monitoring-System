@@ -1,43 +1,30 @@
-import { useMemo, useState } from 'react'
 import FeedbackCard from '../components/FeedbackCard'
 import useFeedback from '../hooks/useFeedback'
+import { useBranchContext } from '../../shared/store/branchContext'
+import { useMemo } from 'react'
 
 function FeedbackPage() {
   const rows = useFeedback()
-  const [branchFilter, setBranchFilter] = useState('All')
+  const { activeBranch } = useBranchContext()
+  const overallRating = useMemo(() => {
+    if (!rows.length) return 0
 
-  const branchOptions = useMemo(() => {
-    return ['All', ...new Set(rows.map((row) => row.branch))]
+    const total = rows.reduce((sum, item) => sum + item.rating, 0)
+    return (total / rows.length).toFixed(1)
   }, [rows])
-
-  const filteredRows = rows.filter(
-    (row) => branchFilter === 'All' || row.branch === branchFilter,
-  )
 
   return (
     <section>
       <header className="page-header">
         <h1>Feedback</h1>
-        <p>Review customer sentiment by branch</p>
+        <p>Review customer sentiment for {activeBranch}</p>
       </header>
       <section className="card" style={{ marginBottom: '1rem' }}>
-        <div className="form-group" style={{ maxWidth: '260px', marginBottom: 0 }}>
-          <label htmlFor="feedbackBranchFilter">Filter by Branch</label>
-          <select
-            id="feedbackBranchFilter"
-            value={branchFilter}
-            onChange={(event) => setBranchFilter(event.target.value)}
-          >
-            {branchOptions.map((option) => (
-              <option key={option} value={option}>
-                {option}
-              </option>
-            ))}
-          </select>
-        </div>
+        <h3>Overall Rating</h3>
+        <p className="value">⭐ {overallRating} / 5</p>
       </section>
       <section className="feedback-grid">
-        {filteredRows.map((item) => (
+        {rows.map((item) => (
           <FeedbackCard key={item.id} feedback={item} />
         ))}
       </section>

@@ -1,15 +1,17 @@
 import { Link } from 'react-router-dom'
 import ReportActionButtons from '../components/ReportActionButtons'
 import useReports from '../hooks/useReports'
+import { useBranchContext } from '../../shared/store/branchContext'
 
 function ReportsPage() {
   const actions = useReports()
+  const { activeBranch } = useBranchContext()
 
   return (
     <section>
       <header className="page-header">
         <h1>Reports</h1>
-        <p>Review branch-level performance and export summary data</p>
+        <p>Review branch-level performance for {activeBranch}</p>
       </header>
       <section className="card">
         <h3>Report Actions</h3>
@@ -27,7 +29,7 @@ function ReportsPage() {
         <div className="action-row">
           <Link className="btn btn-outline" to="/attendance">Attendance Report</Link>
           <Link className="btn btn-outline" to="/employees">Employees Report</Link>
-          <Link className="btn btn-outline" to="/payroll">Payroll Report</Link>
+          <Link className="btn btn-outline" to="/inventory">Inventory Report</Link>
           <Link className="btn btn-outline" to="/feedback">Feedback Report</Link>
         </div>
       </section>

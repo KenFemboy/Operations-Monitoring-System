@@ -1,7 +1,10 @@
 import { attendanceRows } from '../services/attendanceMockService'
+import { useBranchContext } from '../../shared/store/branchContext'
 
 function useAttendance() {
-  return attendanceRows
+  const { activeBranch } = useBranchContext()
+
+  return attendanceRows.filter((row) => row.branch === activeBranch)
 }
 
 export default useAttendance

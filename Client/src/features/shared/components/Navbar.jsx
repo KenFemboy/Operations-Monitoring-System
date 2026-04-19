@@ -1,18 +1,19 @@
-import { useLocation } from 'react-router-dom'
-import { navigationItems } from '../utils/navigation'
+import { useBranchContext } from '../store/branchContext'
 
 function Navbar({ onToggleSidebar }) {
-  const location = useLocation()
+  const {
+    branches,
+    activeBranch,
+    activeBranchMeta,
+    isReadOnly,
+    setActiveBranch,
+  } = useBranchContext()
 
   const currentDate = new Date().toLocaleDateString('en-US', {
     month: 'long',
     day: 'numeric',
     year: 'numeric',
   })
-
-  const activeItem = navigationItems.find(
-    (item) => item.path === location.pathname,
-  )
 
   return (
     <header className="navbar">
@@ -26,12 +27,31 @@ function Navbar({ onToggleSidebar }) {
           Menu
         </button>
         <div>
-          <h1 className="navbar-title">Ally's Monitoring System</h1>
+          <h1 className="navbar-title">Ally's</h1>
           <p className="navbar-subtitle">Superadmin Command Center</p>
         </div>
       </div>
       <div className="navbar-right">
-        <p className="navbar-breadcrumb">Section: {activeItem?.label ?? 'Dashboard'}</p>
+        <label className="branch-switcher" htmlFor="activeBranch">
+          <span>
+            Branch: {activeBranch}
+            {activeBranchMeta.type === 'Main Branch' ? ` (${activeBranchMeta.type})` : ''}
+          </span>
+          <select
+            id="activeBranch"
+            value={activeBranch}
+            onChange={(event) => setActiveBranch(event.target.value)}
+          >
+            {branches.map((branch) => (
+              <option key={branch.id} value={branch.name}>
+                {branch.name}
+              </option>
+            ))}
+          </select>
+        </label>
+        <p className={`access-indicator ${isReadOnly ? 'readonly' : 'full-access'}`}>
+          {isReadOnly ? 'View Only Mode' : 'Full Access'}
+        </p>
         <strong>{currentDate}</strong>
       </div>
     </header>

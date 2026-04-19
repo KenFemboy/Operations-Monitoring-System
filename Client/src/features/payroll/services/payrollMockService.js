@@ -2,7 +2,7 @@ export const payrollRows = [
   {
     id: 1,
     employee: 'Ana Cruz',
-    branch: 'Pantukan Branch',
+    branch: 'Tagum Branch',
     salary: 'PHP 35,000',
     deductions: 'PHP 4,200',
     netPay: 'PHP 30,800',
@@ -18,7 +18,7 @@ export const payrollRows = [
   {
     id: 3,
     employee: 'Lea Santos',
-    branch: 'Pantukan Branch',
+    branch: 'Tagum Branch',
     salary: 'PHP 45,000',
     deductions: 'PHP 5,700',
     netPay: 'PHP 39,300',

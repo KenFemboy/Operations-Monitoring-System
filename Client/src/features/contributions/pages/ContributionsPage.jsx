@@ -1,15 +1,18 @@
 import Table from '../../shared/components/Table'
 import useContributions from '../hooks/useContributions'
 import { contributionColumns } from '../utils/contributionColumns'
+import { useBranchContext } from '../../shared/store/branchContext'
 
 function ContributionsPage() {
   const rows = useContributions()
+  const { activeBranch, isReadOnly } = useBranchContext()
 
   return (
     <section>
       <header className="page-header">
         <h1>Contributions</h1>
-        <p>Government contribution mapping (static table)</p>
+        <p>SSS, Pag-IBIG, and PhilHealth breakdown for {activeBranch}</p>
+        {isReadOnly ? <p className="readonly-label">View Only Mode</p> : null}
       </header>
       <section className="table-card">
         <div className="table-toolbar">

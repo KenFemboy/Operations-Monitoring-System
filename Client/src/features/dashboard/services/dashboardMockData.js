@@ -1,20 +1,29 @@
 export const dashboardSummary = {
-  totalBranches: 2,
-  totalEmployees: 48,
-  totalSales: 328500,
+  totalBranches: 3,
+  totalEmployees: 62,
+  totalSales: 412300,
 }
 
 export const branchOverviewRows = [
   {
     id: 1,
-    branchName: 'Pantukan Branch',
-    location: 'Pantukan, Davao de Oro',
+    branchName: 'Tagum City',
+    type: 'Main Branch',
+    location: 'Tagum City, Davao del Norte',
     status: 'Operational',
   },
   {
     id: 2,
-    branchName: 'Panabo Branch',
+    branchName: 'Panabo City',
+    type: 'Branch',
     location: 'Panabo City, Davao del Norte',
+    status: 'Operational',
+  },
+  {
+    id: 3,
+    branchName: 'Pantukan',
+    type: 'Branch',
+    location: 'Pantukan, Davao de Oro',
     status: 'Operational',
   },
 ]
