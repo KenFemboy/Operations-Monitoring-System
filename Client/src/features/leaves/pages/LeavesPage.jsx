@@ -10,7 +10,7 @@ function LeavesPage() {
     <section>
       <header className="page-header">
         <h1>Leaves</h1>
-        <p>Review and act on leave requests (UI only)</p>
+        <p>Review and act on leave requests</p>
       </header>
       <section className="table-card">
         <div className="table-toolbar">

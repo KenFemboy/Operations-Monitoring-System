@@ -15,7 +15,7 @@ function InventoryForm({ onClose }) {
         <label htmlFor="stockQuantity">Stock Quantity</label>
         <input id="stockQuantity" placeholder="0" />
       </div>
-      <Button onClick={onClose}>Save Item (UI Only)</Button>
+      <Button onClick={onClose}>Save Item</Button>
     </form>
   )
 }

@@ -10,7 +10,7 @@ function PayrollPage() {
     <section>
       <header className="page-header">
         <h1>Payroll</h1>
-        <p>Payroll records generated from local mock data</p>
+        <p>Review payroll records</p>
       </header>
       <section className="table-card">
         <GeneratePayrollBar />

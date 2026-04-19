@@ -14,7 +14,7 @@ function InventoryPage() {
     <section>
       <header className="page-header">
         <h1>Inventory</h1>
-        <p>Track ingredient and supply levels with mock data</p>
+        <p>Track ingredient and supply levels</p>
       </header>
       <section className="table-card">
         <div className="table-toolbar">

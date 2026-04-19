@@ -123,6 +123,30 @@ body {
   padding: 0 1.5rem;
 }
 
+.navbar-left {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.navbar-right {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 0.1rem;
+}
+
+.sidebar-toggle {
+  display: none;
+  border: 1px solid #e2cdb9;
+  border-radius: 0.5rem;
+  background: #fff7ef;
+  color: #7f4d29;
+  padding: 0.4rem 0.6rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
 .navbar-title {
   font-size: 1rem;
   margin: 0;
@@ -132,6 +156,12 @@ body {
   margin: 0.2rem 0 0;
   color: var(--text-secondary);
   font-size: 0.88rem;
+}
+
+.navbar-breadcrumb {
+  margin: 0;
+  font-size: 0.8rem;
+  color: var(--text-secondary);
 }
 
 .grid-4 {
@@ -349,19 +379,24 @@ thead th {
 }
 
 @media (max-width: 720px) {
-  .app-shell {
-    flex-direction: column;
+  .sidebar {
+    width: 250px;
+    position: fixed;
+    top: 0;
+    left: 0;
+    transform: translateX(-104%);
+    transition: transform 0.25s ease;
+    z-index: 20;
+    box-shadow: var(--shadow);
   }
 
-  .sidebar {
-    width: 100%;
-    height: auto;
-    position: static;
+  .sidebar.is-open {
+    transform: translateX(0);
   }
 
   .nav-list {
-    display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
+    display: flex;
+    flex-direction: column;
   }
 
   .grid-4 {
@@ -371,8 +406,13 @@ thead th {
   .navbar {
     padding: 0.75rem 1rem;
     height: auto;
+  }
+
+  .sidebar-toggle {
+    display: inline-flex;
+  }
+
+  .navbar-right {
     align-items: flex-start;
-    gap: 0.5rem;
-    flex-direction: column;
   }
 }

@@ -14,7 +14,7 @@ function EmployeesPage() {
     <section>
       <header className="page-header">
         <h1>Employees</h1>
-        <p>Manage employee records using mock data</p>
+        <p>Manage employee records</p>
       </header>
 
       <section className="table-card">

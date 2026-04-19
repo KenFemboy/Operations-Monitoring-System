@@ -5,8 +5,8 @@ function LoginPage() {
     <div className="login-screen">
       <section className="login-card">
         <div className="page-header">
-          <h1>Ally's Restaurant Management System</h1>
-          <p>Sign in to access the frontend-only prototype</p>
+          <h1>Welcome to Ally's</h1>
+          <p>Sign in to continue</p>
         </div>
         <LoginForm />
       </section>

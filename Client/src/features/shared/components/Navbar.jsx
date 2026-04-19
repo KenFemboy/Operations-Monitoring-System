@@ -26,8 +26,8 @@ function Navbar({ onToggleSidebar }) {
           Menu
         </button>
         <div>
-          <h1 className="navbar-title">Ally's Restaurant Management System</h1>
-          <p className="navbar-subtitle">Frontend-only prototype with mock restaurant operations</p>
+          <h1 className="navbar-title">Ally's</h1>
+          <p className="navbar-subtitle">Manage your daily operations with ease</p>
         </div>
       </div>
       <div className="navbar-right">

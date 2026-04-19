@@ -15,9 +15,7 @@ function EmployeeForm({ onClose }) {
         <label htmlFor="employeeDepartment">Department</label>
         <input id="employeeDepartment" placeholder="Department" />
       </div>
-      <Button variant="primary" onClick={onClose}>
-        Save (UI Only)
-      </Button>
+      <Button variant="primary" onClick={onClose}>Save Employee</Button>
     </form>
   )
 }
