@@ -1,0 +1,35 @@
+{
+  "employeeId": "EMP-2026-1001",
+  "personalInfo": {
+    "firstName": "Ana",
+    "lastName": "Villanueva",
+    "middleName": "Cruz",
+    "gender": "female",
+    "birthDate": "1997-09-14T00:00:00.000Z",
+    "contactNumber": "09171234567",
+    "email": "ana.villanueva@example.com",
+    "address": "Purok 3, Tagum City"
+  },
+  "employmentInfo": {
+    "position": "661f2cb29cb1c5e6dd88a101",
+    "department": "661f2cb29cb1c5e6dd88b201",
+    "employmentType": "regular",
+    "dateHired": "2026-03-01T00:00:00.000Z",
+    "status": "active"
+  },
+  "salaryInfo": {
+    "basicSalary": 28000,
+    "payType": "monthly",
+    "allowances": 2500
+  },
+  "governmentIds": {
+    "sss": "34-1234567-8",
+    "philhealth": "12-345678901-2",
+    "pagibig": "1234-5678-9012",
+    "tin": "123-456-789-000"
+  },
+  "leaveBalances": {
+    "vacationLeave": 10,
+    "sickLeave": 10
+  }
+}
