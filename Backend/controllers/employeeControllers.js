@@ -1,16 +1,40 @@
 import Employee from "../models/Employee.js";
 
+const EMPLOYEE_ID_PREFIX = "EMP";
+
+const generateEmployeeId = async () => {
+  const totalEmployees = await Employee.countDocuments();
+  let sequence = totalEmployees + 1;
+
+  while (true) {
+    const employeeId = `${EMPLOYEE_ID_PREFIX}-${String(sequence).padStart(5, "0")}`;
+    const existingEmployee = await Employee.findOne({ employeeId }).select("_id");
+
+    if (!existingEmployee) {
+      return employeeId;
+    }
+
+    sequence += 1;
+  }
+};
+
 export const createEmployee = async (req, res) => {
   try {
-    const { firstName, lastName, role, assignedBranch, status } = req.body;
+    let employee;
 
-    const employee = await Employee.create({
-      firstName,
-      lastName,
-      role,
-      assignedBranch,
-      status,
-    });
+    for (let attempt = 0; attempt < 5; attempt += 1) {
+      const employeeId = await generateEmployeeId();
+      const payload = { ...req.body, employeeId };
+
+      try {
+        employee = await Employee.create(payload);
+        break;
+      } catch (err) {
+        if (err.code !== 11000 || !err.keyPattern?.employeeId || attempt === 4) {
+          throw err;
+        }
+      }
+    }
 
     res.status(201).json({
       success: true,

@@ -3,6 +3,12 @@ import mongoose from "mongoose";
 
 const employeeSchema = new mongoose.Schema(
   {
+    employeeId: {
+      type: String,
+      required: true,
+      unique: true,
+      trim: true,
+    },
     firstName: {
       type: String,
       required: true,
@@ -13,20 +19,72 @@ const employeeSchema = new mongoose.Schema(
       required: true,
       trim: true,
     },
-    role: {
+    middleName: {
       type: String,
-      required: true,
       trim: true,
     },
-    assignedBranch: {
+    birthDate: {
+      type: Date,
+    },
+    gender: {
       type: String,
-      required: true,
       trim: true,
+    },
+    address: {
+      type: String,
+      trim: true,
+    },
+    contactNumber: {
+      type: String,
+      trim: true,
+    },
+    email: {
+      type: String,
+      trim: true,
+    },
+    departmentId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Department",
+    },
+    positionId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Position",
+    },
+    employmentType: {
+      type: String,
+      enum: ["regular", "contractual"],
+    },
+    dateHired: {
+      type: Date,
     },
     status: {
       type: String,
-      enum: ["active", "retired"],
+      enum: ["active", "inactive"],
       default: "active",
+    },
+    basicSalary: {
+      type: Number,
+    },
+    dailyRate: {
+      type: Number,
+    },
+    governmentIds: {
+      sss: {
+        type: String,
+        trim: true,
+      },
+      philhealth: {
+        type: String,
+        trim: true,
+      },
+      pagibig: {
+        type: String,
+        trim: true,
+      },
+      tin: {
+        type: String,
+        trim: true,
+      },
     },
   },
   { timestamps: true }
