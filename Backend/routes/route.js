@@ -1,6 +1,6 @@
 import express from "express";
 import mongoose from "mongoose";
-import employeeRoutes from "./employee/employeeRoutes.js";
+import employeeRoutes from "./employeeRoutes.js";
 
 const router = express.Router();
 
