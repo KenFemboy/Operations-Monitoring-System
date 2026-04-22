@@ -15,6 +15,8 @@ import PlantillaPage from './features/plantilla/pages/PlantillaPage'
 import ContributionsPage from './features/contributions/pages/ContributionsPage'
 import LeavesPage from './features/leaves/pages/LeavesPage'
 import ReportsPage from './features/reports/pages/ReportsPage'
+import DepartmentsPage from './features/departments/pages/DepartmentsPage'
+import PositionsPage from './features/positions/pages/PositionsPage'
 import { BranchProvider, useBranchContext } from './features/shared/store/branchContext'
 
 function AppLayout() {
@@ -50,6 +52,8 @@ function AppLayout() {
             <Route path="/contributions" element={<ContributionsPage />} />
             <Route path="/leaves" element={<LeavesPage />} />
             <Route path="/reports" element={<ReportsPage />} />
+            <Route path="/departments" element={<DepartmentsPage />} />
+            <Route path="/positions" element={<PositionsPage />} />
             <Route path="/" element={<Navigate to="/dashboard" replace />} />
             <Route path="*" element={<Navigate to="/dashboard" replace />} />
           </Routes>

@@ -12,4 +12,6 @@ export const navigationItems = [
   { label: 'Contributions', path: '/contributions', icon: 'CT' },
   { label: 'Leaves', path: '/leaves', icon: 'LV' },
   { label: 'Reports', path: '/reports', icon: 'RP' },
+  { label: 'Departments', path: '/departments', icon: 'DP' },
+  { label: 'Positions', path: '/positions', icon: 'PS' },
 ]

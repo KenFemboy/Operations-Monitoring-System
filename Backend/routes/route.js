@@ -1,6 +1,8 @@
 import express from "express";
 import mongoose from "mongoose";
 import employeeRoutes from "./employeeRoutes.js";
+import departmentRoutes from "./departmentRoutes.js";
+import positionRoutes from "./positionRoutes.js";
 
 const router = express.Router();
 
@@ -23,5 +25,7 @@ router.get("/health", (_req, res) => {
 });
 
 router.use("/employees", employeeRoutes);
+router.use("/departments", departmentRoutes);
+router.use("/positions", positionRoutes);
 
 export default router;

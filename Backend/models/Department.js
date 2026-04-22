@@ -8,10 +8,14 @@ const departmentSchema = new mongoose.Schema({
     unique: true,
     trim: true
   },
-  code: {
+  branch: {
     type: String,
-    unique: true,
-    uppercase: true
+    required: true,
+    trim: true
+  },
+  location: {
+    type: String,
+    trim: true
   },
   description: String,
 

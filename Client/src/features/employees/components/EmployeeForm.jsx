@@ -1,35 +1,91 @@
-import { useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import Button from '../../shared/components/Button'
 
-function EmployeeForm({ onClose, onCreated }) {
+function EmployeeForm({ onClose, onCreated, initialData, employeeId }) {
   const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000'
+  const isEditMode = !!employeeId
   const [formData, setFormData] = useState({
-    firstName: '',
-    lastName: '',
-    middleName: '',
-    birthDate: '',
-    gender: '',
-    address: '',
-    contactNumber: '',
-    email: '',
-    employmentType: 'regular',
-    dateHired: '',
-    status: 'active',
-    basicSalary: '',
-    dailyRate: '',
+    firstName: initialData?.firstName || '',
+    lastName: initialData?.lastName || '',
+    middleName: initialData?.middleName || '',
+    birthDate: initialData?.birthDate || '',
+    gender: initialData?.gender || '',
+    address: initialData?.address || '',
+    contactNumber: initialData?.contactNumber || '',
+    email: initialData?.email || '',
+    departmentId: initialData?.departmentId?._id || '',
+    positionId: initialData?.positionId?._id || '',
+    employmentType: initialData?.employmentType || 'regular',
+    dateHired: initialData?.dateHired || '',
+    status: initialData?.status || 'active',
+    basicSalary: initialData?.basicSalary || '',
+    dailyRate: initialData?.dailyRate || '',
     governmentIds: {
-      sss: '',
-      philhealth: '',
-      pagibig: '',
-      tin: '',
+      sss: initialData?.governmentIds?.sss || '',
+      philhealth: initialData?.governmentIds?.philhealth || '',
+      pagibig: initialData?.governmentIds?.pagibig || '',
+      tin: initialData?.governmentIds?.tin || '',
     },
   })
   const [isSubmitting, setIsSubmitting] = useState(false)
+  const [isOptionsLoading, setIsOptionsLoading] = useState(true)
   const [error, setError] = useState('')
+  const [departments, setDepartments] = useState([])
+  const [positions, setPositions] = useState([])
+
+  const filteredPositions = useMemo(() => {
+    if (!formData.departmentId) {
+      return []
+    }
+
+    return positions.filter((position) => position.departmentId?._id === formData.departmentId)
+  }, [formData.departmentId, positions])
+
+  useEffect(() => {
+    const fetchOptions = async () => {
+      try {
+        setIsOptionsLoading(true)
+        setError('')
+
+        const [departmentResponse, positionResponse] = await Promise.all([
+          fetch(`${API_BASE_URL}/api/departments/get-all`),
+          fetch(`${API_BASE_URL}/api/positions/get-all`),
+        ])
+
+        const [departmentResult, positionResult] = await Promise.all([
+          departmentResponse.json(),
+          positionResponse.json(),
+        ])
+
+        if (!departmentResponse.ok) {
+          throw new Error(departmentResult?.message || 'Failed to load departments.')
+        }
+
+        if (!positionResponse.ok) {
+          throw new Error(positionResult?.message || 'Failed to load positions.')
+        }
+
+        setDepartments(departmentResult?.data || [])
+        setPositions(positionResult?.data || [])
+      } catch (fetchError) {
+        setError(fetchError.message || 'Failed to load department/position options.')
+      } finally {
+        setIsOptionsLoading(false)
+      }
+    }
+
+    fetchOptions()
+  }, [API_BASE_URL])
 
   const handleChange = (event) => {
     const { name, value } = event.target
-    setFormData((prev) => ({ ...prev, [name]: value }))
+    setFormData((prev) => {
+      if (name === 'departmentId') {
+        return { ...prev, departmentId: value, positionId: '' }
+      }
+
+      return { ...prev, [name]: value }
+    })
   }
 
   const handleGovernmentIdChange = (event) => {
@@ -55,8 +111,11 @@ function EmployeeForm({ onClose, onCreated }) {
         dailyRate: formData.dailyRate === '' ? undefined : Number(formData.dailyRate),
       }
 
-      const response = await fetch(`${API_BASE_URL}/api/employees/create`, {
-        method: 'POST',
+      const endpoint = isEditMode ? `${API_BASE_URL}/api/employees/update/${employeeId}` : `${API_BASE_URL}/api/employees/create`
+      const method = isEditMode ? 'PUT' : 'POST'
+
+      const response = await fetch(endpoint, {
+        method,
         headers: {
           'Content-Type': 'application/json',
         },
@@ -65,15 +124,16 @@ function EmployeeForm({ onClose, onCreated }) {
       const result = await response.json()
 
       if (!response.ok) {
-        throw new Error(result?.message || 'Failed to create employee.')
+        throw new Error(result?.message || `Failed to ${isEditMode ? 'update' : 'create'} employee.`)
       }
 
       if (onCreated) {
         await onCreated()
       }
       onClose()
+      window.location.reload()
     } catch (submitError) {
-      setError(submitError.message || 'Something went wrong while creating employee.')
+      setError(submitError.message || `Something went wrong while ${isEditMode ? 'updating' : 'creating'} employee.`)
     } finally {
       setIsSubmitting(false)
     }
@@ -145,8 +205,47 @@ function EmployeeForm({ onClose, onCreated }) {
         <label htmlFor="email">Email</label>
         <input id="email" name="email" type="email" placeholder="juan@email.com" value={formData.email} onChange={handleChange} />
       </div>
-      
-      
+
+      <div className="form-group">
+        <label htmlFor="departmentId">Department</label>
+        <select
+          id="departmentId"
+          name="departmentId"
+          value={formData.departmentId}
+          onChange={handleChange}
+          required
+          disabled={isOptionsLoading}
+        >
+          <option value="">Select Department</option>
+          {departments.map((department) => (
+            <option key={department._id} value={department._id}>
+              {department.name}
+            </option>
+          ))}
+        </select>
+      </div>
+
+      <div className="form-group">
+        <label htmlFor="positionId">Position</label>
+        <select
+          id="positionId"
+          name="positionId"
+          value={formData.positionId}
+          onChange={handleChange}
+          required
+          disabled={isOptionsLoading || !formData.departmentId}
+        >
+          <option value="">
+            {formData.departmentId ? 'Select Position' : 'Select Department First'}
+          </option>
+          {filteredPositions.map((position) => (
+            <option key={position._id} value={position._id}>
+              {position.name}
+            </option>
+          ))}
+        </select>
+      </div>
+
       <div className="form-group">
         <label htmlFor="employmentType">Employment Type</label>
         <select id="employmentType" name="employmentType" value={formData.employmentType} onChange={handleChange}>
@@ -222,7 +321,7 @@ function EmployeeForm({ onClose, onCreated }) {
 
       {error ? <p>{error}</p> : null}
       <Button variant="primary" type="submit" disabled={isSubmitting}>
-        {isSubmitting ? 'Saving...' : 'Save Employee'}
+        {isSubmitting ? 'Saving...' : isEditMode ? 'Update Employee' : 'Save Employee'}
       </Button>
     </form>
   )

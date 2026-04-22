@@ -21,3 +21,5 @@ export const generateEmployeeId = async () => {
 export const createEmployee = (data) => employeeRepo.create(data);
 
 export const getEmployees = () => employeeRepo.findAll();
+
+export const updateEmployee = (id, data) => employeeRepo.update(id, data);

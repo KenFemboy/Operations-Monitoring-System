@@ -11,6 +11,7 @@ function EmployeesPage() {
   const [employees, setEmployees] = useState([])
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState('')
+  const [editingEmployee, setEditingEmployee] = useState(null)
   const { activeBranch, isReadOnly } = useBranchContext()
   const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000'
 
@@ -29,8 +30,8 @@ function EmployeesPage() {
       const mappedEmployees = (result?.data || []).map((employee) => ({
         id: employee?._id,
         name: `${employee?.firstName || ''} ${employee?.lastName || ''}`.trim() || 'N/A',
-        role: employee?.role || 'N/A',
-        assignedBranch: employee?.assignedBranch || 'N/A',
+        role: employee?.positionId?.name || 'N/A',
+        assignedBranch: employee?.departmentId?.name || 'N/A',
         status: employee?.status || 'N/A',
       }))
 
@@ -45,6 +46,30 @@ function EmployeesPage() {
   useEffect(() => {
     fetchEmployees()
   }, [fetchEmployees])
+
+  const handleEditEmployee = async (employeeId) => {
+    try {
+      const response = await fetch(`${API_BASE_URL}/api/employees/get-all`)
+      const result = await response.json()
+
+      if (!response.ok) {
+        throw new Error(result?.message || 'Failed to load employee.')
+      }
+
+      const employee = (result?.data || []).find((emp) => emp._id === employeeId)
+      if (employee) {
+        setEditingEmployee(employee)
+        setIsModalOpen(true)
+      }
+    } catch (err) {
+      setError(err.message || 'Failed to load employee for editing.')
+    }
+  }
+
+  const handleCloseModal = () => {
+    setIsModalOpen(false)
+    setEditingEmployee(null)
+  }
 
   const filteredEmployees = employees.filter((employee) => {
     if (activeBranch === 'Tagum City') {
@@ -71,16 +96,30 @@ function EmployeesPage() {
       <section className="table-card">
         <div className="table-toolbar">
           <h3 className="table-title">Employee List</h3>
-          <Button onClick={() => setIsModalOpen(true)} disabled={isReadOnly}>Add Employee</Button>
+          <Button
+            onClick={() => {
+              setEditingEmployee(null)
+              setIsModalOpen(true)
+            }}
+            disabled={isReadOnly}
+          >
+            Add Employee
+          </Button>
         </div>
         {isLoading ? <p>Loading employees...</p> : null}
         {error ? <p>{error}</p> : null}
         <Table
           columns={employeeColumns}
           rows={isLoading || error ? [] : filteredEmployees}
-          renderActions={() => (
+          renderActions={(row) => (
             <div className="action-row">
-              <Button variant="outline" disabled={isReadOnly}>Edit</Button>
+              <Button
+                variant="outline"
+                disabled={isReadOnly}
+                onClick={() => handleEditEmployee(row.id)}
+              >
+                Edit
+              </Button>
               <Button variant="danger" disabled={isReadOnly}>Delete</Button>
             </div>
           )}
@@ -88,11 +127,16 @@ function EmployeesPage() {
       </section>
 
       <Modal
-        title="Add Employee"
+        title={editingEmployee ? 'Edit Employee' : 'Add Employee'}
         isOpen={isModalOpen}
-        onClose={() => setIsModalOpen(false)}
+        onClose={handleCloseModal}
       >
-        <EmployeeForm onClose={() => setIsModalOpen(false)} onCreated={fetchEmployees} />
+        <EmployeeForm
+          onClose={handleCloseModal}
+          onCreated={fetchEmployees}
+          initialData={editingEmployee}
+          employeeId={editingEmployee?._id}
+        />
       </Modal>
     </section>
   )

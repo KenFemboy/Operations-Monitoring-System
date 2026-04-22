@@ -53,3 +53,34 @@ export const getEmployees = async (_req, res) => {
     });
   }
 };
+
+export const updateEmployee = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const employee = await employeeService.updateEmployee(id, req.body);
+
+    if (!employee) {
+      return res.status(404).json({
+        success: false,
+        message: "Employee not found",
+      });
+    }
+
+    res.status(200).json({
+      success: true,
+      data: employee,
+    });
+  } catch (err) {
+    if (err.name === "ValidationError") {
+      return res.status(400).json({
+        success: false,
+        message: err.message,
+      });
+    }
+
+    res.status(500).json({
+      success: false,
+      message: err.message,
+    });
+  }
+};

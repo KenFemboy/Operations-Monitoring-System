@@ -1,10 +1,11 @@
 // routes/employeeRoutes.js
 import express from "express";
-import * as controller from "../controllers/employeeControllers.js";
+import * as controller from "../controllers/employeeController.js";
 
 const router = express.Router();
 
 router.post("/create", controller.createEmployee);
 router.get("/get-all", controller.getEmployees);
+router.put("/update/:id", controller.updateEmployee);
 
 export default router;

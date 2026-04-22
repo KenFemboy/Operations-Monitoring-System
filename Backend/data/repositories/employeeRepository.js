@@ -7,4 +7,13 @@ export const findByEmployeeId = (employeeId) =>
 
 export const create = (data) => Employee.create(data);
 
-export const findAll = () => Employee.find({}).sort({ createdAt: -1 });
+export const findAll = () =>
+  Employee.find({})
+    .populate("departmentId", "name branch location status")
+    .populate("positionId", "name baseSalary dailyRate status")
+    .sort({ createdAt: -1 });
+
+export const update = (id, data) =>
+  Employee.findByIdAndUpdate(id, data, { new: true, runValidators: true })
+    .populate("departmentId", "name branch location status")
+    .populate("positionId", "name baseSalary dailyRate status");
