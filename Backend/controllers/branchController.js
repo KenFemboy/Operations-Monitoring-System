@@ -16,7 +16,6 @@ export const createBranch = async (req, res) => {
       location: location?.trim(),
       description: description?.trim(),
       address: address?.trim(),
-      description: description?.trim(),
     });
 
     res.status(201).json({
@@ -62,3 +61,40 @@ export const getBranches = async (_req, res) => {
     }); 
     }
 };
+
+export const getBranchesByLocation = async (req, res) => {
+  try {
+    const branches = await Branch.find({ location: req.params.location });
+
+    if (!branches.length) {
+      return res.status(404).json({
+        success: false,
+        message: "No branches found in this location.",
+      });
+    }
+
+    res.status(200).json({
+        success: true,
+        count: branches.length,
+        data: branches,
+    });
+  } catch (err) {
+    if (err.name === "CastError") {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid branch ID.",
+      });
+    }
+
+    res.status(500).json({
+        success: false,
+        message: err.message,
+    });
+  }
+};
+
+
+
+
+
+
