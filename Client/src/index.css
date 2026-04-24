@@ -124,6 +124,67 @@ body {
   gap: 0.35rem;
 }
 
+.nav-group {
+  display: flex;
+  flex-direction: column;
+}
+
+.nav-group-trigger {
+  width: 100%;
+  border: none;
+  background: transparent;
+  text-align: left;
+}
+
+.nav-arrow {
+  margin-left: auto;
+  font-size: 0.75rem;
+  transform: rotate(0deg);
+  transition: transform 0.22s ease;
+}
+
+.nav-arrow.is-open {
+  transform: rotate(180deg);
+}
+
+.nav-submenu {
+  display: grid;
+  grid-template-rows: 0fr;
+  opacity: 0;
+  transition: grid-template-rows 0.22s ease, opacity 0.2s ease;
+}
+
+.nav-submenu.is-open {
+  grid-template-rows: 1fr;
+  opacity: 1;
+}
+
+.nav-submenu > .nav-subitem {
+  overflow: hidden;
+}
+
+.nav-subitem {
+  margin-left: 2.1rem;
+  margin-top: 0.2rem;
+  display: block;
+  text-decoration: none;
+  color: var(--text-secondary);
+  font-size: 0.88rem;
+  padding: 0.35rem 0.55rem;
+  border-radius: 0.45rem;
+}
+
+.nav-subitem:hover {
+  background: var(--bg-muted);
+  color: var(--text-primary);
+}
+
+.nav-subitem.active {
+  background: #ffead6;
+  color: #8c4f24;
+  font-weight: 600;
+}
+
 .nav-item {
   display: flex;
   align-items: center;
@@ -568,8 +629,12 @@ thead th {
   background: var(--bg-panel);
   border-radius: 0.8rem;
   width: 100%;
-  max-width: 460px;
+  max-width: 760px;
   padding: 1rem;
+  max-height: 88vh;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
 }
 
 .modal-header {
@@ -581,6 +646,30 @@ thead th {
 
 .modal-header h3 {
   margin: 0;
+}
+
+.modal-form-scroll {
+  overflow-y: auto;
+  padding-right: 0.2rem;
+}
+
+.employee-form-grid {
+  border: 1px solid var(--border-color);
+  border-radius: 0.7rem;
+  padding: 1rem;
+}
+
+.form-grid-two {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.8rem;
+}
+
+.modal-form-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.55rem;
+  margin-top: 0.4rem;
 }
 
 @media (max-width: 960px) {
@@ -634,6 +723,10 @@ thead th {
   .filter-grid,
   .branch-grid,
   .feedback-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .form-grid-two {
     grid-template-columns: 1fr;
   }
 

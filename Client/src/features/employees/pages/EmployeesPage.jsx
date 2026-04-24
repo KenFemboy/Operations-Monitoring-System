@@ -1,69 +1,78 @@
-import { useCallback, useEffect, useState } from 'react'
+import { useMemo, useState } from 'react'
 import Button from '../../shared/components/Button'
 import Modal from '../../shared/components/Modal'
 import Table from '../../shared/components/Table'
 import EmployeeForm from '../components/EmployeeForm'
 import { employeeColumns } from '../utils/employeeColumns'
 import { useBranchContext } from '../../shared/store/branchContext'
+import { employeeRows } from '../services/employeesMockService'
+
+const toEmployeeRecord = (employee) => {
+  const [firstName = '', ...lastParts] = employee.name.split(' ')
+
+  return {
+    id: employee.id,
+    firstName,
+    lastName: lastParts.join(' '),
+    name: employee.name,
+    role: employee.role,
+    assignedBranch: employee.assignedBranch,
+    status: employee.status,
+    address: '',
+    contactNumber: '',
+    email: '',
+  }
+}
 
 function EmployeesPage() {
   const [isModalOpen, setIsModalOpen] = useState(false)
-  const [employees, setEmployees] = useState([])
-  const [isLoading, setIsLoading] = useState(true)
-  const [error, setError] = useState('')
+  const [employees, setEmployees] = useState(() => employeeRows.map(toEmployeeRecord))
   const [editingEmployee, setEditingEmployee] = useState(null)
   const { activeBranch, isReadOnly } = useBranchContext()
-  const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000'
 
-  const fetchEmployees = useCallback(async () => {
-    try {
-      setIsLoading(true)
-      setError('')
+  const tableRows = useMemo(
+    () =>
+      employees.map((employee) => ({
+        ...employee,
+        name: `${employee.firstName} ${employee.lastName}`.trim(),
+      })),
+    [employees],
+  )
 
-      const response = await fetch(`${API_BASE_URL}/api/employees/get-all`)
-      const result = await response.json()
-
-      if (!response.ok) {
-        throw new Error(result?.message || 'Failed to load employees.')
-      }
-
-      const mappedEmployees = (result?.data || []).map((employee) => ({
-        id: employee?._id,
-        name: `${employee?.firstName || ''} ${employee?.lastName || ''}`.trim() || 'N/A',
-        role: employee?.positionId?.name || 'N/A',
-        assignedBranch: employee?.departmentId?.name || 'N/A',
-        status: employee?.status || 'N/A',
-      }))
-
-      setEmployees(mappedEmployees)
-    } catch (fetchError) {
-      setError(fetchError.message || 'Something went wrong while loading employees.')
-    } finally {
-      setIsLoading(false)
+  const handleEditEmployee = (employeeId) => {
+    const employee = employees.find((row) => row.id === employeeId)
+    if (!employee) {
+      return
     }
-  }, [API_BASE_URL])
 
-  useEffect(() => {
-    fetchEmployees()
-  }, [fetchEmployees])
+    setEditingEmployee(employee)
+    setIsModalOpen(true)
+  }
 
-  const handleEditEmployee = async (employeeId) => {
-    try {
-      const response = await fetch(`${API_BASE_URL}/api/employees/get-all`)
-      const result = await response.json()
-
-      if (!response.ok) {
-        throw new Error(result?.message || 'Failed to load employee.')
-      }
-
-      const employee = (result?.data || []).find((emp) => emp._id === employeeId)
-      if (employee) {
-        setEditingEmployee(employee)
-        setIsModalOpen(true)
-      }
-    } catch (err) {
-      setError(err.message || 'Failed to load employee for editing.')
+  const handleSaveEmployee = (payload) => {
+    if (editingEmployee) {
+      setEmployees((prev) =>
+        prev.map((employee) =>
+          employee.id === editingEmployee.id
+            ? {
+                ...employee,
+                ...payload,
+              }
+            : employee,
+        ),
+      )
+    } else {
+      const nextId = employees.length ? Math.max(...employees.map((employee) => employee.id)) + 1 : 1
+      setEmployees((prev) => [
+        ...prev,
+        {
+          id: nextId,
+          ...payload,
+        },
+      ])
     }
+
+    handleCloseModal()
   }
 
   const handleCloseModal = () => {
@@ -71,7 +80,7 @@ function EmployeesPage() {
     setEditingEmployee(null)
   }
 
-  const filteredEmployees = employees.filter((employee) => {
+  const filteredEmployees = tableRows.filter((employee) => {
     if (activeBranch === 'Tagum City') {
       return true
     }
@@ -106,11 +115,9 @@ function EmployeesPage() {
             Add Employee
           </Button>
         </div>
-        {isLoading ? <p>Loading employees...</p> : null}
-        {error ? <p>{error}</p> : null}
         <Table
           columns={employeeColumns}
-          rows={isLoading || error ? [] : filteredEmployees}
+          rows={filteredEmployees}
           renderActions={(row) => (
             <div className="action-row">
               <Button
@@ -120,7 +127,6 @@ function EmployeesPage() {
               >
                 Edit
               </Button>
-              <Button variant="danger" disabled={isReadOnly}>Delete</Button>
             </div>
           )}
         />
@@ -133,9 +139,8 @@ function EmployeesPage() {
       >
         <EmployeeForm
           onClose={handleCloseModal}
-          onCreated={fetchEmployees}
+          onSave={handleSaveEmployee}
           initialData={editingEmployee}
-          employeeId={editingEmployee?._id}
         />
       </Modal>
     </section>

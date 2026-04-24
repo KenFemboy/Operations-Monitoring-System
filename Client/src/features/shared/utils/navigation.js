@@ -1,6 +1,14 @@
 export const navigationItems = [
   { label: 'Dashboard', path: '/dashboard', icon: 'DB' },
-  { label: 'Branches', path: '/branches', icon: 'BR' },
+  {
+    label: 'Branches',
+    path: '/branches',
+    icon: 'BR',
+    children: [
+      { label: 'Branches', path: '/branches' },
+      { label: 'User', path: '/branches/users' },
+    ],
+  },
   { label: 'Employees', path: '/employees', icon: 'EM' },
   { label: 'Inventory', path: '/inventory', icon: 'IN' },
   { label: 'Sales', path: '/sales', icon: 'SL' },
@@ -12,6 +20,4 @@ export const navigationItems = [
   { label: 'Contributions', path: '/contributions', icon: 'CT' },
   { label: 'Leaves', path: '/leaves', icon: 'LV' },
   { label: 'Reports', path: '/reports', icon: 'RP' },
-  { label: 'Departments', path: '/departments', icon: 'DP' },
-  { label: 'Positions', path: '/positions', icon: 'PS' },
 ]
