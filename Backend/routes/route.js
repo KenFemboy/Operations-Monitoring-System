@@ -5,8 +5,8 @@ import departmentRoutes from "./departmentRoutes.js";
 import positionRoutes from "./positionRoutes.js";
 import branchRoutes from "./branchRoutes.js";
 import payrollRoutes from "./payrollRoutes.js";
-
-
+import userRoutes from "./userRoutes.js";
+import authRoutes from "./authRoutes.js";
 const router = express.Router();
 
 router.get("/health", (_req, res) => {
@@ -31,5 +31,7 @@ router.use("/employees", employeeRoutes);
 router.use("/departments", departmentRoutes);
 router.use("/positions", positionRoutes);
 router.use("/branches", branchRoutes);
+router.use("/payrolls", payrollRoutes);
+router.use("/auth", authRoutes);
 
 export default router;

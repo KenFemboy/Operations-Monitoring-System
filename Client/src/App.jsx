@@ -1,72 +1,98 @@
-import { useEffect, useState } from 'react'
-import { Navigate, Route, Routes, useLocation } from 'react-router-dom'
-import Navbar from './features/shared/components/Navbar'
-import Sidebar from './features/shared/components/Sidebar'
-import DashboardPage from './features/dashboard/pages/DashboardPage'
-import AttendancePage from './features/attendance/pages/AttendancePage'
-import EmployeesPage from './features/employees/pages/EmployeesPage'
-import BranchesPage from './features/branches/pages/BranchesPage'
-import InventoryPage from './features/inventory/pages/InventoryPage'
-import SalesPage from './features/sales/pages/SalesPage'
-import FeedbackPage from './features/feedback/pages/FeedbackPage'
-import IncidentsPage from './features/incidents/pages/IncidentsPage'
-import NtePage from './features/nte/pages/NtePage'
-import PlantillaPage from './features/plantilla/pages/PlantillaPage'
-import ContributionsPage from './features/contributions/pages/ContributionsPage'
-import LeavesPage from './features/leaves/pages/LeavesPage'
-import ReportsPage from './features/reports/pages/ReportsPage'
-import BranchUsersPage from './features/branches/pages/BranchUsersPage'
-import { BranchProvider, useBranchContext } from './features/shared/store/branchContext'
+// import { useEffect, useState } from 'react'
+// import { Navigate, Route, Routes, useLocation } from 'react-router-dom'
+// import Navbar from './features/shared/components/Navbar'
+// import Sidebar from './features/shared/components/Sidebar'
+// import DashboardPage from './features/dashboard/pages/DashboardPage'
+// import AttendancePage from './features/attendance/pages/AttendancePage'
+// import EmployeesPage from './features/employees/pages/EmployeesPage'
+// import BranchesPage from './features/branches/pages/BranchesPage'
+// import InventoryPage from './features/inventory/pages/InventoryPage'
+// import SalesPage from './features/sales/pages/SalesPage'
+// import FeedbackPage from './features/feedback/pages/FeedbackPage'
+// import IncidentsPage from './features/incidents/pages/IncidentsPage'
+// import NtePage from './features/nte/pages/NtePage'
+// import PlantillaPage from './features/plantilla/pages/PlantillaPage'
+// import ContributionsPage from './features/contributions/pages/ContributionsPage'
+// import LeavesPage from './features/leaves/pages/LeavesPage'
+// import ReportsPage from './features/reports/pages/ReportsPage'
+// import BranchUsersPage from './features/branches/pages/BranchUsersPage'
+// import { BranchProvider, useBranchContext } from './features/shared/store/branchContext'
 
-function AppLayout() {
-  const [isSidebarOpen, setIsSidebarOpen] = useState(false)
-  const location = useLocation()
-  const { activeBranch } = useBranchContext()
-  const branchThemeClass = `theme-${activeBranch.toLowerCase().replace(/\s+/g, '-')}`
+// function AppLayout() {
+//   const [isSidebarOpen, setIsSidebarOpen] = useState(false)
+//   const location = useLocation()
+//   const { activeBranch } = useBranchContext()
+//   const branchThemeClass = `theme-${activeBranch.toLowerCase().replace(/\s+/g, '-')}`
 
-  useEffect(() => {
-    setIsSidebarOpen(false)
-  }, [location.pathname])
+//   useEffect(() => {
+//     setIsSidebarOpen(false)
+//   }, [location.pathname])
 
+//   return (
+//     <div className={`app-shell ${branchThemeClass}`}>
+//       <Sidebar
+//         isOpen={isSidebarOpen}
+//         onNavigate={() => setIsSidebarOpen(false)}
+//       />
+//       <div className="main-shell">
+//         <Navbar onToggleSidebar={() => setIsSidebarOpen((current) => !current)} />
+//         <main className="page-content" key={`${location.pathname}-${activeBranch}`}>
+//           <Routes>
+//             <Route path="/dashboard" element={<DashboardPage />} />
+//             <Route path="/branches" element={<BranchesPage />} />
+//             <Route path="/branches/users" element={<BranchUsersPage />} />
+//             <Route path="/employees" element={<EmployeesPage />} />
+//             <Route path="/inventory" element={<InventoryPage />} />
+//             <Route path="/sales" element={<SalesPage />} />
+//             <Route path="/attendance" element={<AttendancePage />} />
+//             <Route path="/feedback" element={<FeedbackPage />} />
+//             <Route path="/incidents" element={<IncidentsPage />} />
+//             <Route path="/nte" element={<NtePage />} />
+//             <Route path="/plantilla" element={<PlantillaPage />} />
+//             <Route path="/contributions" element={<ContributionsPage />} />
+//             <Route path="/leaves" element={<LeavesPage />} />
+//             <Route path="/reports" element={<ReportsPage />} />
+//             <Route path="/" element={<Navigate to="/dashboard" replace />} />
+//             <Route path="*" element={<Navigate to="/dashboard" replace />} />
+//           </Routes>
+//         </main>
+//       </div>
+//     </div>
+//   )
+// }
+
+// function App() {
+//   return (
+//     <BranchProvider>
+//       <AppLayout />
+//     </BranchProvider>
+//   )
+// }
+
+// export default App
+
+
+import { BrowserRouter, Routes, Route } from "react-router-dom";
+import Login from "./pages/Login";
+import RegisterUser from "./pages/Register";
+import Dashboard from "./pages/Dashboard";
+import { AuthProvider } from "./context/AuthContext";
+
+export default function App() {
   return (
-    <div className={`app-shell ${branchThemeClass}`}>
-      <Sidebar
-        isOpen={isSidebarOpen}
-        onNavigate={() => setIsSidebarOpen(false)}
-      />
-      <div className="main-shell">
-        <Navbar onToggleSidebar={() => setIsSidebarOpen((current) => !current)} />
-        <main className="page-content" key={`${location.pathname}-${activeBranch}`}>
-          <Routes>
-            <Route path="/dashboard" element={<DashboardPage />} />
-            <Route path="/branches" element={<BranchesPage />} />
-            <Route path="/branches/users" element={<BranchUsersPage />} />
-            <Route path="/employees" element={<EmployeesPage />} />
-            <Route path="/inventory" element={<InventoryPage />} />
-            <Route path="/sales" element={<SalesPage />} />
-            <Route path="/attendance" element={<AttendancePage />} />
-            <Route path="/feedback" element={<FeedbackPage />} />
-            <Route path="/incidents" element={<IncidentsPage />} />
-            <Route path="/nte" element={<NtePage />} />
-            <Route path="/plantilla" element={<PlantillaPage />} />
-            <Route path="/contributions" element={<ContributionsPage />} />
-            <Route path="/leaves" element={<LeavesPage />} />
-            <Route path="/reports" element={<ReportsPage />} />
-            <Route path="/" element={<Navigate to="/dashboard" replace />} />
-            <Route path="*" element={<Navigate to="/dashboard" replace />} />
-          </Routes>
-        </main>
-      </div>
-    </div>
-  )
+    <AuthProvider>
+      <BrowserRouter>
+        <Routes>
+          <Route path="/" element={
+            <>
+            <Login />
+            <RegisterUser />
+            </>
+            } />
+          
+          <Route path="/dashboard" element={<Dashboard />} />
+        </Routes>
+      </BrowserRouter>
+    </AuthProvider>
+  );
 }
-
-function App() {
-  return (
-    <BranchProvider>
-      <AppLayout />
-    </BranchProvider>
-  )
-}
-
-export default App
