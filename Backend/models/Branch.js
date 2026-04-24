@@ -9,7 +9,6 @@ const branchSchema = new mongoose.Schema({
     },
     location: {
     type: String,
-    unique: true,
     trim: true
     },
     description: String,

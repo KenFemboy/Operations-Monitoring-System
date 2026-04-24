@@ -50,6 +50,10 @@ const employeeSchema = new mongoose.Schema(
       type: mongoose.Schema.Types.ObjectId,
       ref: "Position",
     },
+    assignedBranchId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Branch",
+    },
     employmentType: {
       type: String,
       enum: ["regular", "contractual"],
