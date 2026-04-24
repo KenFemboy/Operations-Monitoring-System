@@ -127,6 +127,7 @@ body {
 .nav-group {
   display: flex;
   flex-direction: column;
+  gap: 0;
 }
 
 .nav-group-trigger {
@@ -138,7 +139,7 @@ body {
 
 .nav-arrow {
   margin-left: auto;
-  font-size: 0.75rem;
+  font-size: 0.9rem;
   transform: rotate(0deg);
   transition: transform 0.22s ease;
 }
@@ -148,24 +149,26 @@ body {
 }
 
 .nav-submenu {
-  display: grid;
-  grid-template-rows: 0fr;
+  max-height: 0;
+  overflow: hidden;
   opacity: 0;
-  transition: grid-template-rows 0.22s ease, opacity 0.2s ease;
+  transition: max-height 0.24s ease, opacity 0.2s ease;
 }
 
 .nav-submenu.is-open {
-  grid-template-rows: 1fr;
   opacity: 1;
 }
 
-.nav-submenu > .nav-subitem {
-  overflow: hidden;
+.nav-submenu-inner {
+  padding-top: 0.2rem;
+  padding-bottom: 0.05rem;
+  display: grid;
+  gap: 0.2rem;
 }
 
 .nav-subitem {
   margin-left: 2.1rem;
-  margin-top: 0.2rem;
+  margin-top: 0;
   display: block;
   text-decoration: none;
   color: var(--text-secondary);
@@ -195,6 +198,10 @@ body {
   border-radius: 0.55rem;
   font-weight: 500;
   transition: all 0.2s ease;
+}
+
+.nav-group + .nav-item {
+  margin-top: 0;
 }
 
 .nav-icon {
@@ -479,6 +486,20 @@ thead th {
   padding: 0.58rem 0.7rem;
 }
 
+.select-search-input {
+  border: 1px solid #e2cdb9;
+  border-radius: 0.5rem;
+  padding: 0.48rem 0.65rem;
+  font-size: 0.86rem;
+  color: var(--text-primary);
+  background: #fff;
+}
+
+.select-search-input:disabled {
+  background: #f6f3ef;
+  color: #927f70;
+}
+
 .inline-select {
   border: 1px solid #e2cdb9;
   border-radius: 0.45rem;
@@ -599,6 +620,26 @@ thead th {
   }
 }
 
+@keyframes modal-fade {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes modal-pop {
+  from {
+    opacity: 0;
+    transform: translateY(12px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
 .chart-placeholder {
   min-height: 220px;
   border: 1px dashed #d8b89b;
@@ -623,6 +664,7 @@ thead th {
   display: grid;
   place-items: center;
   padding: 1rem;
+  animation: modal-fade 0.2s ease;
 }
 
 .modal-body {
@@ -635,6 +677,7 @@ thead th {
   overflow: hidden;
   display: flex;
   flex-direction: column;
+  animation: modal-pop 0.22s ease;
 }
 
 .modal-header {

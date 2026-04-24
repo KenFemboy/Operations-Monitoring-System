@@ -1,19 +1,18 @@
 import { useMemo, useState } from 'react'
 import Button from '../../shared/components/Button'
-import { branchRows } from '../../branches/services/branchesMockService'
 
 const defaultForm = {
   firstName: '',
   lastName: '',
   role: '',
-  assignedBranch: 'Tagum City',
-  status: 'Active',
+  assignedBranchId: '',
+  status: 'active',
   address: '',
   contactNumber: '',
   email: '',
 }
 
-function EmployeeForm({ onClose, onSave, initialData }) {
+function EmployeeForm({ onClose, onSave, initialData, branchOptions = [], isSaving = false }) {
   const initialState = useMemo(() => {
     if (!initialData) {
       return defaultForm
@@ -23,8 +22,8 @@ function EmployeeForm({ onClose, onSave, initialData }) {
       firstName: initialData.firstName || '',
       lastName: initialData.lastName || '',
       role: initialData.role || '',
-      assignedBranch: initialData.assignedBranch || 'Tagum City',
-      status: initialData.status || 'Active',
+      assignedBranchId: initialData.assignedBranchId || '',
+      status: initialData.status || 'active',
       address: initialData.address || '',
       contactNumber: initialData.contactNumber || '',
       email: initialData.email || '',
@@ -45,8 +44,14 @@ function EmployeeForm({ onClose, onSave, initialData }) {
     }
 
     onSave({
-      ...formData,
-      name: `${formData.firstName} ${formData.lastName}`.trim(),
+      firstName: formData.firstName.trim(),
+      lastName: formData.lastName.trim(),
+      role: formData.role.trim(),
+      assignedBranchId: formData.assignedBranchId || undefined,
+      status: formData.status,
+      address: formData.address.trim(),
+      contactNumber: formData.contactNumber.trim(),
+      email: formData.email.trim(),
     })
   }
 
@@ -72,12 +77,13 @@ function EmployeeForm({ onClose, onSave, initialData }) {
           <label htmlFor="assignedBranch">Assigned Branch</label>
           <select
             id="assignedBranch"
-            name="assignedBranch"
-            value={formData.assignedBranch}
+            name="assignedBranchId"
+            value={formData.assignedBranchId}
             onChange={handleChange}
           >
-            {branchRows.map((branch) => (
-              <option key={branch.id} value={branch.name}>
+            <option value="">Unassigned</option>
+            {branchOptions.map((branch) => (
+              <option key={branch.id} value={branch.id}>
                 {branch.name}
               </option>
             ))}
@@ -89,10 +95,8 @@ function EmployeeForm({ onClose, onSave, initialData }) {
         <div className="form-group">
           <label htmlFor="status">Status</label>
           <select id="status" name="status" value={formData.status} onChange={handleChange}>
-            <option value="Active">Active</option>
-            <option value="On Leave">On Leave</option>
-            <option value="Probationary">Probationary</option>
-            <option value="Inactive">Inactive</option>
+            <option value="active">Active</option>
+            <option value="inactive">Inactive</option>
           </select>
         </div>
         <div className="form-group">
@@ -120,7 +124,9 @@ function EmployeeForm({ onClose, onSave, initialData }) {
         <Button type="button" variant="outline" onClick={onClose}>
           Cancel
         </Button>
-        <Button type="submit">{initialData ? 'Update Employee' : 'Save Employee'}</Button>
+        <Button type="submit" disabled={isSaving}>
+          {isSaving ? 'Saving...' : initialData ? 'Update Employee' : 'Save Employee'}
+        </Button>
       </div>
     </form>
   )

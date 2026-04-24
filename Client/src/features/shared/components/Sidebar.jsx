@@ -1,10 +1,12 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { NavLink, useLocation } from 'react-router-dom'
 import { navigationItems } from '../utils/navigation'
 
 function Sidebar({ isOpen, onNavigate }) {
   const location = useLocation()
   const [isBranchesOpen, setIsBranchesOpen] = useState(false)
+  const submenuInnerRef = useRef(null)
+  const [submenuHeight, setSubmenuHeight] = useState(0)
 
   const isBranchesRoute = useMemo(
     () => location.pathname.startsWith('/branches'),
@@ -16,6 +18,15 @@ function Sidebar({ isOpen, onNavigate }) {
       setIsBranchesOpen(true)
     }
   }, [isBranchesRoute])
+
+  useEffect(() => {
+    if (!submenuInnerRef.current) {
+      return
+    }
+
+    const nextHeight = submenuInnerRef.current.scrollHeight
+    setSubmenuHeight(nextHeight)
+  }, [isBranchesOpen, location.pathname])
 
   return (
     <aside className={`sidebar ${isOpen ? 'is-open' : ''}`}>
@@ -48,25 +59,28 @@ function Sidebar({ isOpen, onNavigate }) {
               >
                 <span className="nav-icon">{item.icon}</span>
                 <span>{item.label}</span>
-                <span className={`nav-arrow ${isBranchesOpen ? 'is-open' : ''}`}>v</span>
+                <span className={`nav-arrow ${isBranchesOpen ? 'is-open' : ''}`}>⌄</span>
               </button>
 
               <div
                 className={`nav-submenu ${isBranchesOpen ? 'is-open' : ''}`}
+                style={{ maxHeight: isBranchesOpen ? `${submenuHeight}px` : '0px' }}
                 aria-hidden={!isBranchesOpen}
               >
-                {item.children.map((child) => (
-                  <NavLink
-                    key={child.path}
-                    to={child.path}
-                    onClick={onNavigate}
-                    className={({ isActive }) =>
-                      isActive ? 'nav-subitem active' : 'nav-subitem'
-                    }
-                  >
-                    {child.label}
-                  </NavLink>
-                ))}
+                <div ref={submenuInnerRef} className="nav-submenu-inner">
+                  {item.children.map((child) => (
+                    <NavLink
+                      key={child.path}
+                      to={child.path}
+                      onClick={onNavigate}
+                      className={({ isActive }) =>
+                        isActive ? 'nav-subitem active' : 'nav-subitem'
+                      }
+                    >
+                      {child.label}
+                    </NavLink>
+                  ))}
+                </div>
               </div>
             </div>
           )

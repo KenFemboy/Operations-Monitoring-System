@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react'
 import Button from '../../shared/components/Button'
 import Modal from '../../shared/components/Modal'
+import SelectDropdown from '../../shared/components/SelectDropdown'
 import Table from '../../shared/components/Table'
 import { branchRows } from '../services/branchesMockService'
 
@@ -12,14 +13,17 @@ const userColumns = [
 
 const defaultUserForm = {
   name: '',
-  role: '',
-  assignedBranch: 'Tagum City',
+  role: 'Admin',
+  assignedBranch: 'Tagum Main Branch',
 }
 
+const allowedRoles = ['Admin', 'Superadmin (Main Branch)']
+const MAIN_BRANCH = 'Tagum Main Branch'
+
 const initialUsers = [
-  { id: 1, name: 'Andrea Valdez', role: 'Manager', assignedBranch: 'Tagum City' },
-  { id: 2, name: 'Marco Lim', role: 'Cashier', assignedBranch: 'Panabo City' },
-  { id: 3, name: 'Rina Gomez', role: 'Supervisor', assignedBranch: 'Pantukan' },
+  { id: 1, name: 'Andrea Valdez', role: 'Superadmin (Main Branch)', assignedBranch: 'Tagum Main Branch' },
+  { id: 2, name: 'Marco Lim', role: 'Admin', assignedBranch: 'Panabo Branch' },
+  { id: 3, name: 'Rina Gomez', role: 'Admin', assignedBranch: 'Quezon City Branch' },
 ]
 
 function BranchUsersPage() {
@@ -28,10 +32,23 @@ function BranchUsersPage() {
   const [users, setUsers] = useState(initialUsers)
   const [branchSelectionByUser, setBranchSelectionByUser] = useState({})
 
-  const branchOptions = useMemo(() => branchRows.map((branch) => branch.name), [])
+  const branchOptions = useMemo(
+    () => branchRows.map((branch) => branch.branchName || branch.name),
+    [],
+  )
 
   const handleFormChange = (event) => {
     const { name, value } = event.target
+
+    if (name === 'role' && value === 'Superadmin (Main Branch)') {
+      setFormData((prev) => ({
+        ...prev,
+        role: value,
+        assignedBranch: MAIN_BRANCH,
+      }))
+      return
+    }
+
     setFormData((prev) => ({ ...prev, [name]: value }))
   }
 
@@ -57,6 +74,11 @@ function BranchUsersPage() {
   }
 
   const handleAssignBranch = (userId) => {
+    const selectedUser = users.find((user) => user.id === userId)
+    if (selectedUser?.role === 'Superadmin (Main Branch)') {
+      return
+    }
+
     const selectedBranch = branchSelectionByUser[userId]
     if (!selectedBranch) {
       return
@@ -93,6 +115,7 @@ function BranchUsersPage() {
             <div className="action-row">
               <select
                 className="inline-select"
+                disabled={row.role === 'Superadmin (Main Branch)'}
                 value={branchSelectionByUser[row.id] ?? row.assignedBranch}
                 onChange={(event) => handleAssignSelection(row.id, event.target.value)}
               >
@@ -102,7 +125,11 @@ function BranchUsersPage() {
                   </option>
                 ))}
               </select>
-              <Button variant="outline" onClick={() => handleAssignBranch(row.id)}>
+              <Button
+                variant="outline"
+                disabled={row.role === 'Superadmin (Main Branch)'}
+                onClick={() => handleAssignBranch(row.id)}
+              >
                 Assign Branch
               </Button>
             </div>
@@ -118,23 +145,26 @@ function BranchUsersPage() {
           </div>
           <div className="form-group">
             <label htmlFor="role">Role</label>
-            <input id="role" name="role" value={formData.role} onChange={handleFormChange} required />
-          </div>
-          <div className="form-group">
-            <label htmlFor="assignedBranch">Assigned Branch</label>
-            <select
-              id="assignedBranch"
-              name="assignedBranch"
-              value={formData.assignedBranch}
-              onChange={handleFormChange}
-            >
-              {branchOptions.map((branchName) => (
-                <option key={branchName} value={branchName}>
-                  {branchName}
+            <select id="role" name="role" value={formData.role} onChange={handleFormChange} required>
+              {allowedRoles.map((role) => (
+                <option key={role} value={role}>
+                  {role}
                 </option>
               ))}
             </select>
           </div>
+          <SelectDropdown
+            id="assignedBranch"
+            name="assignedBranch"
+            label="Assigned Branch"
+            value={formData.assignedBranch}
+            onChange={handleFormChange}
+            options={branchOptions}
+            disabled={formData.role === 'Superadmin (Main Branch)'}
+            required
+            enableSearch
+            searchPlaceholder="Search branch"
+          />
           <Button type="submit">Save User</Button>
         </form>
       </Modal>

@@ -1,40 +1,79 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import Button from '../../shared/components/Button'
 import Modal from '../../shared/components/Modal'
 import Table from '../../shared/components/Table'
 import EmployeeForm from '../components/EmployeeForm'
 import { employeeColumns } from '../utils/employeeColumns'
 import { useBranchContext } from '../../shared/store/branchContext'
-import { employeeRows } from '../services/employeesMockService'
+import { branchesService, employeesService } from '../services/employeesService'
 
 const toEmployeeRecord = (employee) => {
-  const [firstName = '', ...lastParts] = employee.name.split(' ')
-
   return {
-    id: employee.id,
-    firstName,
-    lastName: lastParts.join(' '),
-    name: employee.name,
-    role: employee.role,
-    assignedBranch: employee.assignedBranch,
-    status: employee.status,
-    address: '',
-    contactNumber: '',
-    email: '',
+    id: employee._id,
+    firstName: employee.firstName || '',
+    lastName: employee.lastName || '',
+    role: employee.role || employee.positionId?.name || 'N/A',
+    assignedBranch: employee.assignedBranchId?.branchName || 'N/A',
+    assignedBranchId: employee.assignedBranchId?._id || '',
+    status: employee.status || 'active',
+    address: employee.address || '',
+    contactNumber: employee.contactNumber || '',
+    email: employee.email || '',
   }
+}
+
+const toStatusLabel = (status) => {
+  if (!status) {
+    return 'N/A'
+  }
+
+  return `${status.charAt(0).toUpperCase()}${status.slice(1)}`
 }
 
 function EmployeesPage() {
   const [isModalOpen, setIsModalOpen] = useState(false)
-  const [employees, setEmployees] = useState(() => employeeRows.map(toEmployeeRecord))
+  const [employees, setEmployees] = useState([])
+  const [branches, setBranches] = useState([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState('')
+  const [isSaving, setIsSaving] = useState(false)
   const [editingEmployee, setEditingEmployee] = useState(null)
-  const { activeBranch, isReadOnly } = useBranchContext()
+  const { activeBranch, isMainBranch, isReadOnly } = useBranchContext()
+
+  const loadEmployees = async () => {
+    try {
+      setLoading(true)
+      setError('')
+
+      const [employeeData, branchData] = await Promise.all([
+        employeesService.getAll(),
+        branchesService.getAll(),
+      ])
+
+      setEmployees(employeeData.map(toEmployeeRecord))
+      setBranches(
+        branchData.map((branch) => ({
+          id: branch._id,
+          name: branch.branchName,
+        })),
+      )
+    } catch (err) {
+      setError(err.message || 'Failed to load employees')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  useEffect(() => {
+    loadEmployees()
+  }, [])
 
   const tableRows = useMemo(
     () =>
       employees.map((employee) => ({
         ...employee,
         name: `${employee.firstName} ${employee.lastName}`.trim(),
+        status: toStatusLabel(employee.status),
       })),
     [employees],
   )
@@ -49,30 +88,24 @@ function EmployeesPage() {
     setIsModalOpen(true)
   }
 
-  const handleSaveEmployee = (payload) => {
-    if (editingEmployee) {
-      setEmployees((prev) =>
-        prev.map((employee) =>
-          employee.id === editingEmployee.id
-            ? {
-                ...employee,
-                ...payload,
-              }
-            : employee,
-        ),
-      )
-    } else {
-      const nextId = employees.length ? Math.max(...employees.map((employee) => employee.id)) + 1 : 1
-      setEmployees((prev) => [
-        ...prev,
-        {
-          id: nextId,
-          ...payload,
-        },
-      ])
-    }
+  const handleSaveEmployee = async (payload) => {
+    try {
+      setIsSaving(true)
+      setError('')
 
-    handleCloseModal()
+      if (editingEmployee) {
+        await employeesService.update(editingEmployee.id, payload)
+      } else {
+        await employeesService.create(payload)
+      }
+
+      await loadEmployees()
+      handleCloseModal()
+    } catch (err) {
+      setError(err.message || 'Failed to save employee')
+    } finally {
+      setIsSaving(false)
+    }
   }
 
   const handleCloseModal = () => {
@@ -81,7 +114,7 @@ function EmployeesPage() {
   }
 
   const filteredEmployees = tableRows.filter((employee) => {
-    if (activeBranch === 'Tagum City') {
+    if (isMainBranch) {
       return true
     }
 
@@ -115,9 +148,11 @@ function EmployeesPage() {
             Add Employee
           </Button>
         </div>
+        {loading ? <p>Loading employees...</p> : null}
+        {error ? <p style={{ color: 'red' }}>{error}</p> : null}
         <Table
           columns={employeeColumns}
-          rows={filteredEmployees}
+          rows={loading ? [] : filteredEmployees}
           renderActions={(row) => (
             <div className="action-row">
               <Button
@@ -141,6 +176,8 @@ function EmployeesPage() {
           onClose={handleCloseModal}
           onSave={handleSaveEmployee}
           initialData={editingEmployee}
+          branchOptions={branches}
+          isSaving={isSaving}
         />
       </Modal>
     </section>
