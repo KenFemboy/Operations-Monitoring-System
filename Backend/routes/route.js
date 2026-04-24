@@ -3,7 +3,7 @@ import mongoose from "mongoose";
 import employeeRoutes from "./employeeRoutes.js";
 import departmentRoutes from "./departmentRoutes.js";
 import positionRoutes from "./positionRoutes.js";
-
+import branchRoutes from "./branchRoutes.js";
 import payrollRoutes from "./payrollRoutes.js";
 
 
@@ -30,5 +30,6 @@ router.get("/health", (_req, res) => {
 router.use("/employees", employeeRoutes);
 router.use("/departments", departmentRoutes);
 router.use("/positions", positionRoutes);
+router.use("/branches", branchRoutes);
 
 export default router;
