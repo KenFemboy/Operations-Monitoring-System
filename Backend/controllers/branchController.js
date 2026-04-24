@@ -3,7 +3,7 @@ import Branch from '../models/Branch.js';
 // Create a new branch
 export const createBranch = async (req, res) => {
   try {
-    const { branchName, location, description } = req.body;
+    const { branchName, location, description, address } = req.body;
 
     if (!branchName?.trim()) {
       return res.status(400).json({
@@ -14,6 +14,8 @@ export const createBranch = async (req, res) => {
     const branch = await Branch.create({
       branchName: branchName.trim(),
       location: location?.trim(),
+      description: description?.trim(),
+      address: address?.trim(),
       description: description?.trim(),
     });
 

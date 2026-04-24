@@ -11,6 +11,10 @@ const branchSchema = new mongoose.Schema({
     type: String,
     trim: true
     },
+    address: {
+    type: String,
+    trim: true
+    },
     description: String,
 }, { timestamps: true });
 
