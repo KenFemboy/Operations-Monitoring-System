@@ -15,7 +15,8 @@ const departmentSchema = new mongoose.Schema({
   },
   location: {
     type: String,
-    trim: true
+    trim: true,
+    
   },
   description: String,
 

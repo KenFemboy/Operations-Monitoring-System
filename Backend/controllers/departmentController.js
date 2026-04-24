@@ -2,7 +2,7 @@ import Department from "../models/Department.js";
 
 export const createDepartment = async (req, res) => {
   try {
-    const { name, code, description, status } = req.body;
+    const { name, branch, location, description, status } = req.body;
 
     if (!name?.trim()) {
       return res.status(400).json({
@@ -13,7 +13,8 @@ export const createDepartment = async (req, res) => {
 
     const department = await Department.create({
       name: name.trim(),
-      code: code?.trim(),
+      branch: branch?.trim(),
+      location: location?.trim(),
       description: description?.trim(),
       status,
     });

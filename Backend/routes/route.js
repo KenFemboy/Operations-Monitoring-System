@@ -4,6 +4,9 @@ import employeeRoutes from "./employeeRoutes.js";
 import departmentRoutes from "./departmentRoutes.js";
 import positionRoutes from "./positionRoutes.js";
 
+import payrollRoutes from "./payrollRoutes.js";
+
+
 const router = express.Router();
 
 router.get("/health", (_req, res) => {
