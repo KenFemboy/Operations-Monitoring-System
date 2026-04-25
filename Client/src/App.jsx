@@ -18,7 +18,7 @@ import SuperAdminDashboard from "./adminSuper/SuperAdminDashboard";
 const getHomeRouteByRole = (user) => {
   if (user?.role === "super_admin") return "/superadmin-dashboard";
   if (user?.role === "admin") return "/admin-dashboard";
-  return "/"; // safe fallback
+  return "/login"; // safe fallback
 };
 
 // Protect private routes
