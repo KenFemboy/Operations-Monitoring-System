@@ -11,23 +11,32 @@ import { AuthProvider, AuthContext } from "./auth/context/AuthContext";
 
 
 import Login from "./auth/pages/Login";
-import Dashboard from "./pages/Dashboard";
 import AdminDashboard from "./pages/AdminDashboard";
-import SuperAdminDashboard from "./pages/SuperAdminDashboard";
+import DashboardLayout from "./layouts/DashboardLayout";
+import SuperadminDashboardPage from "./pages/superadmin/SuperadminDashboardPage";
+import SuperadminBranchesPage from "./pages/superadmin/SuperadminBranchesPage";
+import SuperadminEmployeesPage from "./pages/superadmin/SuperadminEmployeesPage";
+
+const isSuperadminRole = (role) =>
+  role === "super_admin" || role === "superadmin";
 
 const getHomeRouteByRole = (user) => {
-  if (user?.role === "super_admin") return "/superadmin-dashboard";
+  if (isSuperadminRole(user?.role)) return "/superadmin/dashboard";
   if (user?.role === "admin") return "/admin-dashboard";
   return "/login"; // safe fallback
 };
 
 // Protect private routes
-function ProtectedRoute({ children }) {
-  const { loading, isAuthenticated } = useContext(AuthContext);
+function ProtectedRoute({ children, allowedRoles }) {
+  const { loading, isAuthenticated, user } = useContext(AuthContext);
 
   if (loading) return <p style={{ padding: 24 }}>Checking session...</p>;
 
   if (!isAuthenticated) return <Navigate to="/login" replace />;
+
+  if (allowedRoles && !allowedRoles.includes(user?.role)) {
+    return <Navigate to={getHomeRouteByRole(user)} replace />;
+  }
 
   return children;
 }
@@ -81,12 +90,23 @@ export default function App() {
 
           {/* Super Admin */}
           <Route
-            path="/superadmin-dashboard"
+            path="/superadmin"
             element={
-              <ProtectedRoute>
-                <SuperAdminDashboard />
+              <ProtectedRoute allowedRoles={["super_admin", "superadmin"]}>
+                <DashboardLayout />
               </ProtectedRoute>
             }
+          >
+            <Route index element={<Navigate to="dashboard" replace />} />
+            <Route path="dashboard" element={<SuperadminDashboardPage />} />
+            <Route path="branches" element={<SuperadminBranchesPage />} />
+            <Route path="employees" element={<SuperadminEmployeesPage />} />
+          </Route>
+
+          {/* Backward compatible entry */}
+          <Route
+            path="/superadmin-dashboard"
+            element={<Navigate to="/superadmin/dashboard" replace />}
           />
 
           {/* Catch all */}

@@ -4,7 +4,11 @@ import { AuthContext } from "../context/AuthContext";
 import "./Login.css";
 
 const getHomeRouteByRole = (user) =>
-  user?.role === "admin" ? "/admin-dashboard" : "/dashboard";
+  user?.role === "admin"
+    ? "/admin-dashboard"
+    : user?.role === "super_admin" || user?.role === "superadmin"
+      ? "/superadmin/dashboard"
+      : "/login";
 
 export default function Login() {
   const { login } = useContext(AuthContext);
