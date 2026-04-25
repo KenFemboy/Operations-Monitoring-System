@@ -6,13 +6,13 @@ import { useBranchContext } from '../../shared/store/branchContext'
 
 function NtePage() {
   const rows = useNte()
-  const { activeBranch, isReadOnly } = useBranchContext()
+  const { activeBranch, displayBranchName, isReadOnly } = useBranchContext()
 
   return (
     <section>
       <header className="page-header">
         <h1>Notice to Explain</h1>
-        <p>Issue and monitor NTE records for {activeBranch}</p>
+        <p>Issue and monitor NTE records for {displayBranchName || activeBranch}</p>
         {isReadOnly ? <p className="readonly-label">View Only Mode</p> : null}
       </header>
       <section className="table-card">

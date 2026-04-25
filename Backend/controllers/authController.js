@@ -1,5 +1,6 @@
 // controllers/authController.js
 import User from "../models/User.js";
+import Branch from "../models/Branch.js";
 import bcrypt from "bcryptjs";
 import { generateToken } from "../utils/generateToken.js";
 
@@ -11,6 +12,7 @@ const sanitizeUser = (userDoc) => {
     name: userDoc.name,
     email: userDoc.email,
     role: userDoc.role,
+    branch: userDoc.branch || userDoc.branchId?.branchName || null,
     branchId: userDoc.branchId,
   };
 };
@@ -59,9 +61,14 @@ export const createUser = async (req, res) => {
 
 export const login = async (req, res) => {
   try {
-    const { email, password } = req.body;
+    const { email, username, password } = req.body;
+    const loginIdentifier = email || username;
 
-    const user = await User.findOne({ email }).populate("branchId");
+    if (!loginIdentifier || !password) {
+      return res.status(400).json({ message: "Email/username and password are required" });
+    }
+
+    const user = await User.findOne({ email: loginIdentifier }).populate("branchId");
 
     if (!user) {
       return res.status(404).json({ message: "User not found" });
@@ -142,6 +149,62 @@ export const tempSuperAdminLogin = async (req, res) => {
     });
   } catch (err) {
     res.status(500).json({ message: err.message });
+  }
+};
+
+export const createAdminUser = async (req, res) => {
+  try {
+    const { name, email, password, branch, branchName, superadminPassword } = req.body;
+    const selectedBranchName = branchName || branch;
+
+    if (!name || !email || !password || !selectedBranchName || !superadminPassword) {
+      return res.status(400).json({
+        message: "Name, email, password, branchName, and superadmin password are required",
+      });
+    }
+
+    const assignedBranch = await Branch.findOne({ branchName: selectedBranchName });
+    if (!assignedBranch) {
+      return res.status(400).json({ message: "Invalid branch assignment" });
+    }
+
+    const superAdmin = await User.findById(req.user.id);
+
+    if (!superAdmin || superAdmin.role !== "super_admin") {
+      return res.status(403).json({ message: "Only superadmin can create users" });
+    }
+
+    const isSuperAdminPasswordValid = await bcrypt.compare(
+      superadminPassword,
+      superAdmin.password,
+    );
+
+    if (!isSuperAdminPasswordValid) {
+      return res.status(401).json({ message: "Invalid superadmin password" });
+    }
+
+    const existingUser = await User.findOne({ email });
+
+    if (existingUser) {
+      return res.status(409).json({ message: "Email already exists" });
+    }
+
+    const hashedPassword = await bcrypt.hash(password, 10);
+    const adminUser = await User.create({
+      name,
+      email,
+      password: hashedPassword,
+      role: "admin",
+      branch: assignedBranch.branchName,
+      branchId: null,
+    });
+
+    return res.status(201).json({
+      message: "Admin user created successfully",
+      user: sanitizeUser(adminUser),
+    });
+  } catch (error) {
+    return res.status(500).json({ message: error.message });
   }
 };
 

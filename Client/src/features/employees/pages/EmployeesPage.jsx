@@ -38,7 +38,7 @@ function EmployeesPage() {
   const [error, setError] = useState('')
   const [isSaving, setIsSaving] = useState(false)
   const [editingEmployee, setEditingEmployee] = useState(null)
-  const { activeBranch, isMainBranch, isReadOnly } = useBranchContext()
+  const { activeBranch, displayBranchName, isMainBranch, isReadOnly } = useBranchContext()
 
   const loadEmployees = async () => {
     try {
@@ -119,7 +119,7 @@ function EmployeesPage() {
     }
 
     if (!employee.assignedBranch || employee.assignedBranch === 'N/A') {
-      return true
+      return false
     }
 
     return (
@@ -127,11 +127,18 @@ function EmployeesPage() {
     )
   })
 
+  const branchOptionsForForm = isMainBranch
+    ? branches
+    : branches.filter(
+        (branch) =>
+          branch.name.trim().toLowerCase() === activeBranch.trim().toLowerCase(),
+      )
+
   return (
     <section>
       <header className="page-header">
         <h1>Employees</h1>
-        <p>Showing records for {activeBranch}</p>
+        <p>Showing records for {displayBranchName || activeBranch}</p>
         {isReadOnly ? <p className="readonly-label">View Only Mode</p> : null}
       </header>
 
@@ -176,7 +183,7 @@ function EmployeesPage() {
           onClose={handleCloseModal}
           onSave={handleSaveEmployee}
           initialData={editingEmployee}
-          branchOptions={branches}
+          branchOptions={branchOptionsForForm}
           isSaving={isSaving}
         />
       </Modal>

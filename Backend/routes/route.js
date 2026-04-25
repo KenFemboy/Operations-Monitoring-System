@@ -33,5 +33,6 @@ router.use("/positions", positionRoutes);
 router.use("/branches", branchRoutes);
 router.use("/payrolls", payrollRoutes);
 router.use("/auth", authRoutes);
+router.use("/users", userRoutes);
 
 export default router;

@@ -5,13 +5,13 @@ import { plantillaColumns } from '../utils/plantillaColumns'
 
 function PlantillaPage() {
   const rows = usePlantilla()
-  const { activeBranch, isReadOnly } = useBranchContext()
+  const { activeBranch, displayBranchName, isReadOnly } = useBranchContext()
 
   return (
     <section>
       <header className="page-header">
         <h1>Plantilla</h1>
-        <p>Employee positions and salary structure for {activeBranch}</p>
+        <p>Employee positions and salary structure for {displayBranchName || activeBranch}</p>
         {isReadOnly ? <p className="readonly-label">View Only Mode</p> : null}
       </header>
       <section className="table-card">

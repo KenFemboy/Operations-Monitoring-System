@@ -6,13 +6,13 @@ import { useBranchContext } from '../../shared/store/branchContext'
 
 function LeavesPage() {
   const rows = useLeaves()
-  const { activeBranch, isReadOnly } = useBranchContext()
+  const { activeBranch, displayBranchName, isReadOnly } = useBranchContext()
 
   return (
     <section>
       <header className="page-header">
         <h1>Leaves</h1>
-        <p>Review SIL, Vacation Leave, and Sick Leave requests for {activeBranch}</p>
+        <p>Review SIL, Vacation Leave, and Sick Leave requests for {displayBranchName || activeBranch}</p>
         {isReadOnly ? <p className="readonly-label">View Only Mode</p> : null}
       </header>
       <section className="table-card">

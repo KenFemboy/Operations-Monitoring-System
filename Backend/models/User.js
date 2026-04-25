@@ -15,11 +15,19 @@ const userSchema = new mongoose.Schema(
       default: "sales",
     },
 
+    branch: {
+      type: String,
+      trim: true,
+      required: function () {
+        return this.role === "admin";
+      },
+    },
+
     branchId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "Branch",
       required: function () {
-        return this.role !== "super_admin";
+        return this.role !== "super_admin" && !this.branch;
       },
     },
   },

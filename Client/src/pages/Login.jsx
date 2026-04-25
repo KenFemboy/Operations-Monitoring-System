@@ -1,24 +1,31 @@
-import { useContext, useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { useContext, useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { AuthContext } from "../context/AuthContext";
 import "./Login.css";
 
 const getHomeRouteByRole = (user) =>
-  user?.role === "super_admin" ? "/super-admin-dashboard" : "/dashboard";
+  user?.role === "admin" ? "/admin-dashboard" : "/dashboard";
 
 export default function Login() {
-  const { login, loginAsSuperAdmin } = useContext(AuthContext);
+  const { login } = useContext(AuthContext);
   const navigate = useNavigate();
   const [form, setForm] = useState({
-    email: "",
+    identifier: "",
     password: "",
   });
 
   const [loading, setLoading] = useState(false);
-  const [superAdminLoading, setSuperAdminLoading] = useState(false);
-  const [superAdminPassword, setSuperAdminPassword] = useState("");
   const [error, setError] = useState("");
   const [showPassword, setShowPassword] = useState(false);
+
+  useEffect(() => {
+    setForm({
+      identifier: "",
+      password: "",
+    });
+    setError("");
+    setShowPassword(false);
+  }, []);
 
   const handleChange = (e) =>
     setForm({ ...form, [e.target.name]: e.target.value });
@@ -26,8 +33,8 @@ export default function Login() {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    if (!form.email || !form.password) {
-      setError("Please enter your email and password.");
+    if (!form.identifier || !form.password) {
+      setError("Please enter your email/username and password.");
       return;
     }
 
@@ -35,35 +42,12 @@ export default function Login() {
     setError("");
 
     try {
-      const loggedInUser = await login(form.email, form.password);
+      const loggedInUser = await login(form.identifier, form.password);
       navigate(getHomeRouteByRole(loggedInUser), { replace: true });
     } catch (err) {
       setError(err.response?.data?.message || err.message || "Login failed");
     } finally {
       setLoading(false);
-    }
-  };
-
-  const handleSuperAdminLogin = async () => {
-    if (!superAdminPassword) {
-      setError("Please enter the super admin password.");
-      return;
-    }
-
-    setSuperAdminLoading(true);
-    setError("");
-
-    try {
-      const loggedInUser = await loginAsSuperAdmin(superAdminPassword);
-      navigate(getHomeRouteByRole(loggedInUser), { replace: true });
-    } catch (err) {
-      setError(
-        err.response?.data?.message ||
-          err.message ||
-          "Super admin login failed"
-      );
-    } finally {
-      setSuperAdminLoading(false);
     }
   };
 
@@ -74,16 +58,16 @@ export default function Login() {
         <h1>Ally&apos;s Management System</h1>
         <p>Sign in to continue to your operations dashboard.</p>
 
-        <form onSubmit={handleSubmit} className="login-form">
-          <label htmlFor="email">Email / Username</label>
+        <form onSubmit={handleSubmit} className="login-form" autoComplete="off">
+          <label htmlFor="identifier">Username / Email</label>
           <input
-            id="email"
-            name="email"
+            id="identifier"
+            name="identifier"
             type="text"
-            placeholder="you@example.com"
+            placeholder="admin@ally.com"
             onChange={handleChange}
-            value={form.email}
-            autoComplete="username"
+            value={form.identifier}
+            autoComplete="off"
           />
 
           <label htmlFor="password">Password</label>
@@ -95,7 +79,7 @@ export default function Login() {
               placeholder="Enter your password"
               onChange={handleChange}
               value={form.password}
-              autoComplete="current-password"
+              autoComplete="off"
             />
             <button
               type="button"
@@ -112,34 +96,6 @@ export default function Login() {
           <button className="login-submit" type="submit" disabled={loading}>
             {loading ? "Signing in..." : "Login"}
           </button>
-
-          <label htmlFor="superAdminPassword">Super Admin Password</label>
-          <input
-            id="superAdminPassword"
-            name="superAdminPassword"
-            type="password"
-            placeholder="Enter super admin password"
-            value={superAdminPassword}
-            onChange={(e) => setSuperAdminPassword(e.target.value)}
-            autoComplete="off"
-          />
-
-          <button
-            className="super-admin-submit"
-            type="button"
-            disabled={superAdminLoading}
-            onClick={handleSuperAdminLogin}
-          >
-            {superAdminLoading ? "Signing in super admin..." : "Login as Super Admin"}
-          </button>
-
-          <p className="temp-note">
-            Temporary super admin password: <strong>12345678</strong>
-          </p>
-
-          <p className="create-account-text">
-            Need an account? <Link to="/register">Create account</Link>
-          </p>
         </form>
       </div>
     </div>

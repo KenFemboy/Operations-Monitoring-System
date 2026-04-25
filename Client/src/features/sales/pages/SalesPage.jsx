@@ -11,13 +11,13 @@ function SalesPage() {
     totalCustomers,
     estimatedRevenue,
   } = useSalesSummary()
-  const { activeBranch, isReadOnly } = useBranchContext()
+  const { activeBranch, displayBranchName, isReadOnly } = useBranchContext()
 
   return (
     <section>
       <header className="page-header">
         <h1>Sales</h1>
-        <p>Buffet customer count and estimated revenue overview for {activeBranch}</p>
+        <p>Buffet customer count and estimated revenue overview for {displayBranchName || activeBranch}</p>
         {isReadOnly ? <p className="readonly-label">View Only Mode</p> : null}
       </header>
       <SalesCards
