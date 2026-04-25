@@ -1,5 +1,5 @@
 import { useContext } from "react";
-import { AuthContext } from "../context/AuthContext";
+import { AuthContext } from "../auth/context/AuthContext";
 
 export default function Dashboard() {
   const { user, logout } = useContext(AuthContext);
@@ -7,18 +7,16 @@ export default function Dashboard() {
   if (!user) return <p>Not logged in</p>;
 
   return (
-    <div>
-      <h2>Welcome {user.name}</h2>
+     <>
+    <h1>Dashboard</h1>
 
-      <p>Role: {user.role}</p>
+    {user.role === "superadmin" && (
+      <SuperAdminPanel />
+    )}
 
-      <p>
-        Branch: {user.branchId
-          ? `${user.branchId.branchName} - ${user.branchId.location}`
-          : "ALL"}
-      </p>
-
-      <button onClick={logout}>Logout</button>
-    </div>
+    {user.role === "admin" && (
+      <AdminPanel />
+    )}
+  </>
   );
 }

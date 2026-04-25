@@ -5,15 +5,15 @@ import {
   Route,
   Routes,
 } from "react-router-dom";
-import { AuthProvider, AuthContext } from "./context/AuthContext";
+import { AuthProvider, AuthContext } from "./auth/context/AuthContext";
 
 
 
 
-import Login from "./pages/Login";
+import Login from "./auth/pages/Login";
 import Dashboard from "./pages/Dashboard";
-import AdminDashboard from "./admin/AdminDashboard";
-import SuperAdminDashboard from "./adminSuper/SuperAdminDashboard";
+import AdminDashboard from "./pages/AdminDashboard";
+import SuperAdminDashboard from "./pages/SuperAdminDashboard";
 
 const getHomeRouteByRole = (user) => {
   if (user?.role === "super_admin") return "/superadmin-dashboard";

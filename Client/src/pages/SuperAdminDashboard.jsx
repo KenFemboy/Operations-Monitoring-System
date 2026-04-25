@@ -1,5 +1,5 @@
 import { useContext } from "react";
-import { AuthContext } from "../context/AuthContext";
+import { AuthContext } from "../auth/context/AuthContext";
 
 export default function SuperAdminDashboard() {
   const { user, logout } = useContext(AuthContext);
