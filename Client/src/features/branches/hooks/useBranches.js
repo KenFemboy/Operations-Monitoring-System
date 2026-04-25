@@ -47,12 +47,4 @@ function useBranches() {
   return { branches, loading, error, fetchAll, searchByLocation, createBranch }
 }
 
-export const branchesService = {
-  getAll: async () => {
-    const result = await fetchApi('/api/branches/get-all', undefined, 'Failed to fetch branches')
-    return result?.data || []
-  },
-}
-
-
 export default useBranches
