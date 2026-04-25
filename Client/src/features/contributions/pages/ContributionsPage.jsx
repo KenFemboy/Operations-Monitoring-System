@@ -5,13 +5,13 @@ import { useBranchContext } from '../../shared/store/branchContext'
 
 function ContributionsPage() {
   const rows = useContributions()
-  const { activeBranch, isReadOnly } = useBranchContext()
+  const { activeBranch, displayBranchName, isReadOnly } = useBranchContext()
 
   return (
     <section>
       <header className="page-header">
         <h1>Contributions</h1>
-        <p>SSS, Pag-IBIG, and PhilHealth breakdown for {activeBranch}</p>
+        <p>SSS, Pag-IBIG, and PhilHealth breakdown for {displayBranchName || activeBranch}</p>
         {isReadOnly ? <p className="readonly-label">View Only Mode</p> : null}
       </header>
       <section className="table-card">

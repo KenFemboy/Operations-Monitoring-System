@@ -7,7 +7,7 @@ import { useBranchContext } from '../../shared/store/branchContext'
 
 function AttendancePage() {
   const rows = useAttendance()
-  const { activeBranch, isReadOnly } = useBranchContext()
+  const { activeBranch, displayBranchName, isReadOnly } = useBranchContext()
   const [department, setDepartment] = useState('All')
   const [shift, setShift] = useState('All')
   const [selectedDate, setSelectedDate] = useState('2026-04-19')
@@ -71,7 +71,7 @@ function AttendancePage() {
     <section>
       <header className="page-header">
         <h1>Attendance</h1>
-        <p>Daily and monthly attendance monitoring for {activeBranch}</p>
+        <p>Daily and monthly attendance monitoring for {displayBranchName || activeBranch}</p>
         {isReadOnly ? <p className="readonly-label">View Only Mode</p> : null}
       </header>
 

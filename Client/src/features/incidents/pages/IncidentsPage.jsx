@@ -6,13 +6,13 @@ import { useBranchContext } from '../../shared/store/branchContext'
 
 function IncidentsPage() {
   const rows = useIncidents()
-  const { activeBranch, isReadOnly } = useBranchContext()
+  const { activeBranch, displayBranchName, isReadOnly } = useBranchContext()
 
   return (
     <section>
       <header className="page-header">
         <h1>Incident Reports</h1>
-        <p>Track and review employee incident reports (IR) for {activeBranch}</p>
+        <p>Track and review employee incident reports (IR) for {displayBranchName || activeBranch}</p>
         {isReadOnly ? <p className="readonly-label">View Only Mode</p> : null}
       </header>
       <section className="table-card">

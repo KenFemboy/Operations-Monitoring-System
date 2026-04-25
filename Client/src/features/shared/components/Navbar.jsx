@@ -2,12 +2,13 @@ import { useContext, useState } from 'react'
 import { AuthContext } from '../../../context/AuthContext'
 import { useBranchContext } from '../store/branchContext'
 
-function Navbar({ onToggleSidebar }) {
+function Navbar({ onToggleSidebar, isAdmin = false }) {
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false)
   const { logout, user } = useContext(AuthContext)
   const {
     branches,
     activeBranch,
+    displayBranchName,
     activeBranchMeta,
     isReadOnly,
     setActiveBranch,
@@ -44,29 +45,37 @@ function Navbar({ onToggleSidebar }) {
           </button>
           <div>
             <h1 className="navbar-title">Ally's</h1>
-            <p className="navbar-subtitle">Superadmin Command Center</p>
+            <p className="navbar-subtitle">
+              {isAdmin ? 'Admin Operations Interface' : "Ally's Management System"}
+            </p>
           </div>
         </div>
         <div className="navbar-right">
-          <label className="branch-switcher" htmlFor="activeBranch">
-            <span>
-              Branch: {activeBranch}
-              {activeBranchMeta.type === 'Main Branch' ? ` (${activeBranchMeta.type})` : ''}
-            </span>
-            <select
-              id="activeBranch"
-              value={activeBranch}
-              onChange={(event) => setActiveBranch(event.target.value)}
-            >
-              {branches.map((branch) => (
-                <option key={branch.id} value={branch.name}>
-                  {branch.name}
-                </option>
-              ))}
-            </select>
-          </label>
+          {isAdmin ? (
+            <p className="branch-switcher">
+              <span>Branch: {displayBranchName || activeBranch}</span>
+            </p>
+          ) : (
+            <label className="branch-switcher" htmlFor="activeBranch">
+              <span>
+                Branch: {activeBranch}
+                {activeBranchMeta.type === 'Main Branch' ? ` (${activeBranchMeta.type})` : ''}
+              </span>
+              <select
+                id="activeBranch"
+                value={activeBranch}
+                onChange={(event) => setActiveBranch(event.target.value)}
+              >
+                {branches.map((branch) => (
+                  <option key={branch.id} value={branch.name}>
+                    {branch.name}
+                  </option>
+                ))}
+              </select>
+            </label>
+          )}
           <p className={`access-indicator ${isReadOnly ? 'readonly' : 'full-access'}`}>
-            {isReadOnly ? 'View Only Mode' : 'Full Access'}
+            {isAdmin ? 'Role: Admin' : isReadOnly ? 'View Only Mode' : 'Full Access'}
           </p>
           <div className="navbar-actions">
             <strong>{currentDate}</strong>

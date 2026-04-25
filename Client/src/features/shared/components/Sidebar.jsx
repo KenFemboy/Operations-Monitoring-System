@@ -2,15 +2,15 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import { NavLink, useLocation } from 'react-router-dom'
 import { navigationItems } from '../utils/navigation'
 
-function Sidebar({ isOpen, onNavigate }) {
+function Sidebar({ isOpen, onNavigate, title = "Ally's Management System", items = navigationItems }) {
   const location = useLocation()
   const [isBranchesOpen, setIsBranchesOpen] = useState(false)
   const submenuInnerRef = useRef(null)
   const [submenuHeight, setSubmenuHeight] = useState(0)
 
   const isBranchesRoute = useMemo(
-    () => location.pathname.startsWith('/branches'),
-    [location.pathname],
+    () => items.some((item) => item.children?.some((child) => location.pathname.startsWith(child.path))),
+    [items, location.pathname],
   )
 
   useEffect(() => {
@@ -30,9 +30,9 @@ function Sidebar({ isOpen, onNavigate }) {
 
   return (
     <aside className={`sidebar ${isOpen ? 'is-open' : ''}`}>
-      <h2>Ally's SA</h2>
+      <h2>{title}</h2>
       <nav className="nav-list">
-        {navigationItems.map((item) => {
+        {items.map((item) => {
           if (!item.children) {
             return (
               <NavLink

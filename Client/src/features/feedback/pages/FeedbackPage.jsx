@@ -5,7 +5,7 @@ import { useMemo } from 'react'
 
 function FeedbackPage() {
   const rows = useFeedback()
-  const { activeBranch } = useBranchContext()
+  const { activeBranch, displayBranchName } = useBranchContext()
   const overallRating = useMemo(() => {
     if (!rows.length) return 0
 
@@ -17,7 +17,7 @@ function FeedbackPage() {
     <section>
       <header className="page-header">
         <h1>Feedback</h1>
-        <p>Review customer sentiment for {activeBranch}</p>
+        <p>Review customer sentiment for {displayBranchName || activeBranch}</p>
       </header>
       <section className="card" style={{ marginBottom: '1rem' }}>
         <h3>Overall Rating</h3>

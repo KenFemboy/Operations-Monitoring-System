@@ -10,13 +10,13 @@ import { useBranchContext } from '../../shared/store/branchContext'
 function InventoryPage() {
   const [isOpen, setIsOpen] = useState(false)
   const rows = useInventory()
-  const { activeBranch, isReadOnly } = useBranchContext()
+  const { activeBranch, displayBranchName, isReadOnly } = useBranchContext()
 
   return (
     <section>
       <header className="page-header">
         <h1>Inventory</h1>
-        <p>Track ingredient and supply levels for {activeBranch}</p>
+        <p>Track ingredient and supply levels for {displayBranchName || activeBranch}</p>
         {isReadOnly ? <p className="readonly-label">View Only Mode</p> : null}
       </header>
       <section className="table-card">

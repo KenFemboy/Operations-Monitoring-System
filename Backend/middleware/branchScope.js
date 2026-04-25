@@ -4,6 +4,8 @@ export const branchScope = (req, res, next) => {
 
   if (user.role === "super_admin") {
     req.branchFilter = {}; // no restriction
+  } else if (user.branch) {
+    req.branchFilter = { branch: user.branch };
   } else {
     req.branchFilter = { branchId: user.branchId };
   }
