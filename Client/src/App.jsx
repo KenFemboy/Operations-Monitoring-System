@@ -4,20 +4,22 @@ import Login from "./pages/Login";
 import { AuthProvider, AuthContext } from "./context/AuthContext";
 import Navbar from "./features/shared/components/Navbar";
 import Sidebar from "./features/shared/components/Sidebar";
-import DashboardPage from "./features/dashboard/pages/DashboardPage";
-import AttendancePage from "./features/attendance/pages/AttendancePage";
-import EmployeesPage from "./features/employees/pages/EmployeesPage";
-import BranchesPage from "./features/branches/pages/BranchesPage";
-import InventoryPage from "./features/inventory/pages/InventoryPage";
-import SalesPage from "./features/sales/pages/SalesPage";
-import FeedbackPage from "./features/feedback/pages/FeedbackPage";
-import IncidentsPage from "./features/incidents/pages/IncidentsPage";
-import NtePage from "./features/nte/pages/NtePage";
-import PlantillaPage from "./features/plantilla/pages/PlantillaPage";
-import ContributionsPage from "./features/contributions/pages/ContributionsPage";
-import LeavesPage from "./features/leaves/pages/LeavesPage";
-import ReportsPage from "./features/reports/pages/ReportsPage";
-import BranchUsersPage from "./features/branches/pages/BranchUsersPage";
+import {
+  DashboardPage,
+  AttendancePage,
+  EmployeesPage,
+  BranchesPage,
+  InventoryPage,
+  SalesPage,
+  FeedbackPage,
+  IncidentsPage,
+  NtePage,
+  PlantillaPage,
+  ContributionsPage,
+  LeavesPage,
+  ReportsPage,
+  BranchUsersPage,
+} from "./features/superadmin/pages";
 import { BranchProvider, useBranchContext } from "./features/shared/store/branchContext";
 import { adminNavigationItems } from "./features/shared/utils/adminNavigation";
 import AdminDashboardPage from "./features/admin/pages/AdminDashboardPage";

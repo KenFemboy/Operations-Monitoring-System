@@ -1,0 +1,14 @@
+export { default as DashboardPage } from "./DashboardPage";
+export { default as AttendancePage } from "./AttendancePage";
+export { default as EmployeesPage } from "./EmployeesPage";
+export { default as BranchesPage } from "./BranchesPage";
+export { default as InventoryPage } from "./InventoryPage";
+export { default as SalesPage } from "./SalesPage";
+export { default as FeedbackPage } from "./FeedbackPage";
+export { default as IncidentsPage } from "./IncidentsPage";
+export { default as NtePage } from "./NtePage";
+export { default as PlantillaPage } from "./PlantillaPage";
+export { default as ContributionsPage } from "./ContributionsPage";
+export { default as LeavesPage } from "./LeavesPage";
+export { default as ReportsPage } from "./ReportsPage";
+export { default as BranchUsersPage } from "./BranchUsersPage";
