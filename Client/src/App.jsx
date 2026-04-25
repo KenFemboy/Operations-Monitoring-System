@@ -1,60 +1,42 @@
-import { useContext, useEffect, useState } from "react";
-import { BrowserRouter, Navigate, Route, Routes, useLocation } from "react-router-dom";
-import Login from "./pages/Login";
+import { useContext } from "react";
+import {
+  BrowserRouter,
+  Navigate,
+  Route,
+  Routes,
+} from "react-router-dom";
 import { AuthProvider, AuthContext } from "./context/AuthContext";
-import Navbar from "./features/shared/components/Navbar";
-import Sidebar from "./features/shared/components/Sidebar";
-import DashboardPage from "./features/dashboard/pages/DashboardPage";
-import AttendancePage from "./features/attendance/pages/AttendancePage";
-import EmployeesPage from "./features/employees/pages/EmployeesPage";
-import BranchesPage from "./features/branches/pages/BranchesPage";
-import InventoryPage from "./features/inventory/pages/InventoryPage";
-import SalesPage from "./features/sales/pages/SalesPage";
-import FeedbackPage from "./features/feedback/pages/FeedbackPage";
-import IncidentsPage from "./features/incidents/pages/IncidentsPage";
-import NtePage from "./features/nte/pages/NtePage";
-import PlantillaPage from "./features/plantilla/pages/PlantillaPage";
-import ContributionsPage from "./features/contributions/pages/ContributionsPage";
-import LeavesPage from "./features/leaves/pages/LeavesPage";
-import ReportsPage from "./features/reports/pages/ReportsPage";
-import BranchUsersPage from "./features/branches/pages/BranchUsersPage";
-import { BranchProvider, useBranchContext } from "./features/shared/store/branchContext";
-import { adminNavigationItems } from "./features/shared/utils/adminNavigation";
-import AdminDashboardPage from "./features/admin/pages/AdminDashboardPage";
-import AdminEmployeesPage from "./features/admin/pages/AdminEmployeesPage";
-import AdminInventoryPage from "./features/admin/pages/AdminInventoryPage";
-import AdminSalesPage from "./features/admin/pages/AdminSalesPage";
-import AdminAttendancePage from "./features/admin/pages/AdminAttendancePage";
-import AdminFeedbackPage from "./features/admin/pages/AdminFeedbackPage";
-import AdminIncidentsPage from "./features/admin/pages/AdminIncidentsPage";
-import AdminNtePage from "./features/admin/pages/AdminNtePage";
-import AdminPlantillaPage from "./features/admin/pages/AdminPlantillaPage";
-import AdminContributionsPage from "./features/admin/pages/AdminContributionsPage";
-import AdminLeavesPage from "./features/admin/pages/AdminLeavesPage";
 
-const getHomeRouteByRole = (user) =>
-  user?.role === "admin" ? "/admin-dashboard" : "/dashboard";
 
+
+
+import Login from "./pages/Login";
+import Dashboard from "./pages/Dashboard";
+import AdminDashboard from "./admin/AdminDashboard";
+import SuperAdminDashboard from "./adminSuper/SuperAdminDashboard";
+
+const getHomeRouteByRole = (user) => {
+  if (user?.role === "super_admin") return "/superadmin-dashboard";
+  if (user?.role === "admin") return "/admin-dashboard";
+  return "/"; // safe fallback
+};
+
+// Protect private routes
 function ProtectedRoute({ children }) {
   const { loading, isAuthenticated } = useContext(AuthContext);
 
-  if (loading) {
-    return <p style={{ padding: 24 }}>Checking session...</p>;
-  }
+  if (loading) return <p style={{ padding: 24 }}>Checking session...</p>;
 
-  if (!isAuthenticated) {
-    return <Navigate to="/login" replace />;
-  }
+  if (!isAuthenticated) return <Navigate to="/login" replace />;
 
   return children;
 }
 
+// Prevent logged-in users from accessing login
 function PublicOnlyRoute({ children }) {
   const { loading, isAuthenticated, user } = useContext(AuthContext);
 
-  if (loading) {
-    return <p style={{ padding: 24 }}>Checking session...</p>;
-  }
+  if (loading) return <p style={{ padding: 24 }}>Checking session...</p>;
 
   if (isAuthenticated) {
     return <Navigate to={getHomeRouteByRole(user)} replace />;
@@ -63,110 +45,10 @@ function PublicOnlyRoute({ children }) {
   return children;
 }
 
-function SuperAdminLayout() {
-  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
-  const location = useLocation();
-  const { activeBranch } = useBranchContext();
-  const branchThemeClass = `theme-${activeBranch.toLowerCase().replace(/\s+/g, "-")}`;
-
-  useEffect(() => {
-    setIsSidebarOpen(false);
-  }, [location.pathname]);
-
-  return (
-    <div className={`app-shell ${branchThemeClass}`}>
-      <Sidebar isOpen={isSidebarOpen} onNavigate={() => setIsSidebarOpen(false)} />
-      <div className="main-shell">
-        <Navbar onToggleSidebar={() => setIsSidebarOpen((current) => !current)} />
-        <main className="page-content" key={`${location.pathname}-${activeBranch}`}>
-          <Routes>
-            <Route path="/dashboard" element={<DashboardPage />} />
-            <Route path="/branches" element={<BranchesPage />} />
-            <Route path="/branches/users" element={<BranchUsersPage />} />
-            <Route path="/employees" element={<EmployeesPage />} />
-            <Route path="/inventory" element={<InventoryPage />} />
-            <Route path="/sales" element={<SalesPage />} />
-            <Route path="/attendance" element={<AttendancePage />} />
-            <Route path="/feedback" element={<FeedbackPage />} />
-            <Route path="/incidents" element={<IncidentsPage />} />
-            <Route path="/nte" element={<NtePage />} />
-            <Route path="/plantilla" element={<PlantillaPage />} />
-            <Route path="/contributions" element={<ContributionsPage />} />
-            <Route path="/leaves" element={<LeavesPage />} />
-            <Route path="/reports" element={<ReportsPage />} />
-            <Route path="/" element={<Navigate to="/dashboard" replace />} />
-            <Route path="*" element={<Navigate to="/dashboard" replace />} />
-          </Routes>
-        </main>
-      </div>
-    </div>
-  );
-}
-
-function AdminLayoutShell() {
-  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
-  const location = useLocation();
-  const { activeBranch } = useBranchContext();
-  const branchThemeClass = `theme-${activeBranch.toLowerCase().replace(/\s+/g, "-")}`;
-
-  useEffect(() => {
-    setIsSidebarOpen(false);
-  }, [location.pathname]);
-
-  return (
-    <div className={`app-shell ${branchThemeClass}`}>
-      <Sidebar
-        isOpen={isSidebarOpen}
-        onNavigate={() => setIsSidebarOpen(false)}
-        title="Ally's Admin"
-        items={adminNavigationItems}
-      />
-      <div className="main-shell">
-        <Navbar onToggleSidebar={() => setIsSidebarOpen((current) => !current)} isAdmin />
-        <main className="page-content" key={`${location.pathname}-${activeBranch}`}>
-          <Routes>
-            <Route path="/admin-dashboard" element={<AdminDashboardPage />} />
-            <Route path="/admin-employees" element={<AdminEmployeesPage />} />
-            <Route path="/admin-inventory" element={<AdminInventoryPage />} />
-            <Route path="/admin-sales" element={<AdminSalesPage />} />
-            <Route path="/admin-attendance" element={<AdminAttendancePage />} />
-            <Route path="/admin-feedback" element={<AdminFeedbackPage />} />
-            <Route path="/admin-incidents" element={<AdminIncidentsPage />} />
-            <Route path="/admin-nte" element={<AdminNtePage />} />
-            <Route path="/admin-plantilla" element={<AdminPlantillaPage />} />
-            <Route path="/admin-contributions" element={<AdminContributionsPage />} />
-            <Route path="/admin-leaves" element={<AdminLeavesPage />} />
-            <Route path="/" element={<Navigate to="/admin-dashboard" replace />} />
-            <Route path="*" element={<Navigate to="/admin-dashboard" replace />} />
-          </Routes>
-        </main>
-      </div>
-    </div>
-  );
-}
-
-function AdminLayout() {
+// Redirect after login based on role
+function RoleRedirect() {
   const { user } = useContext(AuthContext);
-
-  return (
-    <BranchProvider lockedBranch={user?.branch || "Tagum City"} forceReadOnly={false}>
-      <AdminLayoutShell />
-    </BranchProvider>
-  );
-}
-
-function RoleBasedLayout() {
-  const { user } = useContext(AuthContext);
-
-  if (user?.role === "admin") {
-    return <AdminLayout />;
-  }
-
-  return (
-    <BranchProvider>
-      <SuperAdminLayout />
-    </BranchProvider>
-  );
+  return <Navigate to={getHomeRouteByRole(user)} replace />;
 }
 
 export default function App() {
@@ -174,7 +56,10 @@ export default function App() {
     <AuthProvider>
       <BrowserRouter>
         <Routes>
-          <Route path="/" element={<Navigate to="/login" replace />} />
+          {/* Default */}
+          <Route path="/" element={<RoleRedirect />} />
+
+          {/* Public */}
           <Route
             path="/login"
             element={
@@ -183,15 +68,29 @@ export default function App() {
               </PublicOnlyRoute>
             }
           />
-          <Route path="/register" element={<Navigate to="/login" replace />} />
+
+          {/* Admin */}
           <Route
-            path="/*"
+            path="/admin-dashboard"
             element={
               <ProtectedRoute>
-                <RoleBasedLayout />
+                <AdminDashboard />
               </ProtectedRoute>
             }
           />
+
+          {/* Super Admin */}
+          <Route
+            path="/superadmin-dashboard"
+            element={
+              <ProtectedRoute>
+                <SuperAdminDashboard />
+              </ProtectedRoute>
+            }
+          />
+
+          {/* Catch all */}
+          <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </BrowserRouter>
     </AuthProvider>
