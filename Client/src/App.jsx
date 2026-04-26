@@ -15,7 +15,7 @@ import Login from "./auth/pages/Login";
 import AdminDashboard from "./pages/AdminDashboard";
 import DashboardLayout from "./layouts/DashboardLayout";
 import {
-  AttendancePage as SuperadminAttendancePage,
+  
   BranchesPage as SuperadminBranchesPage,
   BranchUsersPage as SuperadminBranchUsersPage,
   ContributionsPage as SuperadminContributionsPage,
@@ -120,7 +120,7 @@ export default function App() {
             <Route path="employees" element={<SuperadminEmployeesPage />} />
             <Route path="inventory" element={<SuperadminInventoryPage />} />
             <Route path="sales" element={<SuperadminSalesPage />} />
-            <Route path="attendance" element={<SuperadminAttendancePage />} />
+            
             <Route path="feedback" element={<SuperadminFeedbackPage />} />
             <Route path="incidents" element={<SuperadminIncidentsPage />} />
             <Route path="nte" element={<SuperadminNtePage />} />
