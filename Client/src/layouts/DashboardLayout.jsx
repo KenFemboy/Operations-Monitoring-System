@@ -5,10 +5,27 @@ import Sidebar from "../components/superadmin/Sidebar";
 import TopNavbar from "../components/superadmin/TopNavbar";
 import "../styles/superadmin-dashboard.css";
 
+const routeTitles = {
+  dashboard: "Dashboard",
+  branches: "Branches",
+  users: "Branch Users",
+  employees: "Employees",
+  inventory: "Inventory",
+  sales: "Sales",
+  attendance: "Attendance",
+  feedback: "Feedback",
+  incidents: "Incidents",
+  nte: "NTE Monitoring",
+  plantilla: "Plantilla",
+  contributions: "Contributions",
+  leaves: "Leaves",
+  reports: "Reports",
+};
+
 const getPageTitle = (pathname) => {
-  if (pathname.endsWith("/branches")) return "Branches";
-  if (pathname.endsWith("/employees")) return "Employees";
-  return "Dashboard";
+  const parts = pathname.split("/").filter(Boolean);
+  const maybeLeaf = parts[parts.length - 1];
+  return routeTitles[maybeLeaf] || "Dashboard";
 };
 
 export default function DashboardLayout() {

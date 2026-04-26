@@ -6,6 +6,7 @@ import {
   Routes,
 } from "react-router-dom";
 import { AuthProvider, AuthContext } from "./auth/context/AuthContext";
+import { BranchProvider } from "./features/shared/store/branchContext";
 
 
 
@@ -13,9 +14,22 @@ import { AuthProvider, AuthContext } from "./auth/context/AuthContext";
 import Login from "./auth/pages/Login";
 import AdminDashboard from "./pages/AdminDashboard";
 import DashboardLayout from "./layouts/DashboardLayout";
-import SuperadminDashboardPage from "./pages/superadmin/SuperadminDashboardPage";
-import SuperadminBranchesPage from "./pages/superadmin/SuperadminBranchesPage";
-import SuperadminEmployeesPage from "./pages/superadmin/SuperadminEmployeesPage";
+import {
+  AttendancePage as SuperadminAttendancePage,
+  BranchesPage as SuperadminBranchesPage,
+  BranchUsersPage as SuperadminBranchUsersPage,
+  ContributionsPage as SuperadminContributionsPage,
+  DashboardPage as SuperadminDashboardPage,
+  EmployeesPage as SuperadminEmployeesPage,
+  FeedbackPage as SuperadminFeedbackPage,
+  IncidentsPage as SuperadminIncidentsPage,
+  InventoryPage as SuperadminInventoryPage,
+  LeavesPage as SuperadminLeavesPage,
+  NtePage as SuperadminNtePage,
+  PlantillaPage as SuperadminPlantillaPage,
+  ReportsPage as SuperadminReportsPage,
+  SalesPage as SuperadminSalesPage,
+} from "./features/superadmin/pages";
 
 const isSuperadminRole = (role) =>
   role === "super_admin" || role === "superadmin";
@@ -93,14 +107,27 @@ export default function App() {
             path="/superadmin"
             element={
               <ProtectedRoute allowedRoles={["super_admin", "superadmin"]}>
-                <DashboardLayout />
+                <BranchProvider>
+                  <DashboardLayout />
+                </BranchProvider>
               </ProtectedRoute>
             }
           >
             <Route index element={<Navigate to="dashboard" replace />} />
             <Route path="dashboard" element={<SuperadminDashboardPage />} />
             <Route path="branches" element={<SuperadminBranchesPage />} />
+            <Route path="branches/users" element={<SuperadminBranchUsersPage />} />
             <Route path="employees" element={<SuperadminEmployeesPage />} />
+            <Route path="inventory" element={<SuperadminInventoryPage />} />
+            <Route path="sales" element={<SuperadminSalesPage />} />
+            <Route path="attendance" element={<SuperadminAttendancePage />} />
+            <Route path="feedback" element={<SuperadminFeedbackPage />} />
+            <Route path="incidents" element={<SuperadminIncidentsPage />} />
+            <Route path="nte" element={<SuperadminNtePage />} />
+            <Route path="plantilla" element={<SuperadminPlantillaPage />} />
+            <Route path="contributions" element={<SuperadminContributionsPage />} />
+            <Route path="leaves" element={<SuperadminLeavesPage />} />
+            <Route path="reports" element={<SuperadminReportsPage />} />
           </Route>
 
           {/* Backward compatible entry */}

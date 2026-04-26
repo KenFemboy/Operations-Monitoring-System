@@ -1,0 +1,13 @@
+1.User:
+    Add User with role (admin & super admin)✅
+
+
+2. Employees: 
+    Add Employees (form )
+    Edit Employees ✅
+
+3. Branches
+    Add Branches✅
+    
+
+

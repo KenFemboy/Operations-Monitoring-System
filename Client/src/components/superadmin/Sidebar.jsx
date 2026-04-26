@@ -3,7 +3,18 @@ import { NavLink } from "react-router-dom";
 const menuItems = [
   { label: "Dashboard", to: "/superadmin/dashboard" },
   { label: "Branches", to: "/superadmin/branches" },
+  { label: "Branch Users", to: "/superadmin/branches/users" },
   { label: "Employees", to: "/superadmin/employees" },
+  { label: "Inventory", to: "/superadmin/inventory" },
+  { label: "Sales", to: "/superadmin/sales" },
+  { label: "Attendance", to: "/superadmin/attendance" },
+  { label: "Feedback", to: "/superadmin/feedback" },
+  { label: "Incidents", to: "/superadmin/incidents" },
+  { label: "NTE", to: "/superadmin/nte" },
+  { label: "Plantilla", to: "/superadmin/plantilla" },
+  { label: "Contributions", to: "/superadmin/contributions" },
+  { label: "Leaves", to: "/superadmin/leaves" },
+  { label: "Reports", to: "/superadmin/reports" },
 ];
 
 export default function Sidebar({ isOpen, onClose }) {
