@@ -15,12 +15,15 @@ import { getHomeRouteByRole } from "./auth/utils/roleRoutes";
 import Login from "./auth/pages/Login";
 import AdminDashboard from "./pages/AdminDashboard";
 import DashboardLayout from "./layouts/DashboardLayout";
+
 import {
   
   BranchesPage as SuperadminBranchesPage,
   BranchUsersPage as SuperadminBranchUsersPage,
   DashboardPage as SuperadminDashboardPage,
-  EmployeesPage as SuperadminEmployeesPage
+  EmployeesPage as SuperadminEmployeesPage,
+  AttendancePage as SuperadminAttendancePage,
+
 } from "./features/superadmin/pages";
 
 // Protect private routes
@@ -101,7 +104,8 @@ export default function App() {
             <Route path="branches" element={<SuperadminBranchesPage />} />
             <Route path="branches/users" element={<SuperadminBranchUsersPage />} />
             <Route path="employees" element={<SuperadminEmployeesPage />} />
-            
+            <Route path="attendance" element={<SuperadminAttendancePage />} />
+          
           </Route>
 
           {/* Backward compatible entry */}
