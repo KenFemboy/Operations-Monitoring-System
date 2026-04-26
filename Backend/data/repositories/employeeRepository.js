@@ -19,5 +19,5 @@ export const findByBranchId = (branchId) =>
 
 export const update = (id, data) =>
   Employee.findByIdAndUpdate(id, data, { new: true, runValidators: true })
-    .populate("positionId", "name baseSalary dailyRate status")
+    .populate("assignedBranchId", "branchName location")
 
