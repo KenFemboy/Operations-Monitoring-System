@@ -7,6 +7,7 @@ import {
 } from "react-router-dom";
 import { AuthProvider, AuthContext } from "./auth/context/AuthContext";
 import { BranchProvider } from "./features/shared/store/branchContext";
+import { getHomeRouteByRole } from "./auth/utils/roleRoutes";
 
 
 
@@ -21,15 +22,6 @@ import {
   DashboardPage as SuperadminDashboardPage,
   EmployeesPage as SuperadminEmployeesPage
 } from "./features/superadmin/pages";
-
-const isSuperadminRole = (role) =>
-  role === "super_admin" || role === "superadmin";
-
-const getHomeRouteByRole = (user) => {
-  if (isSuperadminRole(user?.role)) return "/superadmin/dashboard";
-  if (user?.role === "admin") return "/admin-dashboard";
-  return "/login"; // safe fallback
-};
 
 // Protect private routes
 function ProtectedRoute({ children, allowedRoles }) {
@@ -87,7 +79,7 @@ export default function App() {
           <Route
             path="/admin-dashboard"
             element={
-              <ProtectedRoute>
+              <ProtectedRoute allowedRoles={["admin"]}>
                 <AdminDashboard />
               </ProtectedRoute>
             }

@@ -1,32 +1,26 @@
 import { useContext, useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { AuthContext } from "../context/AuthContext";
+import { getHomeRouteByRole } from "../utils/roleRoutes";
 import "./Login.css";
 
-const getHomeRouteByRole = (user) =>
-  user?.role === "admin"
-    ? "/admin-dashboard"
-    : user?.role === "super_admin" || user?.role === "superadmin"
-      ? "/superadmin/dashboard"
-      : "/login";
+const emptyLoginForm = {
+  identifier: "",
+  password: "",
+};
 
 export default function Login() {
   const { login } = useContext(AuthContext);
   const navigate = useNavigate();
-  const [form, setForm] = useState({
-    identifier: "",
-    password: "",
-  });
+  const [form, setForm] = useState(emptyLoginForm);
 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [showPassword, setShowPassword] = useState(false);
 
   useEffect(() => {
-    setForm({
-      identifier: "",
-      password: "",
-    });
+    // Always start login with blank credentials, including after logout redirects.
+    setForm(emptyLoginForm);
     setError("");
     setShowPassword(false);
   }, []);
@@ -66,12 +60,14 @@ export default function Login() {
           <label htmlFor="identifier">Username / Email</label>
           <input
             id="identifier"
-            name="identifier"
+            name="loginIdentifier"
             type="text"
             placeholder="admin@ally.com"
-            onChange={handleChange}
+            onChange={(e) => setForm({ ...form, identifier: e.target.value })}
             value={form.identifier}
             autoComplete="off"
+            autoCapitalize="none"
+            spellCheck={false}
           />
 
           <label htmlFor="password">Password</label>
@@ -83,7 +79,7 @@ export default function Login() {
               placeholder="Enter your password"
               onChange={handleChange}
               value={form.password}
-              autoComplete="off"
+              autoComplete="new-password"
             />
             <button
               type="button"

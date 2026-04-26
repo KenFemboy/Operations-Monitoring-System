@@ -5,7 +5,7 @@ const sanitizeUser = (userDoc) => ({
   name: userDoc.name,
   email: userDoc.email,
   role: userDoc.role,
-  branch: userDoc.branch || userDoc.branchId?.branchName || null,
+  branch: userDoc.branchId?.branchName || userDoc.branch || null,
   branchId: userDoc.branchId,
 });
 

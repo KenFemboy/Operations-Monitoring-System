@@ -12,7 +12,7 @@ const sanitizeUser = (userDoc) => {
     name: userDoc.name,
     email: userDoc.email,
     role: userDoc.role,
-    branch: userDoc.branch || userDoc.branchId?.branchName || null,
+    branch: userDoc.branchId?.branchName || userDoc.branch || null,
     branchId: userDoc.branchId,
   };
 };
@@ -196,11 +196,83 @@ export const createAdminUser = async (req, res) => {
       password: hashedPassword,
       role: "admin",
       branch: assignedBranch.branchName,
-      branchId: null,
+      branchId: assignedBranch._id,
     });
 
     return res.status(201).json({
       message: "Admin user created successfully",
+      user: sanitizeUser(adminUser),
+    });
+  } catch (error) {
+    return res.status(500).json({ message: error.message });
+  }
+};
+
+export const updateAdminUserAssignment = async (req, res) => {
+  try {
+    const { userId } = req.params;
+    const { branch, branchName, superadminPassword, name, email } = req.body;
+    const selectedBranchName = (branchName || branch || "").trim();
+
+    if (!selectedBranchName || !superadminPassword) {
+      return res.status(400).json({
+        message: "branchName and superadmin password are required",
+      });
+    }
+
+    const superAdmin = await User.findById(req.user.id);
+
+    if (!superAdmin || superAdmin.role !== "super_admin") {
+      return res.status(403).json({ message: "Only superadmin can edit admin users" });
+    }
+
+    const isSuperAdminPasswordValid = await bcrypt.compare(
+      superadminPassword,
+      superAdmin.password,
+    );
+
+    if (!isSuperAdminPasswordValid) {
+      return res.status(401).json({ message: "Invalid superadmin password" });
+    }
+
+    const adminUser = await User.findById(userId);
+
+    if (!adminUser) {
+      return res.status(404).json({ message: "Admin user not found" });
+    }
+
+    if (adminUser.role !== "admin") {
+      return res.status(400).json({ message: "Only admin users can be reassigned" });
+    }
+
+    const assignedBranch = await Branch.findOne({ branchName: selectedBranchName.trim() });
+
+    if (!assignedBranch) {
+      return res.status(400).json({ message: "Invalid branch assignment" });
+    }
+
+    if (typeof name === "string" && name.trim()) {
+      adminUser.name = name.trim();
+    }
+
+    if (typeof email === "string" && email.trim() && email.trim() !== adminUser.email) {
+      const duplicateUser = await User.findOne({ email: email.trim() });
+
+      if (duplicateUser && String(duplicateUser._id) !== String(adminUser._id)) {
+        return res.status(409).json({ message: "Email already exists" });
+      }
+
+      adminUser.email = email.trim();
+    }
+
+    adminUser.branch = assignedBranch.branchName;
+    adminUser.branchId = assignedBranch._id;
+
+    await adminUser.save();
+    await adminUser.populate("branchId");
+
+    return res.status(200).json({
+      message: "Admin user updated successfully",
       user: sanitizeUser(adminUser),
     });
   } catch (error) {
