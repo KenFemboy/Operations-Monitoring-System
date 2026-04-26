@@ -111,7 +111,7 @@ export const tempSuperAdminLogin = async (req, res) => {
       const hashedPassword = await bcrypt.hash(tempPassword, 10);
 
       user = await User.create({
-        name: "Ally Super Admin",
+        name: "Ally's Super Admin",
         email: tempEmail,
         password: hashedPassword,
         role: "super_admin",
@@ -124,8 +124,8 @@ export const tempSuperAdminLogin = async (req, res) => {
         user.password = await bcrypt.hash(tempPassword, 10);
       }
 
-      if (user.name !== "Ally Super Admin") {
-        user.name = "Ally Super Admin";
+      if (user.name !== "Ally's Super Admin") {
+        user.name = "Ally's Super Admin";
       }
 
       if (user.role !== "super_admin") {
@@ -211,7 +211,7 @@ export const createAdminUser = async (req, res) => {
 export const updateAdminUserAssignment = async (req, res) => {
   try {
     const { userId } = req.params;
-    const { branch, branchName, superadminPassword, name, email } = req.body;
+    const { branch, branchName, superadminPassword, name, email, password } = req.body;
     const selectedBranchName = (branchName || branch || "").trim();
 
     if (!selectedBranchName || !superadminPassword) {
@@ -267,6 +267,14 @@ export const updateAdminUserAssignment = async (req, res) => {
 
     adminUser.branch = assignedBranch.branchName;
     adminUser.branchId = assignedBranch._id;
+
+    if (typeof password === "string" && password.trim()) {
+      if (password.trim().length < 8) {
+        return res.status(400).json({ message: "Password must be at least 8 characters" });
+      }
+
+      adminUser.password = await bcrypt.hash(password.trim(), 10);
+    }
 
     await adminUser.save();
     await adminUser.populate("branchId");

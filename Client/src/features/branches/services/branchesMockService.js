@@ -111,6 +111,9 @@ export const branchesService = {
       id: branch._id,
       branchName: branch.branchName,
       region: branch.region || '',
+      provinceCity: branch.provinceCity || '',
+      municipality: branch.municipality || '',
+      specificLocation: branch.specificLocation || '',
       location: branch.location,
       address: branch.address,
       description: branch.description,
@@ -142,6 +145,9 @@ export const branchesService = {
       id: branch._id,
       branchName: branch.branchName,
       region: branch.region || '',
+      provinceCity: branch.provinceCity || '',
+      municipality: branch.municipality || '',
+      specificLocation: branch.specificLocation || '',
       location: branch.location,
       address: branch.address,
       description: branch.description,
@@ -160,6 +166,19 @@ export const branchesService = {
     })
 
     const result = await parseResponse(response, 'Failed to create branch')
+    return result?.data
+  },
+
+  update: async (branchId, branchData) => {
+    const response = await fetch(`${API_BASE_URL}/api/branches/${branchId}`, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(branchData),
+    })
+
+    const result = await parseResponse(response, 'Failed to update branch')
     return result?.data
   },
 }

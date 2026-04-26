@@ -16,13 +16,16 @@ const defaultUserForm = {
   email: '',
   password: '',
   branch: '',
+  location: '',
 }
 
 const defaultEditUserForm = {
   userId: '',
   name: '',
   email: '',
+  password: '',
   branch: '',
+  location: '',
 }
 
 function BranchUsersPage() {
@@ -38,6 +41,7 @@ function BranchUsersPage() {
   const [loading, setLoading] = useState(false)
   const [loadingBranches, setLoadingBranches] = useState(false)
   const [branchOptions, setBranchOptions] = useState([])
+  const [branchLocationMap, setBranchLocationMap] = useState({})
   const [error, setError] = useState('')
   const [successMessage, setSuccessMessage] = useState('')
 
@@ -45,12 +49,15 @@ function BranchUsersPage() {
 
   const buildEditFormFromUser = (user) => {
     const defaultBranch = user?.branch && user.branch !== 'No assigned branch yet' ? user.branch : ''
+    const selectedBranch = defaultBranch || branchOptions[0] || ''
 
     return {
       userId: user?.id || '',
       name: user?.name || '',
       email: user?.email || '',
-      branch: defaultBranch || branchOptions[0] || '',
+      password: '',
+      branch: selectedBranch,
+      location: branchLocationMap[selectedBranch] || '',
     }
   }
 
@@ -60,13 +67,23 @@ function BranchUsersPage() {
       const response = await api.get('/branches/get-all')
       const branches = response.data?.data || []
       const branchNames = branches.map((branch) => branch.branchName).filter(Boolean)
+      const locationMap = branches.reduce((acc, branch) => {
+        if (!branch?.branchName) {
+          return acc
+        }
+
+        acc[branch.branchName] = branch.location || ''
+        return acc
+      }, {})
 
       setBranchOptions(branchNames)
+      setBranchLocationMap(locationMap)
 
       if (branchNames.length) {
         setFormData((prev) => ({
           ...prev,
           branch: prev.branch || branchNames[0],
+          location: locationMap[prev.branch || branchNames[0]] || '',
         }))
       }
     } catch (err) {
@@ -114,6 +131,15 @@ function BranchUsersPage() {
   const handleFormChange = (event) => {
     const { name, value } = event.target
 
+    if (name === 'branch') {
+      setFormData((prev) => ({
+        ...prev,
+        branch: value,
+        location: branchLocationMap[value] || '',
+      }))
+      return
+    }
+
     setFormData((prev) => ({ ...prev, [name]: value }))
   }
 
@@ -125,6 +151,7 @@ function BranchUsersPage() {
       email: formData.email.trim(),
       password: formData.password,
       branch: formData.branch,
+      location: formData.location,
     })
     setIsModalOpen(false)
     setIsConfirmModalOpen(true)
@@ -140,14 +167,16 @@ function BranchUsersPage() {
       return
     }
 
-    setEditFormData((prev) => ({ ...prev, [name]: value }))
-  }
+    if (name === 'branch') {
+      setEditFormData((prev) => ({
+        ...prev,
+        branch: value,
+        location: branchLocationMap[value] || '',
+      }))
+      return
+    }
 
-  const handleOpenEditUser = (user) => {
-    setEditFormData(buildEditFormFromUser(user))
-    setError('')
-    setSuccessMessage('')
-    setIsEditModalOpen(true)
+    setEditFormData((prev) => ({ ...prev, [name]: value }))
   }
 
   const handleEditUser = (event) => {
@@ -157,7 +186,9 @@ function BranchUsersPage() {
       userId: editFormData.userId,
       name: editFormData.name.trim(),
       email: editFormData.email.trim(),
+      password: editFormData.password,
       branch: editFormData.branch,
+      location: editFormData.location,
     })
     setIsEditModalOpen(false)
     setIsConfirmModalOpen(true)
@@ -236,19 +267,7 @@ function BranchUsersPage() {
         {loading ? (
           <p style={{ padding: '1rem' }}>Loading users...</p>
         ) : (
-          <Table
-            columns={userColumns}
-            rows={users}
-            renderActions={(row) =>
-              row.roleKey === 'admin' ? (
-                <Button variant="outline" onClick={() => handleOpenEditUser(row)}>
-                  Edit
-                </Button>
-              ) : (
-                <span className="status-neutral">N/A</span>
-              )
-            }
-          />
+          <Table columns={userColumns} rows={users} />
         )}
       </section>
 
@@ -259,7 +278,7 @@ function BranchUsersPage() {
             <input id="name" name="name" value={formData.name} onChange={handleFormChange} required />
           </div>
           <div className="form-group">
-            <label htmlFor="email">Username / Email</label>
+            <label htmlFor="email">Email</label>
             <input
               id="email"
               name="email"
@@ -282,7 +301,7 @@ function BranchUsersPage() {
             />
           </div>
           <div className="form-group">
-            <label htmlFor="branch">Assign Branch</label>
+            <label htmlFor="branch">Assigned Branch</label>
             <select
               id="branch"
               name="branch"
@@ -297,6 +316,11 @@ function BranchUsersPage() {
                 </option>
               ))}
             </select>
+          </div>
+
+          <div className="form-group">
+            <label htmlFor="location">Location</label>
+            <input id="location" name="location" value={formData.location} readOnly />
           </div>
 
           <p className="status-neutral">Role will be assigned automatically as Admin.</p>
@@ -327,7 +351,7 @@ function BranchUsersPage() {
             <input id="editName" name="name" value={editFormData.name} onChange={handleEditFormChange} required />
           </div>
           <div className="form-group">
-            <label htmlFor="editEmail">Username / Email</label>
+            <label htmlFor="editEmail">Email</label>
             <input
               id="editEmail"
               name="email"
@@ -338,7 +362,19 @@ function BranchUsersPage() {
             />
           </div>
           <div className="form-group">
-            <label htmlFor="editBranch">Assign Branch</label>
+            <label htmlFor="editPassword">Password</label>
+            <input
+              id="editPassword"
+              name="password"
+              type="password"
+              minLength={8}
+              value={editFormData.password}
+              onChange={handleEditFormChange}
+              placeholder="Leave blank to keep current password"
+            />
+          </div>
+          <div className="form-group">
+            <label htmlFor="editBranch">Assigned Branch</label>
             <select
               id="editBranch"
               name="branch"
@@ -353,6 +389,11 @@ function BranchUsersPage() {
                 </option>
               ))}
             </select>
+          </div>
+
+          <div className="form-group">
+            <label htmlFor="editLocation">Location</label>
+            <input id="editLocation" name="location" value={editFormData.location} readOnly />
           </div>
 
           <Button type="submit">Continue</Button>

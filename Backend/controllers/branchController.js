@@ -3,6 +3,13 @@ import User from '../models/User.js';
 
 const escapeRegex = (value) => value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 
+const buildBranchLocation = ({ provinceCity, municipality, specificLocation }) => {
+  return [specificLocation, municipality, provinceCity]
+    .map((part) => (typeof part === 'string' ? part.trim() : ''))
+    .filter(Boolean)
+    .join(', ');
+};
+
 const resolveAdminBranch = async (userId) => {
   const user = await User.findById(userId).populate('branchId');
 
@@ -38,7 +45,16 @@ const resolveAdminBranch = async (userId) => {
 // Create a new branch
 export const createBranch = async (req, res) => {
   try {
-    const { branchName, location, description, address } = req.body;
+    const {
+      branchName,
+      region,
+      provinceCity,
+      municipality,
+      specificLocation,
+      location,
+      description,
+      address,
+    } = req.body;
 
     if (!branchName?.trim()) {
       return res.status(400).json({
@@ -46,9 +62,25 @@ export const createBranch = async (req, res) => {
         message: "Branch name is required.",
       });
     }
+
+    const resolvedLocation =
+      buildBranchLocation({ provinceCity, municipality, specificLocation }) ||
+      (typeof location === 'string' ? location.trim() : '');
+
+    if (!resolvedLocation) {
+      return res.status(400).json({
+        success: false,
+        message: 'Location details are required.',
+      });
+    }
+
     const branch = await Branch.create({
       branchName: branchName.trim(),
-      location: location?.trim(),
+      region: typeof region === 'string' ? region.trim() : '',
+      provinceCity: typeof provinceCity === 'string' ? provinceCity.trim() : '',
+      municipality: typeof municipality === 'string' ? municipality.trim() : '',
+      specificLocation: typeof specificLocation === 'string' ? specificLocation.trim() : '',
+      location: resolvedLocation,
       description: description?.trim(),
       address: address?.trim(),
     });
@@ -75,6 +107,82 @@ export const createBranch = async (req, res) => {
     res.status(500).json({
         success: false,
         message: err.message,
+    });
+  }
+};
+
+export const updateBranchById = async (req, res) => {
+  try {
+    const { branchId } = req.params;
+    const {
+      branchName,
+      region,
+      provinceCity,
+      municipality,
+      specificLocation,
+      location,
+      description,
+      address,
+    } = req.body;
+
+    const branch = await Branch.findById(branchId);
+
+    if (!branch) {
+      return res.status(404).json({
+        success: false,
+        message: 'Branch not found.',
+      });
+    }
+
+    const trimmedBranchName = typeof branchName === 'string' ? branchName.trim() : '';
+
+    if (!trimmedBranchName) {
+      return res.status(400).json({
+        success: false,
+        message: 'Branch name is required.',
+      });
+    }
+
+    const duplicateBranch = await Branch.findOne({ branchName: trimmedBranchName });
+
+    if (duplicateBranch && String(duplicateBranch._id) !== String(branch._id)) {
+      return res.status(409).json({
+        success: false,
+        message: 'Branch name already exists.',
+      });
+    }
+
+    const resolvedLocation =
+      buildBranchLocation({ provinceCity, municipality, specificLocation }) ||
+      (typeof location === 'string' ? location.trim() : '');
+
+    if (!resolvedLocation) {
+      return res.status(400).json({
+        success: false,
+        message: 'Location details are required.',
+      });
+    }
+
+    branch.branchName = trimmedBranchName;
+    branch.region = typeof region === 'string' ? region.trim() : '';
+    branch.provinceCity = typeof provinceCity === 'string' ? provinceCity.trim() : '';
+    branch.municipality = typeof municipality === 'string' ? municipality.trim() : '';
+    branch.specificLocation = typeof specificLocation === 'string' ? specificLocation.trim() : '';
+    branch.location = resolvedLocation;
+    branch.description = typeof description === 'string' ? description.trim() : '';
+    branch.address = typeof address === 'string' ? address.trim() : '';
+
+    const updatedBranch = await branch.save();
+
+    return res.status(200).json({
+      success: true,
+      data: updatedBranch,
+      message: 'Branch updated successfully.',
+    });
+  } catch (err) {
+    return res.status(500).json({
+      success: false,
+      message: err.message,
     });
   }
 };

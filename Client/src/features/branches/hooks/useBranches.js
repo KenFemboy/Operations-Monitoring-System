@@ -44,7 +44,19 @@ function useBranches() {
     }
   }, [fetchAll])
 
-  return { branches, loading, error, fetchAll, searchByLocation, createBranch }
+  const updateBranch = useCallback(async (branchId, branchData) => {
+    try {
+      setError('')
+      const result = await branchesService.update(branchId, branchData)
+      await fetchAll()
+      return result
+    } catch (err) {
+      setError(err.message || 'Failed to update branch')
+      throw err
+    }
+  }, [fetchAll])
+
+  return { branches, loading, error, fetchAll, searchByLocation, createBranch, updateBranch }
 }
 
 export default useBranches
