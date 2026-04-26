@@ -137,29 +137,6 @@
   cursor: not-allowed;
 }
 
-.super-admin-submit {
-  margin-top: 6px;
-  border: 1px solid #b4caec;
-  border-radius: 12px;
-  padding: 11px;
-  font-size: 0.92rem;
-  font-weight: 700;
-  color: #1f4ea0;
-  background: #f2f7ff;
-  cursor: pointer;
-  transition: background 160ms ease, border-color 160ms ease, opacity 140ms ease;
-}
-
-.super-admin-submit:hover:not(:disabled) {
-  background: #e6f0ff;
-  border-color: #8fb1e6;
-}
-
-.super-admin-submit:disabled {
-  opacity: 0.75;
-  cursor: not-allowed;
-}
-
 .temp-note {
   margin: 2px 0 0;
   text-align: center;

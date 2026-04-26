@@ -11,15 +11,15 @@ const userSchema = new mongoose.Schema(
 
     role: {
       type: String,
-      enum: ["super_admin", "admin"],
-      default: "sales",
+      enum: ["console_user", "admin", "super_admin", "sales", "hr"],
+      default: "console_user",
     },
 
     branch: {
       type: String,
       trim: true,
       required: function () {
-        return this.role === "admin";
+        return false;
       },
     },
 
@@ -27,7 +27,7 @@ const userSchema = new mongoose.Schema(
       type: mongoose.Schema.Types.ObjectId,
       ref: "Branch",
       required: function () {
-        return this.role !== "super_admin" && !this.branch;
+        return false;
       },
     },
   },

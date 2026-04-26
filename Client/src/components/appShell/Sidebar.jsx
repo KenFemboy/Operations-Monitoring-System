@@ -6,53 +6,53 @@ const navGroups = [
     items: [
       {
         label: "Dashboard",
-        hint: "Branch performance snapshot",
-        to: "/superadmin/dashboard",
+        hint: "Performance snapshot",
+        to: "/app/dashboard",
       },
       {
         label: "Reports",
         hint: "Summaries and exports",
-        to: "/superadmin/reports",
+        to: "/app/reports",
       },
     ],
   },
   {
-    title: "Workforce",
+    title: "Branch Management",
     items: [
       {
         label: "Branches",
         hint: "Locations and setup",
-        to: "/superadmin/branches",
+        to: "/app/branches",
       },
       {
         label: "Branch Users",
-        hint: "Admin account assignment",
-        to: "/superadmin/branches/users",
+        hint: "Account assignment",
+        to: "/app/branches/users",
       },
+    ],
+  },
+  {
+    title: "HR",
+    items: [
       {
         label: "Employees",
-        hint: "Per-branch employee records",
-        to: "/superadmin/employees",
+        hint: "Employee records",
+        to: "/app/employees",
       },
       {
         label: "Plantilla",
         hint: "Role slots and salary basis",
-        to: "/superadmin/plantilla",
+        to: "/app/plantilla",
       },
       {
         label: "Attendance",
         hint: "Daily time records",
-        to: "/superadmin/attendance",
+        to: "/app/attendance",
       },
       {
         label: "Leaves",
         hint: "Leave filing and status",
-        to: "/superadmin/leaves",
-      },
-      {
-        label: "Contributions",
-        hint: "Government deductions",
-        to: "/superadmin/contributions",
+        to: "/app/leaves",
       },
     ],
   },
@@ -62,27 +62,57 @@ const navGroups = [
       {
         label: "Inventory",
         hint: "Stocks and items",
-        to: "/superadmin/inventory",
+        to: "/app/inventory",
       },
       {
         label: "Sales",
         hint: "Revenue and transactions",
-        to: "/superadmin/sales",
+        to: "/app/sales",
       },
       {
         label: "Feedback",
         hint: "Customer ratings",
-        to: "/superadmin/feedback",
+        to: "/app/feedback",
       },
+    ],
+  },
+  {
+    title: "Finance",
+    items: [
+      {
+        label: "Payroll",
+        hint: "Payroll records",
+        to: "/app/payroll",
+      },
+      {
+        label: "Contributions",
+        hint: "Government deductions",
+        to: "/app/contributions",
+      },
+    ],
+  },
+  {
+    title: "Compliance",
+    items: [
       {
         label: "Incidents",
         hint: "Issue monitoring",
-        to: "/superadmin/incidents",
+        to: "/app/incidents",
       },
       {
-        label: "NTE",
+        label: "NTE Monitoring",
         hint: "Notice to explain tracking",
-        to: "/superadmin/nte",
+        to: "/app/nte",
+      },
+    ],
+  },
+  {
+    title: "System",
+    items: [
+      {
+        label: "Settings",
+        hint: "System preferences",
+        to: "/app/settings",
       },
     ],
   },
@@ -101,10 +131,10 @@ export default function Sidebar({ isOpen, onClose }) {
       <aside className={`sd-sidebar ${isOpen ? "is-open" : ""}`}>
         <div className="sd-brand-wrap">
           <p className="sd-brand-eyebrow">Operations Monitoring</p>
-          <h1 className="sd-brand-title">Superadmin</h1>
+          <h1 className="sd-brand-title">Console</h1>
         </div>
 
-        <nav className="sd-nav" aria-label="Superadmin navigation">
+        <nav className="sd-nav" aria-label="Main navigation">
           {navGroups.map((group) => (
             <section className="sd-nav-group" key={group.title}>
               <p className="sd-nav-group-title">{group.title}</p>

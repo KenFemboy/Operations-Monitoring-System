@@ -19,7 +19,7 @@ const sanitizeUser = (userDoc) => {
 
 export const createUser = async (req, res) => {
   try {
-    const { name, email, password, role, branchId } = req.body;
+    const { name, email, password, role = "console_user", branchId } = req.body;
 
     // 1. Check if user exists
     const existingUser = await User.findOne({ email });
@@ -27,22 +27,17 @@ export const createUser = async (req, res) => {
       return res.status(400).json({ message: "Email already exists" });
     }
 
-    // 2. Validate branch requirement
-    if (role !== "super_admin" && !branchId) {
-      return res.status(400).json({ message: "Branch is required" });
-    }
-
-    // 3. Hash password
+    // 2. Hash password
     const salt = await bcrypt.genSalt(10);
     const hashedPassword = await bcrypt.hash(password, salt);
 
-    // 4. Create user
+    // 3. Create user
     const user = await User.create({
       name,
       email,
       password: hashedPassword,
       role,
-      branchId: role === "super_admin" ? null : branchId,
+      branchId: branchId || null,
     });
 
     // 5. Return response (no password)
@@ -91,75 +86,15 @@ export const login = async (req, res) => {
   }
 };
 
-export const tempSuperAdminLogin = async (req, res) => {
-  try {
-    const { password } = req.body;
-    const tempEmail = process.env.TEMP_SUPERADMIN_EMAIL || "superadmin@ally.local";
-    const tempPassword = process.env.TEMP_SUPERADMIN_PASSWORD || "12345678";
-
-    if (!password) {
-      return res.status(400).json({ message: "Super admin password is required" });
-    }
-
-    if (password !== tempPassword) {
-      return res.status(401).json({ message: "Invalid super admin password" });
-    }
-
-    let user = await User.findOne({ email: tempEmail });
-
-    if (!user) {
-      const hashedPassword = await bcrypt.hash(tempPassword, 10);
-
-      user = await User.create({
-        name: "Ally's Super Admin",
-        email: tempEmail,
-        password: hashedPassword,
-        role: "super_admin",
-        branchId: null,
-      });
-    } else {
-      const shouldResetPassword = !(await bcrypt.compare(tempPassword, user.password));
-
-      if (shouldResetPassword) {
-        user.password = await bcrypt.hash(tempPassword, 10);
-      }
-
-      if (user.name !== "Ally's Super Admin") {
-        user.name = "Ally's Super Admin";
-      }
-
-      if (user.role !== "super_admin") {
-        user.role = "super_admin";
-      }
-
-      if (user.branchId) {
-        user.branchId = null;
-      }
-
-      if (shouldResetPassword || user.isModified("name") || user.isModified("role") || user.isModified("branchId")) {
-        await user.save();
-      }
-    }
-
-    const token = generateToken(user);
-
-    res.json({
-      token,
-      user: sanitizeUser(user),
-    });
-  } catch (err) {
-    res.status(500).json({ message: err.message });
-  }
-};
-
 export const createAdminUser = async (req, res) => {
   try {
-    const { name, email, password, branch, branchName, superadminPassword } = req.body;
+    const { name, email, password, branch, branchName } = req.body;
+    const authorizationPassword = req.body.authorizationPassword || req.body.superadminPassword;
     const selectedBranchName = branchName || branch;
 
-    if (!name || !email || !password || !selectedBranchName || !superadminPassword) {
+    if (!name || !email || !password || !selectedBranchName || !authorizationPassword) {
       return res.status(400).json({
-        message: "Name, email, password, branchName, and superadmin password are required",
+        message: "Name, email, password, branchName, and authorization password are required",
       });
     }
 
@@ -168,19 +103,19 @@ export const createAdminUser = async (req, res) => {
       return res.status(400).json({ message: "Invalid branch assignment" });
     }
 
-    const superAdmin = await User.findById(req.user.id);
+    const currentUser = await User.findById(req.user.id);
 
-    if (!superAdmin || superAdmin.role !== "super_admin") {
-      return res.status(403).json({ message: "Only superadmin can create users" });
+    if (!currentUser) {
+      return res.status(401).json({ message: "Current user not found" });
     }
 
-    const isSuperAdminPasswordValid = await bcrypt.compare(
-      superadminPassword,
-      superAdmin.password,
+    const isAuthorizationPasswordValid = await bcrypt.compare(
+      authorizationPassword,
+      currentUser.password,
     );
 
-    if (!isSuperAdminPasswordValid) {
-      return res.status(401).json({ message: "Invalid superadmin password" });
+    if (!isAuthorizationPasswordValid) {
+      return res.status(401).json({ message: "Invalid authorization password" });
     }
 
     const existingUser = await User.findOne({ email });
@@ -190,18 +125,18 @@ export const createAdminUser = async (req, res) => {
     }
 
     const hashedPassword = await bcrypt.hash(password, 10);
-    const adminUser = await User.create({
+    const newUser = await User.create({
       name,
       email,
       password: hashedPassword,
-      role: "admin",
+      role: "console_user",
       branch: assignedBranch.branchName,
       branchId: assignedBranch._id,
     });
 
     return res.status(201).json({
-      message: "Admin user created successfully",
-      user: sanitizeUser(adminUser),
+      message: "User created successfully",
+      user: sanitizeUser(newUser),
     });
   } catch (error) {
     return res.status(500).json({ message: error.message });
@@ -211,38 +146,35 @@ export const createAdminUser = async (req, res) => {
 export const updateAdminUserAssignment = async (req, res) => {
   try {
     const { userId } = req.params;
-    const { branch, branchName, superadminPassword, name, email, password } = req.body;
+    const { branch, branchName, name, email, password } = req.body;
+    const authorizationPassword = req.body.authorizationPassword || req.body.superadminPassword;
     const selectedBranchName = (branchName || branch || "").trim();
 
-    if (!selectedBranchName || !superadminPassword) {
+    if (!selectedBranchName || !authorizationPassword) {
       return res.status(400).json({
-        message: "branchName and superadmin password are required",
+        message: "branchName and authorization password are required",
       });
     }
 
-    const superAdmin = await User.findById(req.user.id);
+    const currentUser = await User.findById(req.user.id);
 
-    if (!superAdmin || superAdmin.role !== "super_admin") {
-      return res.status(403).json({ message: "Only superadmin can edit admin users" });
+    if (!currentUser) {
+      return res.status(401).json({ message: "Current user not found" });
     }
 
-    const isSuperAdminPasswordValid = await bcrypt.compare(
-      superadminPassword,
-      superAdmin.password,
+    const isAuthorizationPasswordValid = await bcrypt.compare(
+      authorizationPassword,
+      currentUser.password,
     );
 
-    if (!isSuperAdminPasswordValid) {
-      return res.status(401).json({ message: "Invalid superadmin password" });
+    if (!isAuthorizationPasswordValid) {
+      return res.status(401).json({ message: "Invalid authorization password" });
     }
 
-    const adminUser = await User.findById(userId);
+    const targetUser = await User.findById(userId);
 
-    if (!adminUser) {
-      return res.status(404).json({ message: "Admin user not found" });
-    }
-
-    if (adminUser.role !== "admin") {
-      return res.status(400).json({ message: "Only admin users can be reassigned" });
+    if (!targetUser) {
+      return res.status(404).json({ message: "User not found" });
     }
 
     const assignedBranch = await Branch.findOne({ branchName: selectedBranchName.trim() });
@@ -252,36 +184,36 @@ export const updateAdminUserAssignment = async (req, res) => {
     }
 
     if (typeof name === "string" && name.trim()) {
-      adminUser.name = name.trim();
+      targetUser.name = name.trim();
     }
 
-    if (typeof email === "string" && email.trim() && email.trim() !== adminUser.email) {
+    if (typeof email === "string" && email.trim() && email.trim() !== targetUser.email) {
       const duplicateUser = await User.findOne({ email: email.trim() });
 
-      if (duplicateUser && String(duplicateUser._id) !== String(adminUser._id)) {
+      if (duplicateUser && String(duplicateUser._id) !== String(targetUser._id)) {
         return res.status(409).json({ message: "Email already exists" });
       }
 
-      adminUser.email = email.trim();
+      targetUser.email = email.trim();
     }
 
-    adminUser.branch = assignedBranch.branchName;
-    adminUser.branchId = assignedBranch._id;
+    targetUser.branch = assignedBranch.branchName;
+    targetUser.branchId = assignedBranch._id;
 
     if (typeof password === "string" && password.trim()) {
       if (password.trim().length < 8) {
         return res.status(400).json({ message: "Password must be at least 8 characters" });
       }
 
-      adminUser.password = await bcrypt.hash(password.trim(), 10);
+      targetUser.password = await bcrypt.hash(password.trim(), 10);
     }
 
-    await adminUser.save();
-    await adminUser.populate("branchId");
+    await targetUser.save();
+    await targetUser.populate("branchId");
 
     return res.status(200).json({
-      message: "Admin user updated successfully",
-      user: sanitizeUser(adminUser),
+      message: "User updated successfully",
+      user: sanitizeUser(targetUser),
     });
   } catch (error) {
     return res.status(500).json({ message: error.message });

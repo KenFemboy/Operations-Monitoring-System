@@ -71,22 +71,6 @@ export function AuthProvider({ children }) {
     return loggedInUser;
   };
 
-  const loginAsSuperAdmin = async (password) => {
-    const res = await api.post("/auth/temp-superadmin-login", { password });
-    const token = res.data?.token;
-    const loggedInUser = res.data?.user;
-
-    if (!token || !loggedInUser) {
-      throw new Error("Invalid login response from server");
-    }
-
-    localStorage.setItem("token", token);
-    localStorage.setItem("user", JSON.stringify(loggedInUser));
-    setUser(loggedInUser);
-
-    return loggedInUser;
-  };
-
   // LOGOUT
   const logout = () => {
     localStorage.removeItem("token");
@@ -101,7 +85,6 @@ export function AuthProvider({ children }) {
       value={{
         user,
         login,
-        loginAsSuperAdmin,
         logout,
         loading,
         isAuthenticated,

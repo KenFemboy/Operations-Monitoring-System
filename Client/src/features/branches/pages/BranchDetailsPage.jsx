@@ -18,7 +18,7 @@ function BranchDetailsPage() {
           <h1>Branch Not Found</h1>
           <p>The requested branch data is not available.</p>
         </header>
-        <Link className="inline-link" to="/branches">
+        <Link className="inline-link" to="/app/branches">
           Back to Branches
         </Link>
       </section>
@@ -43,7 +43,7 @@ function BranchDetailsPage() {
       <header className="page-header">
         <h1>{selectedBranch.name}</h1>
         <p>
-          Superadmin branch report view from attendance to feedback ({selectedBranch.location})
+          Branch report view from attendance to feedback ({selectedBranch.location})
         </p>
       </header>
 

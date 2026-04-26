@@ -7,7 +7,7 @@ import Table from '../../shared/components/Table'
 const userColumns = [
   { key: 'name', label: 'Name' },
   { key: 'email', label: 'Email' },
-  { key: 'role', label: 'Role' },
+  { key: 'role', label: 'Access' },
   { key: 'branch', label: 'Assigned Branch' },
 ]
 
@@ -36,7 +36,7 @@ function BranchUsersPage() {
   const [editFormData, setEditFormData] = useState(defaultEditUserForm)
   const [pendingFormData, setPendingFormData] = useState(null)
   const [pendingAction, setPendingAction] = useState('create')
-  const [superAdminPassword, setSuperAdminPassword] = useState('')
+  const [authorizationPassword, setAuthorizationPassword] = useState('')
   const [users, setUsers] = useState([])
   const [loading, setLoading] = useState(false)
   const [loadingBranches, setLoadingBranches] = useState(false)
@@ -45,7 +45,7 @@ function BranchUsersPage() {
   const [error, setError] = useState('')
   const [successMessage, setSuccessMessage] = useState('')
 
-  const adminUsers = users.filter((user) => user.roleKey === 'admin')
+  const editableUsers = users.filter((user) => user.roleKey !== 'super_admin')
 
   const buildEditFormFromUser = (user) => {
     const defaultBranch = user?.branch && user.branch !== 'No assigned branch yet' ? user.branch : ''
@@ -99,17 +99,13 @@ function BranchUsersPage() {
       setError('')
       const response = await api.get('/users')
       const allUsers = response.data?.data || []
-      const adminAndSuperAdminUsers = allUsers.filter(
-        (user) => user.role === 'admin' || user.role === 'super_admin',
-      )
-
       setUsers(
-        adminAndSuperAdminUsers.map((user) => ({
+        allUsers.map((user) => ({
           id: user._id,
           name: user.name,
           email: user.email,
           roleKey: user.role,
-          role: user.role === 'super_admin' ? 'Superadmin' : 'Admin',
+          role: user.role === 'super_admin' ? 'Full Access' : 'Console Access',
           branch:
             user.role === 'super_admin'
               ? 'All Branches'
@@ -162,7 +158,7 @@ function BranchUsersPage() {
     const { name, value } = event.target
 
     if (name === 'userId') {
-      const selectedUser = adminUsers.find((user) => user.id === value)
+      const selectedUser = editableUsers.find((user) => user.id === value)
       setEditFormData(buildEditFormFromUser(selectedUser))
       return
     }
@@ -208,30 +204,30 @@ function BranchUsersPage() {
       setSuccessMessage('')
 
       if (pendingAction === 'create') {
-        await api.post('/auth/admin-users', {
+        await api.post('/auth/users', {
           ...pendingFormData,
-          superadminPassword: superAdminPassword,
+          authorizationPassword,
         })
 
-        setSuccessMessage('Admin user created successfully.')
+        setSuccessMessage('User created successfully.')
         setFormData(defaultUserForm)
       } else {
-        await api.put(`/auth/admin-users/${pendingFormData.userId}`, {
+        await api.put(`/auth/users/${pendingFormData.userId}`, {
           ...pendingFormData,
-          superadminPassword: superAdminPassword,
+          authorizationPassword,
         })
 
-        setSuccessMessage('Admin user updated successfully.')
+        setSuccessMessage('User updated successfully.')
         setEditFormData(defaultEditUserForm)
       }
 
-      setSuperAdminPassword('')
+      setAuthorizationPassword('')
       setPendingFormData(null)
       setPendingAction('create')
       setIsConfirmModalOpen(false)
       await fetchUsers()
     } catch (err) {
-      setError(err.response?.data?.message || 'Failed to save admin user')
+      setError(err.response?.data?.message || 'Failed to save user')
     } finally {
       setLoading(false)
     }
@@ -241,7 +237,7 @@ function BranchUsersPage() {
     <section>
       <header className="page-header">
         <h1>User Management</h1>
-        <p>Create Admin users and assign each account to exactly one branch.</p>
+        <p>Create user accounts and assign branch access.</p>
       </header>
 
       {error ? <p className="status-warning">{error}</p> : null}
@@ -255,10 +251,10 @@ function BranchUsersPage() {
             <Button
               variant="outline"
               onClick={() => {
-                setEditFormData(buildEditFormFromUser(adminUsers[0]))
+                setEditFormData(buildEditFormFromUser(editableUsers[0]))
                 setIsEditModalOpen(true)
               }}
-              disabled={!adminUsers.length}
+              disabled={!editableUsers.length}
             >
               Edit User
             </Button>
@@ -323,15 +319,15 @@ function BranchUsersPage() {
             <input id="location" name="location" value={formData.location} readOnly />
           </div>
 
-          <p className="status-neutral">Role will be assigned automatically as Admin.</p>
+          <p className="status-neutral">New users can access the main console after login.</p>
           <Button type="submit">Continue</Button>
         </form>
       </Modal>
 
-      <Modal title="Edit Admin User" isOpen={isEditModalOpen} onClose={() => setIsEditModalOpen(false)}>
+      <Modal title="Edit User" isOpen={isEditModalOpen} onClose={() => setIsEditModalOpen(false)}>
         <form className="modal-form-scroll" onSubmit={handleEditUser}>
           <div className="form-group">
-            <label htmlFor="editUserId">Admin User</label>
+            <label htmlFor="editUserId">User</label>
             <select
               id="editUserId"
               name="userId"
@@ -339,7 +335,7 @@ function BranchUsersPage() {
               onChange={handleEditFormChange}
               required
             >
-              {adminUsers.map((user) => (
+              {editableUsers.map((user) => (
                 <option key={user.id} value={user.id}>
                   {user.name} ({user.email})
                 </option>
@@ -401,19 +397,19 @@ function BranchUsersPage() {
       </Modal>
 
       <Modal
-        title={pendingAction === 'edit' ? 'Confirm Admin Update' : 'Enter Superadmin Password to Confirm'}
+        title={pendingAction === 'edit' ? 'Confirm User Update' : 'Confirm User Creation'}
         isOpen={isConfirmModalOpen}
         onClose={() => setIsConfirmModalOpen(false)}
       >
         <form className="modal-form-scroll" onSubmit={handleConfirmAction}>
           <div className="form-group">
-            <label htmlFor="superadminPassword">Superadmin Password</label>
+            <label htmlFor="authorizationPassword">Authorization Password</label>
             <input
-              id="superadminPassword"
-              name="superadminPassword"
+              id="authorizationPassword"
+              name="authorizationPassword"
               type="password"
-              value={superAdminPassword}
-              onChange={(event) => setSuperAdminPassword(event.target.value)}
+              value={authorizationPassword}
+              onChange={(event) => setAuthorizationPassword(event.target.value)}
               required
             />
           </div>

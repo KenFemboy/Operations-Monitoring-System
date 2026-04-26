@@ -1,5 +1,5 @@
 export const settingsDefaults = {
   systemName: "Ally's",
-  supportEmail: 'superadmin@allys.local',
+  supportEmail: 'support@allys.local',
   timezone: 'Asia/Manila',
 }

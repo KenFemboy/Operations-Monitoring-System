@@ -1,12 +1,13 @@
 import { useContext, useMemo, useState } from "react";
 import { Outlet, useLocation } from "react-router-dom";
 import { AuthContext } from "../auth/context/AuthContext";
-import Sidebar from "../components/superadmin/Sidebar";
-import TopNavbar from "../components/superadmin/TopNavbar";
-import "../styles/superadmin-dashboard.css";
+import Sidebar from "../components/appShell/Sidebar";
+import TopNavbar from "../components/appShell/TopNavbar";
+import "../styles/app-shell.css";
 
 const routeTitles = {
   dashboard: "Dashboard",
+  reports: "Reports",
   branches: "Branches",
   users: "Branch Users",
   employees: "Employees",
@@ -17,9 +18,10 @@ const routeTitles = {
   incidents: "Incidents",
   nte: "NTE Monitoring",
   plantilla: "Plantilla",
+  payroll: "Payroll",
   contributions: "Contributions",
   leaves: "Leaves",
-  reports: "Reports",
+  settings: "Settings",
 };
 
 const getPageTitle = (pathname) => {

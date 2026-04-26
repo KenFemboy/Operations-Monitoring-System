@@ -234,7 +234,7 @@ function BranchesPage() {
       id: branch.id,
       name: branch.branchName || branch.locationRaw,
     })
-    navigate('/superadmin/employees')
+    navigate('/app/employees')
   }
 
   return (

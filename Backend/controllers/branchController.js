@@ -250,7 +250,7 @@ export const getMyBranch = async (req, res) => {
     if (!branch) {
       return res.status(404).json({
         success: false,
-        message: 'No branch assigned to this admin account.',
+        message: 'No branch assigned to this account.',
       });
     }
 
@@ -280,7 +280,7 @@ export const updateMyBranch = async (req, res) => {
     if (!branch) {
       return res.status(404).json({
         success: false,
-        message: 'No branch assigned to this admin account.',
+        message: 'No branch assigned to this account.',
       });
     }
 
@@ -314,7 +314,7 @@ export const updateMyBranch = async (req, res) => {
 
     const updatedBranch = await branch.save();
 
-    // Keep the admin account synchronized with branch assignment fields.
+    // Keep the account synchronized with branch assignment fields.
     user.branchId = updatedBranch._id;
     user.branch = updatedBranch.branchName;
     await user.save();

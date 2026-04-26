@@ -1,7 +1,7 @@
-import { useContext, useEffect, useState } from "react";
+import { useContext, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { AuthContext } from "../context/AuthContext";
-import { getHomeRouteByRole } from "../utils/roleRoutes";
+import { getHomeRoute } from "../utils/appRoutes";
 import "./Login.css";
 
 const emptyLoginForm = {
@@ -18,13 +18,6 @@ export default function Login() {
   const [error, setError] = useState("");
   const [showPassword, setShowPassword] = useState(false);
 
-  useEffect(() => {
-    // Always start login with blank credentials, including after logout redirects.
-    setForm(emptyLoginForm);
-    setError("");
-    setShowPassword(false);
-  }, []);
-
   const handleChange = (e) =>
     setForm({ ...form, [e.target.name]: e.target.value });
 
@@ -40,8 +33,8 @@ export default function Login() {
     setError("");
 
     try {
-      const loggedInUser = await login(form.identifier, form.password);
-      navigate(getHomeRouteByRole(loggedInUser), { replace: true });
+      await login(form.identifier, form.password);
+      navigate(getHomeRoute(), { replace: true });
     } catch (err) {
       setError(err.response?.data?.message || err.message || "Login failed");
     } finally {
