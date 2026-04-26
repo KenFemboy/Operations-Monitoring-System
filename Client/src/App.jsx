@@ -18,17 +18,8 @@ import {
   
   BranchesPage as SuperadminBranchesPage,
   BranchUsersPage as SuperadminBranchUsersPage,
-  ContributionsPage as SuperadminContributionsPage,
   DashboardPage as SuperadminDashboardPage,
-  EmployeesPage as SuperadminEmployeesPage,
-  FeedbackPage as SuperadminFeedbackPage,
-  IncidentsPage as SuperadminIncidentsPage,
-  InventoryPage as SuperadminInventoryPage,
-  LeavesPage as SuperadminLeavesPage,
-  NtePage as SuperadminNtePage,
-  PlantillaPage as SuperadminPlantillaPage,
-  ReportsPage as SuperadminReportsPage,
-  SalesPage as SuperadminSalesPage,
+  EmployeesPage as SuperadminEmployeesPage
 } from "./features/superadmin/pages";
 
 const isSuperadminRole = (role) =>
@@ -118,16 +109,7 @@ export default function App() {
             <Route path="branches" element={<SuperadminBranchesPage />} />
             <Route path="branches/users" element={<SuperadminBranchUsersPage />} />
             <Route path="employees" element={<SuperadminEmployeesPage />} />
-            <Route path="inventory" element={<SuperadminInventoryPage />} />
-            <Route path="sales" element={<SuperadminSalesPage />} />
             
-            <Route path="feedback" element={<SuperadminFeedbackPage />} />
-            <Route path="incidents" element={<SuperadminIncidentsPage />} />
-            <Route path="nte" element={<SuperadminNtePage />} />
-            <Route path="plantilla" element={<SuperadminPlantillaPage />} />
-            <Route path="contributions" element={<SuperadminContributionsPage />} />
-            <Route path="leaves" element={<SuperadminLeavesPage />} />
-            <Route path="reports" element={<SuperadminReportsPage />} />
           </Route>
 
           {/* Backward compatible entry */}
