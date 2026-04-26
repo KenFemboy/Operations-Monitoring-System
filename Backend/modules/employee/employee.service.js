@@ -22,4 +22,7 @@ export const createEmployee = (data) => employeeRepo.create(data);
 
 export const getEmployees = () => employeeRepo.findAll();
 
+export const getEmployeesByBranchId = (branchId) =>
+  employeeRepo.findByBranchId(branchId);
+
 export const updateEmployee = (id, data) => employeeRepo.update(id, data);

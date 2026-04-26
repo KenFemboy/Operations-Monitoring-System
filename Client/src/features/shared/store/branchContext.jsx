@@ -9,8 +9,9 @@ const branches = [
 
 const BranchContext = createContext(undefined)
 
-function BranchProvider({ children, lockedBranch = null, forceReadOnly }) {
+function BranchProvider({ children, lockedBranch = null }) {
   const [activeBranch, setActiveBranchState] = useState(lockedBranch || 'Tagum City')
+  const [activeBranchId, setActiveBranchId] = useState(null)
 
   const setActiveBranch = (nextBranch) => {
     if (lockedBranch) {
@@ -18,6 +19,18 @@ function BranchProvider({ children, lockedBranch = null, forceReadOnly }) {
     }
 
     setActiveBranchState(nextBranch)
+    setActiveBranchId(null)
+  }
+
+  const setActiveBranchSelection = ({ id, name }) => {
+    if (lockedBranch) {
+      return
+    }
+
+    if (name) {
+      setActiveBranchState(name)
+    }
+    setActiveBranchId(id || null)
   }
 
   const activeBranchMeta = useMemo(() => {
@@ -25,20 +38,22 @@ function BranchProvider({ children, lockedBranch = null, forceReadOnly }) {
   }, [activeBranch])
 
   const isMainBranch = activeBranch === 'Tagum City'
-  const isReadOnly = typeof forceReadOnly === 'boolean' ? forceReadOnly : !isMainBranch
+  const isReadOnly = false
   const displayBranchName = lockedBranch ? getShortBranchName(activeBranch) : activeBranch
 
   const value = useMemo(
     () => ({
       branches,
       activeBranch,
+      activeBranchId,
       displayBranchName,
       activeBranchMeta,
       isMainBranch,
       isReadOnly,
       setActiveBranch,
+      setActiveBranchSelection,
     }),
-    [activeBranch, displayBranchName, activeBranchMeta, isMainBranch, isReadOnly],
+    [activeBranch, activeBranchId, displayBranchName, activeBranchMeta, isMainBranch, isReadOnly],
   )
 
   return <BranchContext.Provider value={value}>{children}</BranchContext.Provider>

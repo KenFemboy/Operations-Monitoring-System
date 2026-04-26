@@ -28,6 +28,7 @@ router.get("/health", (_req, res) => {
 });
 
 router.use("/employees", employeeRoutes);
+router.use("/empoyee", employeeRoutes);
 router.use("/departments", departmentRoutes);
 router.use("/branches", branchRoutes);
 router.use("/payrolls", payrollRoutes);

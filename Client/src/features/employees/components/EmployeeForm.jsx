@@ -4,12 +4,20 @@ import Button from '../../shared/components/Button'
 const defaultForm = {
   firstName: '',
   lastName: '',
+  middleName: '',
+  birthDate: '',
+  gender: '',
   role: '',
   assignedBranchId: '',
+  dateHired: '',
   status: 'active',
   address: '',
   contactNumber: '',
   email: '',
+  sss: '',
+  philhealth: '',
+  pagibig: '',
+  tin: '',
 }
 
 function EmployeeForm({ onClose, onSave, initialData, branchOptions = [], isSaving = false }) {
@@ -21,12 +29,20 @@ function EmployeeForm({ onClose, onSave, initialData, branchOptions = [], isSavi
     return {
       firstName: initialData.firstName || '',
       lastName: initialData.lastName || '',
+      middleName: initialData.middleName || '',
+      birthDate: initialData.birthDate ? String(initialData.birthDate).slice(0, 10) : '',
+      gender: initialData.gender || '',
       role: initialData.role || '',
       assignedBranchId: initialData.assignedBranchId || '',
+      dateHired: initialData.dateHired ? String(initialData.dateHired).slice(0, 10) : '',
       status: initialData.status || 'active',
       address: initialData.address || '',
       contactNumber: initialData.contactNumber || '',
       email: initialData.email || '',
+      sss: initialData.governmentIds?.sss || '',
+      philhealth: initialData.governmentIds?.philhealth || '',
+      pagibig: initialData.governmentIds?.pagibig || '',
+      tin: initialData.governmentIds?.tin || '',
     }
   }, [initialData])
 
@@ -46,12 +62,22 @@ function EmployeeForm({ onClose, onSave, initialData, branchOptions = [], isSavi
     onSave({
       firstName: formData.firstName.trim(),
       lastName: formData.lastName.trim(),
+      middleName: formData.middleName.trim(),
+      birthDate: formData.birthDate || undefined,
+      gender: formData.gender || undefined,
       role: formData.role.trim(),
       assignedBranchId: formData.assignedBranchId || undefined,
+      dateHired: formData.dateHired || undefined,
       status: formData.status,
       address: formData.address.trim(),
       contactNumber: formData.contactNumber.trim(),
       email: formData.email.trim(),
+      governmentIds: {
+        sss: formData.sss.trim(),
+        philhealth: formData.philhealth.trim(),
+        pagibig: formData.pagibig.trim(),
+        tin: formData.tin.trim(),
+      },
     })
   }
 
@@ -70,9 +96,27 @@ function EmployeeForm({ onClose, onSave, initialData, branchOptions = [], isSavi
 
       <div className="form-grid-two">
         <div className="form-group">
+          <label htmlFor="middleName">Middle Name</label>
+          <input id="middleName" name="middleName" value={formData.middleName} onChange={handleChange} />
+        </div>
+        <div className="form-group">
+          <label htmlFor="birthDate">Birth Date</label>
+          <input id="birthDate" name="birthDate" type="date" value={formData.birthDate} onChange={handleChange} />
+        </div>
+      </div>
+
+      <div className="form-grid-two">
+        <div className="form-group">
+          <label htmlFor="gender">Gender</label>
+          <input id="gender" name="gender" value={formData.gender} onChange={handleChange} placeholder="e.g. Male" />
+        </div>
+        <div className="form-group">
           <label htmlFor="role">Role</label>
           <input id="role" name="role" value={formData.role} onChange={handleChange} required />
         </div>
+      </div>
+
+      <div className="form-grid-two">
         <div className="form-group">
           <label htmlFor="assignedBranch">Assigned Branch</label>
           <select
@@ -88,6 +132,10 @@ function EmployeeForm({ onClose, onSave, initialData, branchOptions = [], isSavi
               </option>
             ))}
           </select>
+        </div>
+        <div className="form-group">
+          <label htmlFor="dateHired">Date Hired</label>
+          <input id="dateHired" name="dateHired" type="date" value={formData.dateHired} onChange={handleChange} />
         </div>
       </div>
 
@@ -118,6 +166,28 @@ function EmployeeForm({ onClose, onSave, initialData, branchOptions = [], isSavi
       <div className="form-group">
         <label htmlFor="address">Address</label>
         <input id="address" name="address" value={formData.address} onChange={handleChange} />
+      </div>
+
+      <div className="form-grid-two">
+        <div className="form-group">
+          <label htmlFor="sss">SSS</label>
+          <input id="sss" name="sss" value={formData.sss} onChange={handleChange} />
+        </div>
+        <div className="form-group">
+          <label htmlFor="philhealth">PhilHealth</label>
+          <input id="philhealth" name="philhealth" value={formData.philhealth} onChange={handleChange} />
+        </div>
+      </div>
+
+      <div className="form-grid-two">
+        <div className="form-group">
+          <label htmlFor="pagibig">Pag-IBIG</label>
+          <input id="pagibig" name="pagibig" value={formData.pagibig} onChange={handleChange} />
+        </div>
+        <div className="form-group">
+          <label htmlFor="tin">TIN</label>
+          <input id="tin" name="tin" value={formData.tin} onChange={handleChange} />
+        </div>
       </div>
 
       <div className="modal-form-actions">

@@ -46,21 +46,9 @@ const employeeSchema = new mongoose.Schema(
       type: String,
       trim: true,
     },
-    departmentId: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "Department",
-    },
-    positionId: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "Position",
-    },
     assignedBranchId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "Branch",
-    },
-    employmentType: {
-      type: String,
-      enum: ["regular", "contractual"],
     },
     dateHired: {
       type: Date,
@@ -69,12 +57,6 @@ const employeeSchema = new mongoose.Schema(
       type: String,
       enum: ["active", "inactive"],
       default: "active",
-    },
-    basicSalary: {
-      type: Number,
-    },
-    dailyRate: {
-      type: Number,
     },
     governmentIds: {
       sss: {

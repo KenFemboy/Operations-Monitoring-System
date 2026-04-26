@@ -1,4 +1,5 @@
 import * as employeeService from "../modules/employee/employee.service.js";
+import mongoose from "mongoose";
 
 export const createEmployee = async (req, res) => {
   try {
@@ -40,6 +41,32 @@ export const createEmployee = async (req, res) => {
 export const getEmployees = async (_req, res) => {
   try {
     const employees = await employeeService.getEmployees();
+
+    res.status(200).json({
+      success: true,
+      count: employees.length,
+      data: employees,
+    });
+  } catch (err) {
+    res.status(500).json({
+      success: false,
+      message: err.message,
+    });
+  }
+};
+
+export const getEmployeesByBranchId = async (req, res) => {
+  try {
+    const { branchId } = req.params;
+
+    if (!mongoose.Types.ObjectId.isValid(branchId)) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid branchId",
+      });
+    }
+
+    const employees = await employeeService.getEmployeesByBranchId(branchId);
 
     res.status(200).json({
       success: true,

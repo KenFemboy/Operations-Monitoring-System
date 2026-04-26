@@ -43,6 +43,19 @@ export const employeesService = {
     return result?.data || []
   },
 
+  getByBranchId: async (branchId) => {
+    if (!branchId) {
+      return []
+    }
+
+    const result = await fetchApi(
+      `/api/employees/by-branch/${branchId}`,
+      undefined,
+      'Failed to fetch employees by branch',
+    )
+    return result?.data || []
+  },
+
   create: async (payload) => {
     const result = await fetchApi('/api/employees/create', {
       method: 'POST',
