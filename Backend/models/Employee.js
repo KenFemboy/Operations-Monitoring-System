@@ -1,4 +1,3 @@
-// models/Employee.js
 import mongoose from "mongoose";
 
 const employeeSchema = new mongoose.Schema(
@@ -7,84 +6,53 @@ const employeeSchema = new mongoose.Schema(
       type: String,
       required: true,
       unique: true,
-      trim: true,
     },
+
     firstName: {
       type: String,
       required: true,
-      trim: true,
     },
+
     lastName: {
       type: String,
       required: true,
-      trim: true,
     },
-    middleName: {
-      type: String,
-      trim: true,
-    },
-    birthDate: {
-      type: Date,
-    },
-    gender: {
-      type: String,
-      trim: true,
-    },
-    address: {
-      type: String,
-      trim: true,
-    },
-    contactNumber: {
-      type: String,
-      trim: true,
-    },
+
     email: {
       type: String,
-      trim: true,
+      unique: true,
+      sparse: true,
     },
-    role: {
+
+    phone: String,
+
+    position: {
       type: String,
-      trim: true,
+      required: true,
     },
-    plantillaId: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "Plantilla",
-    },
-    assignedBranchId: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "Branch",
-    },
-    dateHired: {
-      type: Date,
-    },
-    status: {
+
+    branch: {
       type: String,
-      enum: ["active", "inactive"],
+      required: true,
+    },
+
+    employmentStatus: {
+      type: String,
+      enum: ["active", "inactive", "resigned", "terminated"],
       default: "active",
     },
-    governmentIds: {
-      sss: {
-        type: String,
-        trim: true,
-      },
-      philhealth: {
-        type: String,
-        trim: true,
-      },
-      pagibig: {
-        type: String,
-        trim: true,
-      },
-      tin: {
-        type: String,
-        trim: true,
-      },
+
+    salaryRate: {
+      type: Number,
+      default: 0,
+    },
+
+    dateHired: {
+      type: Date,
+      default: Date.now,
     },
   },
   { timestamps: true }
 );
-
-employeeSchema.index({ assignedBranchId: 1, role: 1, status: 1 });
-employeeSchema.index({ plantillaId: 1, status: 1 });
 
 export default mongoose.model("Employee", employeeSchema);
