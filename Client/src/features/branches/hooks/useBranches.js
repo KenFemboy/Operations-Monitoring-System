@@ -56,7 +56,28 @@ function useBranches() {
     }
   }, [fetchAll])
 
-  return { branches, loading, error, fetchAll, searchByLocation, createBranch, updateBranch }
+  const deleteBranch = useCallback(async (branchId, authorizationPassword) => {
+    try {
+      setError('')
+      const result = await branchesService.delete(branchId, authorizationPassword)
+      await fetchAll()
+      return result
+    } catch (err) {
+      setError(err.message || 'Failed to delete branch')
+      throw err
+    }
+  }, [fetchAll])
+
+  return {
+    branches,
+    loading,
+    error,
+    fetchAll,
+    searchByLocation,
+    createBranch,
+    updateBranch,
+    deleteBranch,
+  }
 }
 
 export default useBranches

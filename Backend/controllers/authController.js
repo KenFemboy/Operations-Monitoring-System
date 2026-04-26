@@ -1,6 +1,7 @@
 // controllers/authController.js
 import User from "../models/User.js";
 import Branch from "../models/Branch.js";
+import ArchiveEntry from "../models/ArchiveEntry.js";
 import bcrypt from "bcryptjs";
 import { generateToken } from "../utils/generateToken.js";
 
@@ -214,6 +215,64 @@ export const updateAdminUserAssignment = async (req, res) => {
     return res.status(200).json({
       message: "User updated successfully",
       user: sanitizeUser(targetUser),
+    });
+  } catch (error) {
+    return res.status(500).json({ message: error.message });
+  }
+};
+
+export const deleteAdminUser = async (req, res) => {
+  try {
+    const { userId } = req.params;
+    const authorizationPassword = req.body.authorizationPassword || req.body.superadminPassword;
+
+    if (!authorizationPassword) {
+      return res.status(400).json({
+        message: "Authorization password is required",
+      });
+    }
+
+    const currentUser = await User.findById(req.user.id);
+
+    if (!currentUser) {
+      return res.status(401).json({ message: "Current user not found" });
+    }
+
+    const isAuthorizationPasswordValid = await bcrypt.compare(
+      authorizationPassword,
+      currentUser.password,
+    );
+
+    if (!isAuthorizationPasswordValid) {
+      return res.status(401).json({ message: "Invalid authorization password" });
+    }
+
+    const targetUser = await User.findById(userId).populate("branchId");
+
+    if (!targetUser) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    if (targetUser.role === "super_admin") {
+      return res.status(403).json({ message: "Super admin user cannot be deleted" });
+    }
+
+    if (String(targetUser._id) === String(currentUser._id)) {
+      return res.status(400).json({ message: "You cannot delete your own account" });
+    }
+
+    await ArchiveEntry.create({
+      entityType: "user",
+      entityId: String(targetUser._id),
+      displayName: targetUser.name,
+      snapshot: sanitizeUser(targetUser),
+      deletedBy: currentUser._id,
+    });
+
+    await User.deleteOne({ _id: targetUser._id });
+
+    return res.status(200).json({
+      message: "User deleted and archived successfully",
     });
   } catch (error) {
     return res.status(500).json({ message: error.message });

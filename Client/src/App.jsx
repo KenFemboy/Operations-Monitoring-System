@@ -29,6 +29,7 @@ import PayrollPage from "./features/payroll/pages/PayrollPage";
 import ContributionsPage from "./features/contributions/pages/ContributionsPage";
 import ReportsPage from "./features/reports/pages/ReportsPage";
 import SettingsPage from "./features/settings/pages/SettingsPage";
+import ArchivePage from "./features/settings/pages/ArchivePage";
 
 // Protect private routes
 function ProtectedRoute({ children }) {
@@ -114,6 +115,7 @@ export default function App() {
             <Route path="payroll" element={<PayrollPage />} />
             <Route path="contributions" element={<ContributionsPage />} />
             <Route path="settings" element={<SettingsPage />} />
+            <Route path="settings/archive" element={<ArchivePage />} />
           </Route>
 
           {/* Backward compatible entries */}

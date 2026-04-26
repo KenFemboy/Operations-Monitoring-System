@@ -37,6 +37,11 @@ function BranchUsersPage() {
   const [pendingFormData, setPendingFormData] = useState(null)
   const [pendingAction, setPendingAction] = useState('create')
   const [authorizationPassword, setAuthorizationPassword] = useState('')
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false)
+  const [deleteUserId, setDeleteUserId] = useState('')
+  const [deleteAuthorizationPassword, setDeleteAuthorizationPassword] = useState('')
+  const [isDeleteSubmitting, setIsDeleteSubmitting] = useState(false)
+  const [showEditPassword, setShowEditPassword] = useState(false)
   const [users, setUsers] = useState([])
   const [loading, setLoading] = useState(false)
   const [loadingBranches, setLoadingBranches] = useState(false)
@@ -120,8 +125,12 @@ function BranchUsersPage() {
   }
 
   useEffect(() => {
-    fetchUsers()
-    fetchBranches()
+    const timerId = setTimeout(() => {
+      fetchUsers()
+      fetchBranches()
+    }, 0)
+
+    return () => clearTimeout(timerId)
   }, [])
 
   const handleFormChange = (event) => {
@@ -191,6 +200,48 @@ function BranchUsersPage() {
     setError('')
   }
 
+  const handleOpenEditModal = (user) => {
+    if (user.roleKey === 'super_admin') {
+      return
+    }
+
+    setEditFormData(buildEditFormFromUser(user))
+    setIsEditModalOpen(true)
+    setError('')
+  }
+
+  const handleDeleteUser = async (event) => {
+    event.preventDefault()
+
+    if (!deleteUserId) {
+      setError('Please select a user to delete')
+      return
+    }
+
+    try {
+      setIsDeleteSubmitting(true)
+      setLoading(true)
+      setError('')
+      setSuccessMessage('')
+
+      await api.delete(`/auth/users/${deleteUserId}`, {
+        data: {
+          authorizationPassword: deleteAuthorizationPassword,
+        },
+      })
+
+      setSuccessMessage('User deleted and archived successfully.')
+      setDeleteAuthorizationPassword('')
+      setIsDeleteModalOpen(false)
+      await fetchUsers()
+    } catch (err) {
+      setError(err.response?.data?.message || 'Failed to delete user')
+    } finally {
+      setLoading(false)
+      setIsDeleteSubmitting(false)
+    }
+  }
+
   const handleConfirmAction = async (event) => {
     event.preventDefault()
 
@@ -249,21 +300,32 @@ function BranchUsersPage() {
           <div className="action-row">
             <Button onClick={() => setIsModalOpen(true)}>Add User</Button>
             <Button
-              variant="outline"
+              variant="danger"
               onClick={() => {
-                setEditFormData(buildEditFormFromUser(editableUsers[0]))
-                setIsEditModalOpen(true)
+                setDeleteUserId(editableUsers[0]?.id || '')
+                setDeleteAuthorizationPassword('')
+                setIsDeleteModalOpen(true)
               }}
               disabled={!editableUsers.length}
             >
-              Edit User
+              Delete User
             </Button>
           </div>
         </div>
         {loading ? (
           <p style={{ padding: '1rem' }}>Loading users...</p>
         ) : (
-          <Table columns={userColumns} rows={users} />
+          <Table
+            columns={userColumns}
+            rows={users}
+            renderActions={(row) =>
+              row.roleKey === 'super_admin' ? null : (
+                <Button variant="outline" onClick={() => handleOpenEditModal(row)}>
+                  Edit
+                </Button>
+              )
+            }
+          />
         )}
       </section>
 
@@ -314,11 +376,6 @@ function BranchUsersPage() {
             </select>
           </div>
 
-          <div className="form-group">
-            <label htmlFor="location">Location</label>
-            <input id="location" name="location" value={formData.location} readOnly />
-          </div>
-
           <p className="status-neutral">New users can access the main console after login.</p>
           <Button type="submit">Continue</Button>
         </form>
@@ -326,22 +383,6 @@ function BranchUsersPage() {
 
       <Modal title="Edit User" isOpen={isEditModalOpen} onClose={() => setIsEditModalOpen(false)}>
         <form className="modal-form-scroll" onSubmit={handleEditUser}>
-          <div className="form-group">
-            <label htmlFor="editUserId">User</label>
-            <select
-              id="editUserId"
-              name="userId"
-              value={editFormData.userId}
-              onChange={handleEditFormChange}
-              required
-            >
-              {editableUsers.map((user) => (
-                <option key={user.id} value={user.id}>
-                  {user.name} ({user.email})
-                </option>
-              ))}
-            </select>
-          </div>
           <div className="form-group">
             <label htmlFor="editName">Name</label>
             <input id="editName" name="name" value={editFormData.name} onChange={handleEditFormChange} required />
@@ -359,15 +400,33 @@ function BranchUsersPage() {
           </div>
           <div className="form-group">
             <label htmlFor="editPassword">Password</label>
-            <input
-              id="editPassword"
-              name="password"
-              type="password"
-              minLength={8}
-              value={editFormData.password}
-              onChange={handleEditFormChange}
-              placeholder="Leave blank to keep current password"
-            />
+            <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'stretch' }}>
+              <input
+                id="editPassword"
+                name="password"
+                type={showEditPassword ? 'text' : 'password'}
+                minLength={8}
+                value={editFormData.password}
+                onChange={handleEditFormChange}
+                placeholder="Leave blank to keep current password"
+                style={{ flex: 1 }}
+              />
+              <button
+                type="button"
+                onClick={() => setShowEditPassword(!showEditPassword)}
+                style={{
+                  padding: '0 0.7rem',
+                  border: '1px solid #e2cdb9',
+                  borderRadius: '0.5rem',
+                  background: '#fff',
+                  cursor: 'pointer',
+                  fontSize: '1rem',
+                }}
+                title={showEditPassword ? 'Hide password' : 'Show password'}
+              >
+                {showEditPassword ? '👁️‍🗨️' : '👁️'}
+              </button>
+            </div>
           </div>
           <div className="form-group">
             <label htmlFor="editBranch">Assigned Branch</label>
@@ -387,12 +446,47 @@ function BranchUsersPage() {
             </select>
           </div>
 
-          <div className="form-group">
-            <label htmlFor="editLocation">Location</label>
-            <input id="editLocation" name="location" value={editFormData.location} readOnly />
-          </div>
-
           <Button type="submit">Continue</Button>
+        </form>
+      </Modal>
+
+      <Modal title="Delete User" isOpen={isDeleteModalOpen} onClose={() => setIsDeleteModalOpen(false)}>
+        <form className="modal-form-scroll" onSubmit={handleDeleteUser}>
+          <div className="form-group">
+            <label htmlFor="deleteUserId">User</label>
+            <select
+              id="deleteUserId"
+              name="deleteUserId"
+              value={deleteUserId}
+              onChange={(event) => setDeleteUserId(event.target.value)}
+              required
+            >
+              {editableUsers.map((user) => (
+                <option key={user.id} value={user.id}>
+                  {user.name} ({user.email})
+                </option>
+              ))}
+            </select>
+          </div>
+          <div className="form-group">
+            <label htmlFor="deleteUserAuthorizationPassword">Admin Password</label>
+            <input
+              id="deleteUserAuthorizationPassword"
+              name="deleteUserAuthorizationPassword"
+              type="password"
+              value={deleteAuthorizationPassword}
+              onChange={(event) => setDeleteAuthorizationPassword(event.target.value)}
+              required
+            />
+          </div>
+          <div className="modal-form-actions">
+            <Button variant="outline" onClick={() => setIsDeleteModalOpen(false)}>
+              Cancel
+            </Button>
+            <Button type="submit" variant="danger" disabled={isDeleteSubmitting}>
+              {isDeleteSubmitting ? 'Deleting...' : 'Delete User'}
+            </Button>
+          </div>
         </form>
       </Modal>
 

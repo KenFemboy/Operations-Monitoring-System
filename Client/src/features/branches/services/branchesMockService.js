@@ -69,6 +69,11 @@ const parseResponse = async (response, fallbackMessage) => {
   return result
 }
 
+const getAuthHeaders = () => {
+  const token = localStorage.getItem('token')
+  return token ? { Authorization: `Bearer ${token}` } : {}
+}
+
 export const branchRows = [
   {
     id: 1,
@@ -180,5 +185,19 @@ export const branchesService = {
 
     const result = await parseResponse(response, 'Failed to update branch')
     return result?.data
+  },
+
+  delete: async (branchId, authorizationPassword) => {
+    const response = await fetch(`${API_BASE_URL}/api/branches/${branchId}`, {
+      method: 'DELETE',
+      headers: {
+        'Content-Type': 'application/json',
+        ...getAuthHeaders(),
+      },
+      body: JSON.stringify({ authorizationPassword }),
+    })
+
+    await parseResponse(response, 'Failed to delete branch')
+    return true
   },
 }

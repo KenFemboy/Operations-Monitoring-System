@@ -22,6 +22,7 @@ const routeTitles = {
   contributions: "Contributions",
   leaves: "Leaves",
   settings: "Settings",
+  archive: "Archive",
 };
 
 const getPageTitle = (pathname) => {

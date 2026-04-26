@@ -1,5 +1,7 @@
 import Branch from '../models/Branch.js';
 import User from '../models/User.js';
+import bcrypt from 'bcryptjs';
+import ArchiveEntry from '../models/ArchiveEntry.js';
 
 const escapeRegex = (value) => value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 
@@ -332,6 +334,86 @@ export const updateMyBranch = async (req, res) => {
       });
     }
 
+    return res.status(500).json({
+      success: false,
+      message: err.message,
+    });
+  }
+};
+
+export const deleteBranchById = async (req, res) => {
+  try {
+    const { branchId } = req.params;
+    const authorizationPassword =
+      req.body?.authorizationPassword || req.body?.superadminPassword;
+
+    if (!authorizationPassword) {
+      return res.status(400).json({
+        success: false,
+        message: 'Authorization password is required.',
+      });
+    }
+
+    const currentUser = await User.findById(req.user?.id);
+
+    if (!currentUser) {
+      return res.status(401).json({
+        success: false,
+        message: 'Current user not found.',
+      });
+    }
+
+    const isAuthorizationPasswordValid = await bcrypt.compare(
+      authorizationPassword,
+      currentUser.password,
+    );
+
+    if (!isAuthorizationPasswordValid) {
+      return res.status(401).json({
+        success: false,
+        message: 'Invalid authorization password.',
+      });
+    }
+
+    const branch = await Branch.findById(branchId);
+
+    if (!branch) {
+      return res.status(404).json({
+        success: false,
+        message: 'Branch not found.',
+      });
+    }
+
+    const detachedUsersCount = await User.countDocuments({ branchId: branch._id });
+
+    await ArchiveEntry.create({
+      entityType: 'branch',
+      entityId: String(branch._id),
+      displayName: branch.branchName,
+      snapshot: {
+        ...branch.toObject(),
+        detachedUsersCount,
+      },
+      deletedBy: currentUser._id,
+    });
+
+    await User.updateMany(
+      { branchId: branch._id },
+      {
+        $set: {
+          branchId: null,
+          branch: '',
+        },
+      },
+    );
+
+    await Branch.deleteOne({ _id: branch._id });
+
+    return res.status(200).json({
+      success: true,
+      message: 'Branch deleted and archived successfully.',
+    });
+  } catch (err) {
     return res.status(500).json({
       success: false,
       message: err.message,

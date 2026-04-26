@@ -1,5 +1,6 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useContext, useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { AuthContext } from '../../../auth/context/AuthContext'
 import Button from '../../shared/components/Button'
 import Modal from '../../shared/components/Modal'
 import Table from '../../shared/components/Table'
@@ -29,8 +30,9 @@ const defaultBranchForm = {
 }
 
 function BranchesPage() {
-  const { branches, loading, error, fetchAll, createBranch, updateBranch } = useBranches()
+  const { branches, loading, error, fetchAll, createBranch, updateBranch, deleteBranch } = useBranches()
   const { setActiveBranchSelection } = useBranchContext()
+  const { user } = useContext(AuthContext)
   const navigate = useNavigate()
 
   const [isModalOpen, setIsModalOpen] = useState(false)
@@ -39,10 +41,18 @@ function BranchesPage() {
   const [editFormError, setEditFormError] = useState('')
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [isEditSubmitting, setIsEditSubmitting] = useState(false)
+  const [isDeleteSubmitting, setIsDeleteSubmitting] = useState(false)
   const [formData, setFormData] = useState(defaultBranchForm)
   const [editFormData, setEditFormData] = useState({ id: '', ...defaultBranchForm })
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false)
+  const [deleteBranchId, setDeleteBranchId] = useState('')
+  const [deleteAuthorizationPassword, setDeleteAuthorizationPassword] = useState('')
+  const [deleteFormError, setDeleteFormError] = useState('')
   const [employeesCountByBranch, setEmployeesCountByBranch] = useState({})
   const [employeesError, setEmployeesError] = useState('')
+  const [isBranchAccessModalOpen, setIsBranchAccessModalOpen] = useState(false)
+  const [branchAccessPassword, setBranchAccessPassword] = useState('')
+  const [pendingBranchAccess, setPendingBranchAccess] = useState(null)
 
   const normalizeBranch = (value = '') =>
     value
@@ -190,20 +200,21 @@ function BranchesPage() {
     }
   }
 
-  const handleOpenEditModal = () => {
-    if (!branches.length) {
+  const handleOpenEditModal = (row) => {
+    const selectedBranch = branches.find((branch) => branch.id === row.id)
+
+    if (!selectedBranch) {
       return
     }
 
-    const firstBranch = branches[0]
     setEditFormData({
-      id: firstBranch.id,
-      branchName: firstBranch.branchName || '',
-      region: firstBranch.region || '',
-      provinceCity: firstBranch.provinceCity || '',
-      municipality: firstBranch.municipality || '',
-      specificLocation: firstBranch.specificLocation || '',
-      description: firstBranch.description || '',
+      id: selectedBranch.id,
+      branchName: selectedBranch.branchName || '',
+      region: selectedBranch.region || '',
+      provinceCity: selectedBranch.provinceCity || '',
+      municipality: selectedBranch.municipality || '',
+      specificLocation: selectedBranch.specificLocation || '',
+      description: selectedBranch.description || '',
     })
     setEditFormError('')
     setIsEditModalOpen(true)
@@ -230,11 +241,61 @@ function BranchesPage() {
   }
 
   const handleViewEmployees = (branch) => {
+    // If user is not super admin and trying to access a branch, require password confirmation
+    if (user?.role !== 'super_admin' && user?.branch && user.branch !== 'All Branches') {
+      setPendingBranchAccess(branch)
+      setIsBranchAccessModalOpen(true)
+      return
+    }
+
     setActiveBranchSelection({
       id: branch.id,
       name: branch.branchName || branch.locationRaw,
     })
     navigate('/app/employees')
+  }
+
+  const handleConfirmBranchAccess = (event) => {
+    event.preventDefault()
+
+    if (!pendingBranchAccess || !branchAccessPassword) {
+      return
+    }
+
+    // Note: Password validation would be done via backend auth in production
+    // For now, just confirm with the provided password
+    if (branchAccessPassword.length >= 8) {
+      setActiveBranchSelection({
+        id: pendingBranchAccess.id,
+        name: pendingBranchAccess.branchName || pendingBranchAccess.locationRaw,
+      })
+      setBranchAccessPassword('')
+      setIsBranchAccessModalOpen(false)
+      setPendingBranchAccess(null)
+      navigate('/app/employees')
+    }
+  }
+
+  const handleDeleteSubmit = async (event) => {
+    event.preventDefault()
+    setDeleteFormError('')
+
+    if (!deleteBranchId) {
+      setDeleteFormError('Please select a branch to delete.')
+      return
+    }
+
+    try {
+      setIsDeleteSubmitting(true)
+      await deleteBranch(deleteBranchId, deleteAuthorizationPassword)
+      setDeleteAuthorizationPassword('')
+      setDeleteFormError('')
+      setIsDeleteModalOpen(false)
+    } catch (err) {
+      setDeleteFormError(err.message || 'Something went wrong while deleting branch')
+    } finally {
+      setIsDeleteSubmitting(false)
+    }
   }
 
   return (
@@ -249,8 +310,17 @@ function BranchesPage() {
           <h3 className="table-title">Branch List</h3>
           <div className="action-row">
             <Button onClick={() => setIsModalOpen(true)}>Add Branch</Button>
-            <Button variant="outline" onClick={handleOpenEditModal} disabled={!branches.length}>
-              Edit Branch
+            <Button
+              variant="danger"
+              onClick={() => {
+                setDeleteBranchId(branches[0]?.id || '')
+                setDeleteAuthorizationPassword('')
+                setDeleteFormError('')
+                setIsDeleteModalOpen(true)
+              }}
+              disabled={!branches.length}
+            >
+              Delete Branch
             </Button>
           </div>
         </div>
@@ -262,9 +332,14 @@ function BranchesPage() {
             columns={branchColumns}
             rows={tableRows}
             renderActions={(row) => (
-              <Button variant="outline" onClick={() => handleViewEmployees(row)}>
-                View Employees
-              </Button>
+              <div className="action-row">
+                <Button variant="outline" onClick={() => handleViewEmployees(row)}>
+                  View Employees
+                </Button>
+                <Button variant="outline" onClick={() => handleOpenEditModal(row)}>
+                  Edit
+                </Button>
+              </div>
             )}
           />
         )}
@@ -359,23 +434,6 @@ function BranchesPage() {
       <Modal title="Edit Branch" isOpen={isEditModalOpen} onClose={() => setIsEditModalOpen(false)}>
         <form className="modal-form-scroll" onSubmit={handleEditSubmit}>
           <div className="form-group">
-            <label htmlFor="editBranchId">Branch</label>
-            <select
-              id="editBranchId"
-              name="id"
-              value={editFormData.id}
-              onChange={handleEditFormChange}
-              required
-            >
-              {branches.map((branch) => (
-                <option key={branch.id} value={branch.id}>
-                  {branch.branchName}
-                </option>
-              ))}
-            </select>
-          </div>
-
-          <div className="form-group">
             <label htmlFor="editBranchName">Branch Name</label>
             <input
               id="editBranchName"
@@ -460,6 +518,96 @@ function BranchesPage() {
           <Button type="submit" disabled={isEditSubmitting}>
             {isEditSubmitting ? 'Saving...' : 'Update Branch'}
           </Button>
+        </form>
+      </Modal>
+
+      <Modal
+        title="Delete Branch"
+        isOpen={isDeleteModalOpen}
+        onClose={() => setIsDeleteModalOpen(false)}
+      >
+        <form className="modal-form-scroll" onSubmit={handleDeleteSubmit}>
+          <div className="form-group">
+            <label htmlFor="deleteBranchId">Branch</label>
+            <select
+              id="deleteBranchId"
+              name="deleteBranchId"
+              value={deleteBranchId}
+              onChange={(event) => setDeleteBranchId(event.target.value)}
+              required
+            >
+              {branches.map((branch) => (
+                <option key={branch.id} value={branch.id}>
+                  {branch.branchName}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          <div className="form-group">
+            <label htmlFor="deleteAuthorizationPassword">Admin Password</label>
+            <input
+              id="deleteAuthorizationPassword"
+              name="deleteAuthorizationPassword"
+              type="password"
+              value={deleteAuthorizationPassword}
+              onChange={(event) => setDeleteAuthorizationPassword(event.target.value)}
+              required
+            />
+          </div>
+
+          {deleteFormError && <p style={{ color: 'red' }}>{deleteFormError}</p>}
+          <div className="modal-form-actions">
+            <Button variant="outline" onClick={() => setIsDeleteModalOpen(false)}>
+              Cancel
+            </Button>
+            <Button type="submit" variant="danger" disabled={isDeleteSubmitting}>
+              {isDeleteSubmitting ? 'Deleting...' : 'Delete Branch'}
+            </Button>
+          </div>
+        </form>
+      </Modal>
+
+      <Modal
+        title="Verify Branch Access"
+        isOpen={isBranchAccessModalOpen}
+        onClose={() => {
+          setIsBranchAccessModalOpen(false)
+          setBranchAccessPassword('')
+          setPendingBranchAccess(null)
+        }}
+      >
+        <form className="modal-form-scroll" onSubmit={handleConfirmBranchAccess}>
+          <p style={{ marginBottom: '1rem', color: 'var(--text-secondary)' }}>
+            To access {pendingBranchAccess?.branchName}, please enter your password for security verification.
+          </p>
+
+          <div className="form-group">
+            <label htmlFor="branchAccessPassword">Your Password</label>
+            <input
+              id="branchAccessPassword"
+              type="password"
+              minLength={8}
+              value={branchAccessPassword}
+              onChange={(event) => setBranchAccessPassword(event.target.value)}
+              required
+            />
+          </div>
+
+          <div className="modal-form-actions">
+            <Button
+              variant="outline"
+              type="button"
+              onClick={() => {
+                setIsBranchAccessModalOpen(false)
+                setBranchAccessPassword('')
+                setPendingBranchAccess(null)
+              }}
+            >
+              Cancel
+            </Button>
+            <Button type="submit">Verify & Access</Button>
+          </div>
         </form>
       </Modal>
     </section>

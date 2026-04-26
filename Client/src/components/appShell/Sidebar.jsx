@@ -114,6 +114,11 @@ const navGroups = [
         hint: "System preferences",
         to: "/app/settings",
       },
+      {
+        label: "Archive",
+        hint: "Deleted records",
+        to: "/app/settings/archive",
+      },
     ],
   },
 ];
