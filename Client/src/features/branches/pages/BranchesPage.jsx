@@ -1,14 +1,21 @@
 import { useEffect, useMemo, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import Button from '../../shared/components/Button'
 import Modal from '../../shared/components/Modal'
 import SelectDropdown from '../../shared/components/SelectDropdown'
 import Table from '../../shared/components/Table'
+import { employeesService } from '../../employees/services/employeesService'
+import { plantillaRows } from '../../plantilla/services/plantillaMockService'
+import { useBranchContext } from '../../shared/store/branchContext'
 import useBranches from '../hooks/useBranches'
 import { philippineRegionLocations } from '../services/branchesMockService'
 
 const branchColumns = [
   { key: 'branchName', label: 'Branch Name' },
   { key: 'location', label: 'Location' },
+  { key: 'employeesCount', label: 'Employees' },
+  { key: 'plantillaRoles', label: 'Plantilla Roles' },
+  { key: 'plannedHeadcount', label: 'Planned Headcount' },
   { key: 'address', label: 'Address' },
   { key: 'description', label: 'Description' },
 ]
@@ -33,10 +40,22 @@ const specificLocationMap = {
 
 function BranchesPage() {
   const { branches, loading, error, fetchAll, createBranch } = useBranches()
+  const { setActiveBranch } = useBranchContext()
+  const navigate = useNavigate()
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [formError, setFormError] = useState('')
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [formData, setFormData] = useState(defaultBranchForm)
+  const [employeesCountByBranch, setEmployeesCountByBranch] = useState({})
+  const [employeesError, setEmployeesError] = useState('')
+
+  const normalizeBranch = (value = '') =>
+    value
+      .toLowerCase()
+      .replace(/\bmain\b/g, '')
+      .replace(/\bbranch\b/g, '')
+      .replace(/\s+/g, ' ')
+      .trim()
 
   const regionOptions = useMemo(() => Object.keys(philippineRegionLocations), [])
 
@@ -57,18 +76,75 @@ function BranchesPage() {
   }, [formData.area])
 
   const tableRows = useMemo(() => {
+    const plantillaMetricsByBranch = plantillaRows.reduce((acc, row) => {
+      const key = normalizeBranch(row.branch)
+      const required = Number(row.requiredCount ?? 1)
+
+      if (!acc[key]) {
+        acc[key] = { roles: 0, requiredCount: 0 }
+      }
+
+      acc[key].roles += 1
+      acc[key].requiredCount += Number.isFinite(required) ? required : 0
+      return acc
+    }, {})
+
     return branches.map((branch) => ({
       id: branch.id,
       branchName: branch.branchName,
       location: branch.region ? `${branch.location} (${branch.region})` : branch.location,
+      employeesCount:
+        employeesCountByBranch[normalizeBranch(branch.branchName)] ??
+        employeesCountByBranch[normalizeBranch(branch.location)] ??
+        0,
+      plantillaRoles:
+        plantillaMetricsByBranch[normalizeBranch(branch.branchName)]?.roles ??
+        plantillaMetricsByBranch[normalizeBranch(branch.location)]?.roles ??
+        0,
+      plannedHeadcount:
+        plantillaMetricsByBranch[normalizeBranch(branch.branchName)]?.requiredCount ??
+        plantillaMetricsByBranch[normalizeBranch(branch.location)]?.requiredCount ??
+        0,
       address: branch.address || '-',
       description: branch.description || '-',
     }))
-  }, [branches])
+  }, [branches, employeesCountByBranch])
 
   useEffect(() => {
     fetchAll()
   }, [fetchAll])
+
+  useEffect(() => {
+    const loadEmployeesByBranch = async () => {
+      try {
+        setEmployeesError('')
+        const rows = await employeesService.getAll()
+        const counts = rows.reduce((acc, employee) => {
+          const branchName =
+            employee.assignedBranchId?.branchName || employee.assignedBranch || employee.branch || ''
+
+          const key = normalizeBranch(branchName)
+          if (!key) {
+            return acc
+          }
+
+          acc[key] = (acc[key] || 0) + 1
+          return acc
+        }, {})
+
+        setEmployeesCountByBranch(counts)
+      } catch (err) {
+        setEmployeesError(err.message || 'Unable to load employee counts')
+      }
+    }
+
+    loadEmployeesByBranch()
+  }, [])
+
+  const handleOpenBranchWorkforce = (branch) => {
+    setActiveBranch(branch.location || branch.branchName)
+    navigate('/superadmin/employees')
+  }
 
   const handleChange = (event) => {
     const { name, value } = event.target
@@ -119,7 +195,7 @@ function BranchesPage() {
     <section>
       <header className="page-header">
         <h1>Branches</h1>
-        <p>Manage all branches.</p>
+        <p>Manage branches with their own employees and plantilla for payroll-ready planning.</p>
       </header>
 
       <section className="table-card">
@@ -129,8 +205,43 @@ function BranchesPage() {
         </div>
         {loading && <p>Loading branches...</p>}
         {error && <p style={{ color: 'red' }}>{error}</p>}
+        {employeesError && <p style={{ color: 'red' }}>{employeesError}</p>}
         {!loading && !error && <Table columns={branchColumns} rows={tableRows} />}
       </section>
+
+      {!loading && !error && tableRows.length ? (
+        <section className="table-card" style={{ marginTop: '1rem' }}>
+          <div className="table-toolbar">
+            <h3 className="table-title">Branch Workforce Setup</h3>
+          </div>
+          <div className="table-wrapper">
+            <table>
+              <thead>
+                <tr>
+                  <th>Branch</th>
+                  <th>Employees</th>
+                  <th>Planned Slots</th>
+                  <th>Action</th>
+                </tr>
+              </thead>
+              <tbody>
+                {tableRows.map((branch) => (
+                  <tr key={branch.id}>
+                    <td>{branch.branchName}</td>
+                    <td>{branch.employeesCount}</td>
+                    <td>{branch.plannedHeadcount}</td>
+                    <td>
+                      <Button variant="outline" onClick={() => handleOpenBranchWorkforce(branch)}>
+                        Open Workforce
+                      </Button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </section>
+      ) : null}
 
       <Modal title="Add Branch" isOpen={isModalOpen} onClose={() => setIsModalOpen(false)}>
         <form className="modal-form-scroll" onSubmit={handleSubmit}>

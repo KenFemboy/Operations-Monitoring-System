@@ -58,7 +58,25 @@
 .sd-nav {
   display: flex;
   flex-direction: column;
+  gap: 14px;
+  height: calc(100vh - 132px);
+  overflow-y: auto;
+  padding-right: 4px;
+}
+
+.sd-nav-group {
+  display: flex;
+  flex-direction: column;
   gap: 8px;
+}
+
+.sd-nav-group-title {
+  margin: 0;
+  padding: 0 10px;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--sd-text-muted);
 }
 
 .sd-nav-item {
@@ -67,18 +85,37 @@
   padding: 10px 12px;
   border-radius: 10px;
   font-weight: 500;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  border: 1px solid transparent;
   transition: transform 0.2s ease, background-color 0.2s ease, color 0.2s ease;
 }
 
 .sd-nav-item:hover {
   background: var(--sd-surface-soft);
-  transform: translateX(3px);
+  border-color: var(--sd-border);
+  transform: translateX(2px);
+}
+
+.sd-nav-item-label {
+  font-size: 14px;
+}
+
+.sd-nav-item-hint {
+  font-size: 11px;
+  color: var(--sd-text-muted);
 }
 
 .sd-nav-item.is-active {
   background: var(--sd-brand-soft);
   color: var(--sd-brand);
+  border-color: rgba(38, 93, 74, 0.2);
   font-weight: 600;
+}
+
+.sd-nav-item.is-active .sd-nav-item-hint {
+  color: #2c5d4a;
 }
 
 .sd-main {

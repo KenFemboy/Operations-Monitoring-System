@@ -8,7 +8,7 @@ import PlantillaCard from '../components/PlantillaCard'
 import PlantillaForm from '../components/PlantillaForm'
 
 function PlantillaPage() {
-  const { rows =[] , createPlantilla, updatePlantilla, deletePlantilla } = usePlantilla()
+  const { rows = [], createPlantilla, updatePlantilla, deletePlantilla } = usePlantilla()
   const { activeBranch, isReadOnly, branches } = useBranchContext()
 
   const [showForm, setShowForm] = useState(false)
@@ -32,10 +32,18 @@ function PlantillaPage() {
   }
 
   const handleSubmit = (data) => {
+    const selectedBranch = branches.find((branch) => branch.id === Number(data.branchId))
+
     if (selectedPlantilla) {
-      updatePlantilla(selectedPlantilla._id, data)
+      updatePlantilla(selectedPlantilla._id, {
+        ...data,
+        branch: selectedBranch?.name || activeBranch,
+      })
     } else {
-      createPlantilla(data)
+      createPlantilla({
+        ...data,
+        branch: selectedBranch?.name || activeBranch,
+      })
     }
     setShowForm(false)
   }
