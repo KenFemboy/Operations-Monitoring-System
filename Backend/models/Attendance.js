@@ -9,6 +9,12 @@ const attendanceSchema = new mongoose.Schema(
       ref: "Employee",
       required: true,
     },
+    branchId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Branch",
+      required: true,
+      index: true,
+    },
 
     date: {
       type: Date,
@@ -50,6 +56,7 @@ const attendanceSchema = new mongoose.Schema(
         "halfday",
         "leave",
         "holiday",
+        "timed_in",
       ],
       default: "present",
     },
@@ -79,5 +86,6 @@ const attendanceSchema = new mongoose.Schema(
 
 // 🚀 Prevent duplicate attendance per day
 attendanceSchema.index({ employee: 1, date: 1 }, { unique: true });
+attendanceSchema.index({ branchId: 1, date: 1 });
 
 export default mongoose.model("Attendance", attendanceSchema);

@@ -16,6 +16,7 @@ const toEmployeeRecord = (employee) => {
     birthDate: employee.birthDate || '',
     gender: employee.gender || '',
     role: employee.role || employee.positionId?.name || 'N/A',
+    plantillaId: employee.plantillaId?._id || employee.plantillaId || '',
     assignedBranch: employee.assignedBranchId?.branchName || 'N/A',
     assignedBranchId: employee.assignedBranchId?._id || '',
     dateHired: employee.dateHired || '',

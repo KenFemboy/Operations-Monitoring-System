@@ -46,6 +46,10 @@ const employeeSchema = new mongoose.Schema(
       type: String,
       trim: true,
     },
+    plantillaId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Plantilla",
+    },
     assignedBranchId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "Branch",
@@ -79,5 +83,8 @@ const employeeSchema = new mongoose.Schema(
   },
   { timestamps: true }
 );
+
+employeeSchema.index({ assignedBranchId: 1, role: 1, status: 1 });
+employeeSchema.index({ plantillaId: 1, status: 1 });
 
 export default mongoose.model("Employee", employeeSchema);

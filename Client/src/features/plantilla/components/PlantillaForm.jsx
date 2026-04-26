@@ -5,10 +5,10 @@ function PlantillaForm({ onSubmit, initialData = null, isLoading = false, branch
   const [formData, setFormData] = useState({
     branchId: '',
     role: '',
+    department: '',
     baseSalary: '',
     allowance: '',
     requiredCount: 1,
-    filledCount: 0,
     status: 'active',
     description: '',
   })
@@ -20,10 +20,10 @@ function PlantillaForm({ onSubmit, initialData = null, isLoading = false, branch
       setFormData({
         branchId: initialData.branchId || '',
         role: initialData.role || '',
+        department: initialData.department || '',
         baseSalary: initialData.baseSalary || '',
         allowance: initialData.allowance || '',
         requiredCount: initialData.requiredCount || 1,
-        filledCount: initialData.filledCount || 0,
         status: initialData.status || 'active',
         description: initialData.description || '',
       })
@@ -45,16 +45,12 @@ function PlantillaForm({ onSubmit, initialData = null, isLoading = false, branch
       newErrors.baseSalary = 'Base salary must be greater than 0'
     }
 
-    if (!formData.allowance || parseFloat(formData.allowance) < 0) {
+    if (formData.allowance !== '' && parseFloat(formData.allowance) < 0) {
       newErrors.allowance = 'Allowance cannot be negative'
     }
 
     if (!formData.requiredCount || parseInt(formData.requiredCount) < 1) {
       newErrors.requiredCount = 'Required count must be at least 1'
-    }
-
-    if (parseInt(formData.filledCount) > parseInt(formData.requiredCount)) {
-      newErrors.filledCount = 'Filled count cannot exceed required count'
     }
 
     setErrors(newErrors)
@@ -84,11 +80,14 @@ function PlantillaForm({ onSubmit, initialData = null, isLoading = false, branch
     }
 
     onSubmit({
-      ...formData,
+      branchId: formData.branchId,
+      role: formData.role.trim(),
+      department: formData.department.trim(),
       baseSalary: parseFloat(formData.baseSalary),
-      allowance: parseFloat(formData.allowance),
+      allowance: formData.allowance === '' ? 0 : parseFloat(formData.allowance),
       requiredCount: parseInt(formData.requiredCount),
-      filledCount: parseInt(formData.filledCount),
+      status: formData.status,
+      description: formData.description.trim(),
     })
   }
 
@@ -131,6 +130,21 @@ function PlantillaForm({ onSubmit, initialData = null, isLoading = false, branch
         {errors.role && <span className={styles.errorMessage}>{errors.role}</span>}
       </div>
 
+      <div className={styles.formGroup}>
+        <label htmlFor="department" className={styles.label}>
+          Department
+        </label>
+        <input
+          id="department"
+          type="text"
+          name="department"
+          value={formData.department}
+          onChange={handleChange}
+          placeholder="e.g., HR, Operations"
+          className={styles.input}
+        />
+      </div>
+
       <div className={styles.formGrid}>
         <div className={styles.formGroup}>
           <label htmlFor="baseSalary" className={styles.label}>
@@ -169,40 +183,22 @@ function PlantillaForm({ onSubmit, initialData = null, isLoading = false, branch
         </div>
       </div>
 
-      <div className={styles.formGrid}>
-        <div className={styles.formGroup}>
-          <label htmlFor="requiredCount" className={styles.label}>
-            Required Count *
-          </label>
-          <input
-            id="requiredCount"
-            type="number"
-            name="requiredCount"
-            value={formData.requiredCount}
-            onChange={handleChange}
-            min="1"
-            className={`${styles.input} ${errors.requiredCount ? styles.error : ''}`}
-          />
-          {errors.requiredCount && (
-            <span className={styles.errorMessage}>{errors.requiredCount}</span>
-          )}
-        </div>
-
-        <div className={styles.formGroup}>
-          <label htmlFor="filledCount" className={styles.label}>
-            Filled Count
-          </label>
-          <input
-            id="filledCount"
-            type="number"
-            name="filledCount"
-            value={formData.filledCount}
-            onChange={handleChange}
-            min="0"
-            className={`${styles.input} ${errors.filledCount ? styles.error : ''}`}
-          />
-          {errors.filledCount && <span className={styles.errorMessage}>{errors.filledCount}</span>}
-        </div>
+      <div className={styles.formGroup}>
+        <label htmlFor="requiredCount" className={styles.label}>
+          Required Count *
+        </label>
+        <input
+          id="requiredCount"
+          type="number"
+          name="requiredCount"
+          value={formData.requiredCount}
+          onChange={handleChange}
+          min="1"
+          className={`${styles.input} ${errors.requiredCount ? styles.error : ''}`}
+        />
+        {errors.requiredCount && (
+          <span className={styles.errorMessage}>{errors.requiredCount}</span>
+        )}
       </div>
 
       <div className={styles.formGroup}>

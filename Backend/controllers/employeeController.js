@@ -1,5 +1,6 @@
 import * as employeeService from "../modules/employee/employee.service.js";
 import mongoose from "mongoose";
+import { canAccessBranch } from "../middleware/accessControl.js";
 
 export const createEmployee = async (req, res) => {
   try {
@@ -31,6 +32,13 @@ export const createEmployee = async (req, res) => {
       });
     }
 
+    if (err.statusCode) {
+      return res.status(err.statusCode).json({
+        success: false,
+        message: err.message,
+      });
+    }
+
     res.status(500).json({
       success: false,
       message: err.message,
@@ -40,7 +48,9 @@ export const createEmployee = async (req, res) => {
 
 export const getEmployees = async (_req, res) => {
   try {
-    const employees = await employeeService.getEmployees();
+    const employees = _req.branchScope?.branchId
+      ? await employeeService.getEmployeesByBranchId(_req.branchScope.branchId)
+      : await employeeService.getEmployees();
 
     res.status(200).json({
       success: true,
@@ -58,6 +68,13 @@ export const getEmployees = async (_req, res) => {
 export const getEmployeesByBranchId = async (req, res) => {
   try {
     const { branchId } = req.params;
+
+    if (!canAccessBranch(req.user, branchId)) {
+      return res.status(403).json({
+        success: false,
+        message: "Forbidden: you can only access your assigned branch",
+      });
+    }
 
     if (!mongoose.Types.ObjectId.isValid(branchId)) {
       return res.status(400).json({
@@ -106,6 +123,29 @@ export const updateEmployee = async (req, res) => {
     }
 
     res.status(500).json({
+      success: false,
+      message: err.message,
+    });
+  }
+};
+
+export const deactivateEmployee = async (req, res) => {
+  try {
+    const employee = await employeeService.deactivateEmployee(req.params.id);
+
+    if (!employee) {
+      return res.status(404).json({
+        success: false,
+        message: "Employee not found",
+      });
+    }
+
+    return res.status(200).json({
+      success: true,
+      data: employee,
+    });
+  } catch (err) {
+    return res.status(err.statusCode || 500).json({
       success: false,
       message: err.message,
     });

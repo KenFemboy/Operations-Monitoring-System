@@ -12,13 +12,23 @@ const parseResponse = async (response, fallbackMessage) => {
 }
 
 const fetchApi = async (path, options, fallbackMessage) => {
+  const token = localStorage.getItem('token')
+  const headers = {
+    ...(options?.headers || {}),
+    ...(token ? { Authorization: `Bearer ${token}` } : {}),
+  }
+  const requestOptions = {
+    ...options,
+    headers,
+  }
+
   try {
-    const response = await fetch(`${API_BASE_URL}${path}`, options)
+    const response = await fetch(`${API_BASE_URL}${path}`, requestOptions)
     return await parseResponse(response, fallbackMessage)
   } catch (error) {
     if (error instanceof TypeError && API_BASE_URL !== API_FALLBACK_URL) {
       try {
-        const fallbackResponse = await fetch(`${API_FALLBACK_URL}${path}`, options)
+        const fallbackResponse = await fetch(`${API_FALLBACK_URL}${path}`, requestOptions)
         return await parseResponse(fallbackResponse, fallbackMessage)
       } catch {
         throw new Error(

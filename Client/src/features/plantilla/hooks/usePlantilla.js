@@ -1,8 +1,8 @@
-import { useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useBranchContext } from '../../shared/store/branchContext'
-import { plantillaRows as initialPlantillaRows } from '../services/plantillaMockService'
+import { plantillaService } from '../services/plantillaService'
 
-const normalizeBranch = (value = '') =>
+const normalizeBranchName = (value = '') =>
   value
     .toLowerCase()
     .replace(/\bmain\b/g, '')
@@ -10,72 +10,106 @@ const normalizeBranch = (value = '') =>
     .replace(/\s+/g, ' ')
     .trim()
 
-const toCurrencyNumber = (value) => {
-  if (typeof value === 'number') {
-    return value
-  }
-
-  const parsed = Number(String(value || '').replace(/[^0-9.-]/g, ''))
-  return Number.isFinite(parsed) ? parsed : 0
-}
-
-const toViewRow = (row) => ({
-  _id: row._id || row.id || `${row.branch}-${row.role}`,
-  branchId: row.branchId || '',
-  branch: row.branch || '',
-  role: row.role || row.position || '',
-  position: row.position || row.role || '',
-  baseSalary: toCurrencyNumber(row.baseSalary),
-  allowance: toCurrencyNumber(row.allowance),
-  requiredCount: row.requiredCount ?? 1,
-  filledCount: row.filledCount ?? 0,
-  status: row.status || 'active',
-  description: row.description || '',
-})
-
 function usePlantilla() {
-  const { activeBranch, isMainBranch } = useBranchContext()
-  const [allRows, setAllRows] = useState(() => initialPlantillaRows.map(toViewRow))
+  const { activeBranch, activeBranchId, isMainBranch } = useBranchContext()
+  const [branches, setBranches] = useState([])
+  const [rows, setRows] = useState([])
+  const [isLoading, setIsLoading] = useState(true)
+  const [error, setError] = useState('')
 
-  const rows = useMemo(() => {
-    if (isMainBranch) {
-      return allRows
+  const selectedBranch = useMemo(() => {
+    if (activeBranchId) {
+      return branches.find((branch) => branch._id === activeBranchId)
     }
 
-    const activeBranchKey = normalizeBranch(activeBranch)
-    return allRows.filter((row) => normalizeBranch(row.branch) === activeBranchKey)
-  }, [activeBranch, allRows, isMainBranch])
+    const activeBranchKey = normalizeBranchName(activeBranch)
+    return branches.find((branch) => normalizeBranchName(branch.branchName) === activeBranchKey)
+  }, [activeBranch, activeBranchId, branches])
 
-  const createPlantilla = (payload) => {
-    const nextRow = toViewRow({
-      _id: `${Date.now()}`,
-      ...payload,
-      branch: payload.branch || activeBranch,
-    })
+  const fetchRows = useCallback(async (branchList = branches, branchOverride = selectedBranch) => {
+    if (!branchList.length) {
+      setRows([])
+      return
+    }
 
-    setAllRows((prev) => [...prev, nextRow])
-  }
+    const branchesToFetch =
+      isMainBranch && !activeBranchId
+        ? branchList
+        : [branchOverride].filter(Boolean)
 
-  const updatePlantilla = (id, payload) => {
-    setAllRows((prev) =>
-      prev.map((row) =>
-        row._id === id
-          ? toViewRow({
-              ...row,
-              ...payload,
-              _id: row._id,
-            })
-          : row,
-      ),
+    if (!branchesToFetch.length) {
+      setRows([])
+      return
+    }
+
+    const results = await Promise.all(
+      branchesToFetch.map((branch) => plantillaService.getByBranch(branch._id)),
     )
+
+    setRows(results.flat())
+  }, [activeBranchId, branches, isMainBranch, selectedBranch])
+
+  const loadBranches = useCallback(async () => {
+    try {
+      setIsLoading(true)
+      setError('')
+
+      const branchList = await plantillaService.getBranches()
+      setBranches(branchList)
+    } catch (err) {
+      setError(err.message || 'Failed to load branch records')
+      setRows([])
+    } finally {
+      setIsLoading(false)
+    }
+  }, [])
+
+  useEffect(() => {
+    loadBranches()
+  }, [loadBranches])
+
+  useEffect(() => {
+    if (!branches.length) {
+      return
+    }
+
+    const loadRows = async () => {
+      try {
+        setIsLoading(true)
+        setError('')
+        await fetchRows()
+      } catch (err) {
+        setError(err.message || 'Failed to load plantilla records')
+        setRows([])
+      } finally {
+        setIsLoading(false)
+      }
+    }
+
+    loadRows()
+  }, [branches.length, fetchRows])
+
+  const createPlantilla = async (payload) => {
+    await plantillaService.create(payload)
+    await fetchRows()
   }
 
-  const deletePlantilla = (id) => {
-    setAllRows((prev) => prev.filter((row) => row._id !== id))
+  const updatePlantilla = async (id, payload) => {
+    await plantillaService.update(id, payload)
+    await fetchRows()
+  }
+
+  const deletePlantilla = async (id) => {
+    await plantillaService.delete(id)
+    await fetchRows()
   }
 
   return {
     rows,
+    branches,
+    isLoading,
+    error,
+    reloadPlantilla: () => fetchRows(),
     createPlantilla,
     updatePlantilla,
     deletePlantilla,

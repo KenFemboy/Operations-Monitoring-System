@@ -1,49 +1,114 @@
-import { generatePayroll } from "../modules/payroll/payroll.service.js";
+import * as payrollService from "../modules/payroll/payroll.service.js";
+import Employee from "../models/Employee.js";
 import Payroll from "../models/Payroll.js";
+import { canAccessBranch } from "../middleware/accessControl.js";
+
+const sendError = (res, error) =>
+  res.status(error.statusCode || 500).json({
+    success: false,
+    message: error.message || "Payroll request failed",
+  });
+
+const assertEmployeeAccess = async (req, employeeId) => {
+  const employee = await Employee.findById(employeeId).select("assignedBranchId").lean();
+
+  if (!employee) {
+    const error = new Error("Employee not found");
+    error.statusCode = 404;
+    throw error;
+  }
+
+  if (!canAccessBranch(req.user, employee.assignedBranchId)) {
+    const error = new Error("Forbidden: you can only access your assigned branch");
+    error.statusCode = 403;
+    throw error;
+  }
+};
+
+const assertPayrollAccess = async (req, payrollId) => {
+  const payroll = await Payroll.findById(payrollId).select("branchId").lean();
+
+  if (!payroll) {
+    const error = new Error("Payroll not found");
+    error.statusCode = 404;
+    throw error;
+  }
+
+  if (!canAccessBranch(req.user, payroll.branchId)) {
+    const error = new Error("Forbidden: you can only access your assigned branch");
+    error.statusCode = 403;
+    throw error;
+  }
+};
 
 export const generatePayrollController = async (req, res) => {
   try {
-    const { startDate, endDate } = req.body;
+    await assertEmployeeAccess(req, req.body.employeeId);
+    const payroll = await payrollService.generatePayroll({
+      employeeId: req.body.employeeId,
+      periodStart: req.body.periodStart,
+      periodEnd: req.body.periodEnd,
+      generatedBy: req.user?.id,
+    });
 
-    const payrolls = await generatePayroll(
-      startDate,
-      endDate,
-      req.user.id
-    );
-
-    res.json({
+    return res.status(201).json({
+      success: true,
       message: "Payroll generated successfully",
-      data: payrolls,
+      data: payroll,
     });
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    return sendError(res, error);
   }
 };
 
 export const getPayrolls = async (req, res) => {
-  const payrolls = await Payroll.find()
-    .populate("employee")
-    .sort({ createdAt: -1 });
+  try {
+    const filter = req.branchScope?.branchId
+      ? { branchId: req.branchScope.branchId }
+      : {};
+    const payrolls = await payrollService.getPayrolls(filter);
 
-  res.json(payrolls);
+    return res.status(200).json({
+      success: true,
+      count: payrolls.length,
+      data: payrolls,
+    });
+  } catch (error) {
+    return sendError(res, error);
+  }
 };
 
 export const getEmployeePayroll = async (req, res) => {
-  const payrolls = await Payroll.find({
-    employee: req.params.employeeId,
-  });
+  try {
+    await assertEmployeeAccess(req, req.params.employeeId);
+    const payrolls = await payrollService.getPayrollByEmployee(req.params.employeeId);
 
-  res.json(payrolls);
+    return res.status(200).json({
+      success: true,
+      count: payrolls.length,
+      data: payrolls,
+    });
+  } catch (error) {
+    return sendError(res, error);
+  }
 };
 
-export const updatePayrollStatus = async (req, res) => {
-  const { status } = req.body;
+export const approvePayroll = async (req, res) => {
+  try {
+    await assertPayrollAccess(req, req.params.id);
+    const payroll = await payrollService.approvePayroll(req.params.id);
+    return res.status(200).json({ success: true, data: payroll });
+  } catch (error) {
+    return sendError(res, error);
+  }
+};
 
-  const payroll = await Payroll.findByIdAndUpdate(
-    req.params.id,
-    { status, paidAt: status === "paid" ? new Date() : null },
-    { new: true }
-  );
-
-  res.json(payroll);
+export const markAsPaid = async (req, res) => {
+  try {
+    await assertPayrollAccess(req, req.params.id);
+    const payroll = await payrollService.markAsPaid(req.params.id);
+    return res.status(200).json({ success: true, data: payroll });
+  } catch (error) {
+    return sendError(res, error);
+  }
 };

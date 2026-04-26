@@ -8,11 +8,21 @@ import PlantillaCard from '../components/PlantillaCard'
 import PlantillaForm from '../components/PlantillaForm'
 
 function PlantillaPage() {
-  const { rows = [], createPlantilla, updatePlantilla, deletePlantilla } = usePlantilla()
-  const { activeBranch, isReadOnly, branches } = useBranchContext()
+  const {
+    rows = [],
+    branches = [],
+    isLoading,
+    error,
+    createPlantilla,
+    updatePlantilla,
+    deletePlantilla,
+  } = usePlantilla()
+  const { activeBranch, isReadOnly } = useBranchContext()
 
   const [showForm, setShowForm] = useState(false)
   const [selectedPlantilla, setSelectedPlantilla] = useState(null)
+  const [isSaving, setIsSaving] = useState(false)
+  const [formError, setFormError] = useState('')
 
   // --- Handlers ---
   const handleCreate = () => {
@@ -25,27 +35,29 @@ function PlantillaPage() {
     setShowForm(true)
   }
 
-  const handleDelete = (plantilla) => {
+  const handleDelete = async (plantilla) => {
     if (confirm(`Delete ${plantilla.role}?`)) {
-      deletePlantilla(plantilla._id)
+      await deletePlantilla(plantilla._id)
     }
   }
 
-  const handleSubmit = (data) => {
-    const selectedBranch = branches.find((branch) => branch.id === Number(data.branchId))
+  const handleSubmit = async (data) => {
+    try {
+      setIsSaving(true)
+      setFormError('')
 
-    if (selectedPlantilla) {
-      updatePlantilla(selectedPlantilla._id, {
-        ...data,
-        branch: selectedBranch?.name || activeBranch,
-      })
-    } else {
-      createPlantilla({
-        ...data,
-        branch: selectedBranch?.name || activeBranch,
-      })
+      if (selectedPlantilla) {
+        await updatePlantilla(selectedPlantilla._id, data)
+      } else {
+        await createPlantilla(data)
+      }
+
+      setShowForm(false)
+    } catch (err) {
+      setFormError(err.response?.data?.message || err.message || 'Failed to save plantilla')
+    } finally {
+      setIsSaving(false)
     }
-    setShowForm(false)
   }
 
   return (
@@ -73,16 +85,21 @@ function PlantillaPage() {
               onSubmit={handleSubmit}
               initialData={selectedPlantilla}
               branches={branches}
+              isLoading={isSaving}
             />
 
+            {formError ? <p style={{ color: 'red' }}>{formError}</p> : null}
             <button onClick={() => setShowForm(false)}>Cancel</button>
           </div>
         </div>
       )}
 
+      {isLoading ? <p>Loading plantilla records...</p> : null}
+      {error ? <p style={{ color: 'red' }}>{error}</p> : null}
+
       {/* --- CARD VIEW --- */}
       <section className="card-grid">
-        {rows.map((plantilla) => (
+        {!isLoading && rows.map((plantilla) => (
           <PlantillaCard
             key={plantilla._id}
             plantilla={plantilla}
@@ -99,7 +116,7 @@ function PlantillaPage() {
           <h3 className="table-title">Role and Salary Structure</h3>
         </div>
 
-        <Table columns={plantillaColumns} rows={rows} />
+        <Table columns={plantillaColumns} rows={isLoading ? [] : rows} />
       </section>
     </section>
   )
