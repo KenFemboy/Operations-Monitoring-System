@@ -1,11 +1,13 @@
 import { useState } from "react";
 
 function AttendanceForm({ employees, onSubmit }) {
+  const getToday = () => new Date().toISOString().split("T")[0];
+  const getNowTime = () => new Date().toTimeString().slice(0, 5);
   const [form, setForm] = useState({
     employee: "",
-    date: "",
-    timeIn: "",
-    timeOut: "",
+    date: getToday(),
+    timeIn: getNowTime(),
+    timeOut: getNowTime(),
     status: "present",
     remarks: "",
   });
@@ -23,41 +25,87 @@ const handleSubmit = (e) => {
 
   setForm({
     employee: "",
-    date: "",
-    timeIn: "",
-    timeOut: "",
+    date: getToday(),
+    timeIn: getNowTime(),
+    timeOut: getNowTime(),
     status: "present",
     remarks: "",
   });
 };
 
   return (
-    <form onSubmit={handleSubmit}>
-      <h2>Record Attendance</h2>
+    <form onSubmit={handleSubmit} className="attendance-form">
+      <div className="attendance-form-header">
+        <div>
+          <p className="attendance-eyebrow">Attendance</p>
+          <h2>Record Attendance</h2>
+          <p className="attendance-form-help">
+            Log time in, time out, and status for each employee.
+          </p>
+        </div>
+        <button type="submit" className="btn btn-primary">
+          Save Attendance
+        </button>
+      </div>
 
-      <select name="employee" value={form.employee} onChange={handleChange} required>
-        <option value="">Select Employee</option>
-        {employees.map((emp) => (
-          <option key={emp._id} value={emp._id}>
-            {emp.firstName} {emp.lastName}
-          </option>
-        ))}
-      </select>
+      <div className="attendance-form-sections">
+        <section className="attendance-section">
+          <h4>Employee & Status</h4>
+          <div className="attendance-section-grid">
+            <label className="attendance-field">
+              <span>Employee</span>
+              <select name="employee" value={form.employee} onChange={handleChange} required>
+                <option value="">Select Employee</option>
+                {employees.map((emp) => (
+                  <option key={emp._id} value={emp._id}>
+                    {emp.firstName} {emp.lastName}
+                  </option>
+                ))}
+              </select>
+            </label>
 
-      <input type="date" name="date" value={form.date} onChange={handleChange} required />
-      <input type="time" name="timeIn" value={form.timeIn} onChange={handleChange} />
-      <input type="time" name="timeOut" value={form.timeOut} onChange={handleChange} />
+            <label className="attendance-field">
+              <span>Status</span>
+              <select name="status" value={form.status} onChange={handleChange}>
+                <option value="present">Present</option>
+                <option value="absent">Absent</option>
+                <option value="late">Late</option>
+                <option value="half-day">Half-Day</option>
+              </select>
+            </label>
 
-      <select name="status" value={form.status} onChange={handleChange}>
-        <option value="present">Present</option>
-        <option value="absent">Absent</option>
-        <option value="late">Late</option>
-        <option value="half-day">Half-Day</option>
-      </select>
+            <label className="attendance-field attendance-field-full">
+              <span>Remarks</span>
+              <textarea
+                name="remarks"
+                placeholder="Add notes or reason (optional)"
+                value={form.remarks}
+                onChange={handleChange}
+              />
+            </label>
+          </div>
+        </section>
 
-      <textarea name="remarks" placeholder="Remarks" value={form.remarks} onChange={handleChange} />
+        <section className="attendance-section">
+          <h4>Date & Time</h4>
+          <div className="attendance-section-grid">
+            <label className="attendance-field">
+              <span>Date</span>
+              <input type="date" name="date" value={form.date} onChange={handleChange} required />
+            </label>
 
-      <button type="submit">Save Attendance</button>
+            <label className="attendance-field">
+              <span>Time in</span>
+              <input type="time" name="timeIn" value={form.timeIn} onChange={handleChange} />
+            </label>
+
+            <label className="attendance-field">
+              <span>Time out</span>
+              <input type="time" name="timeOut" value={form.timeOut} onChange={handleChange} />
+            </label>
+          </div>
+        </section>
+      </div>
     </form>
   );
 }

@@ -12,6 +12,7 @@
 
 .sd-shell {
   min-height: 100vh;
+  height: 100vh;
   display: flex;
   background:
     radial-gradient(circle at 15% -10%, #ffffff 0%, transparent 42%),
@@ -89,7 +90,7 @@
   flex-direction: column;
   gap: 2px;
   border: 1px solid transparent;
-  transition: transform 0.2s ease, background-color 0.2s ease, color 0.2s ease;
+  transition: transform 0.2s ease, background-color 0.2s ease, color 0.2s ease, box-shadow 0.2s ease;
 }
 
 .sd-nav-item:hover {
@@ -112,6 +113,8 @@
   color: var(--sd-brand);
   border-color: rgba(38, 93, 74, 0.2);
   font-weight: 600;
+  animation: sd-nav-pop 0.25s ease;
+  box-shadow: 0 12px 18px rgba(38, 93, 74, 0.12);
 }
 
 .sd-nav-item.is-active .sd-nav-item-hint {
@@ -123,6 +126,7 @@
   display: flex;
   flex-direction: column;
   min-height: 100vh;
+  height: 100vh;
   width: calc(100% - 260px);
 }
 
@@ -154,6 +158,12 @@
   padding: 8px 12px;
   border-radius: 10px;
   cursor: pointer;
+  transition: transform 0.2s ease, box-shadow 0.2s ease, background-color 0.2s ease;
+}
+
+.sd-menu-btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 10px 16px rgba(24, 39, 32, 0.12);
 }
 
 .sd-navbar-label {
@@ -188,16 +198,20 @@
   padding: 8px 12px;
   border-radius: 10px;
   cursor: pointer;
-  transition: background-color 0.2s ease;
+  transition: transform 0.2s ease, box-shadow 0.2s ease, background-color 0.2s ease;
 }
 
 .sd-logout-btn:hover {
   background: #f5f7f4;
+  transform: translateY(-1px);
+  box-shadow: 0 10px 16px rgba(24, 39, 32, 0.12);
 }
 
 .sd-content {
   flex: 1;
   padding: 22px;
+  overflow-y: auto;
+  min-height: 0;
 }
 
 .sd-page {
@@ -206,7 +220,7 @@
   background: var(--sd-surface);
   box-shadow: var(--sd-shadow);
   padding: 22px;
-  min-height: calc(100vh - 140px);
+  min-height: 0;
 }
 
 .sd-page-title {
@@ -258,11 +272,12 @@
   font-weight: 600;
   padding: 9px 14px;
   cursor: pointer;
-  transition: transform 0.2s ease, background-color 0.2s ease;
+  transition: transform 0.2s ease, background-color 0.2s ease, box-shadow 0.2s ease;
 }
 
 .sd-btn:hover {
-  transform: translateY(-1px);
+  transform: translateY(-2px);
+  box-shadow: 0 12px 20px rgba(24, 39, 32, 0.14);
 }
 
 .sd-btn-primary {
@@ -414,6 +429,15 @@
   to {
     opacity: 1;
     transform: translateY(0);
+  }
+}
+
+@keyframes sd-nav-pop {
+  from {
+    transform: scale(0.98);
+  }
+  to {
+    transform: scale(1);
   }
 }
 

@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import Table from '../../shared/components/Table'
+import Button from '../../shared/components/Button'
 import { useBranchContext } from '../../shared/store/branchContext'
 import usePlantilla from '../hooks/usePlantilla'
 import { plantillaColumns } from '../utils/plantillaColumns'
@@ -61,18 +62,19 @@ function PlantillaPage() {
   }
 
   return (
-    <section>
+    <section className="plantilla-page">
       <header className="page-header">
-        <h1>Plantilla</h1>
-        <p>Employee positions and salary structure for {activeBranch}</p>
+        <div>
+          <h1>Plantilla</h1>
+          <p>Employee positions and salary structure for {activeBranch}</p>
+        </div>
 
-        {!isReadOnly && (
-          <button onClick={handleCreate} className="primary-btn">
-            + Add Role
-          </button>
-        )}
-
-        {isReadOnly && <p className="readonly-label">View Only Mode</p>}
+        <div className="page-header-actions">
+          {!isReadOnly && (
+            <Button onClick={handleCreate}>+ Add Role</Button>
+          )}
+          {isReadOnly && <p className="readonly-label">View Only Mode</p>}
+        </div>
       </header>
 
       {/* --- FORM MODAL --- */}

@@ -39,7 +39,7 @@ function EmployeeForm({ onSubmit }) {
   };
 
   return (
-    <form onSubmit={handleSubmit} style={{ marginBottom: "24px" }}>
+    <form onSubmit={handleSubmit} className="employee-form">
       <h2>Add Employee</h2>
 
       <input name="firstName" placeholder="First Name" value={form.firstName} onChange={handleChange} required />
@@ -50,7 +50,9 @@ function EmployeeForm({ onSubmit }) {
       <input name="branch" placeholder="Branch" value={form.branch} onChange={handleChange} required />
       <input name="salaryRate" type="number" placeholder="Salary Rate" value={form.salaryRate} onChange={handleChange} />
 
-      <button type="submit">Save Employee</button>
+      <div className="form-actions">
+        <button type="submit">Save Employee</button>
+      </div>
     </form>
   );
 }

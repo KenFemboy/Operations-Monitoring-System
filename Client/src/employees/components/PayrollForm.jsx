@@ -34,62 +34,94 @@ function PayrollForm({ employees, onSubmit }) {
   };
 
   return (
-    <form onSubmit={handleSubmit}>
+    <form onSubmit={handleSubmit} className="employee-form">
       <h2>Create Payroll</h2>
 
-      <select
-        name="employee"
-        value={form.employee}
-        onChange={handleChange}
-        required
-      >
-        <option value="">Select Employee</option>
-        {employees.map((emp) => (
-          <option key={emp._id} value={emp._id}>
-            {emp.employeeId} - {emp.firstName} {emp.lastName}
-          </option>
-        ))}
-      </select>
+      <div className="employee-form-sections">
+        <section className="employee-form-section">
+          <h4>Employee</h4>
+          <div className="employee-form-grid">
+            <label className="employee-field">
+              <span>Employee</span>
+              <select
+                name="employee"
+                value={form.employee}
+                onChange={handleChange}
+                required
+              >
+                <option value="">Select Employee</option>
+                {employees.map((emp) => (
+                  <option key={emp._id} value={emp._id}>
+                    {emp.employeeId} - {emp.firstName} {emp.lastName}
+                  </option>
+                ))}
+              </select>
+            </label>
 
-      {selectedEmployee && (
-        <p>
-          Hourly Rate: ₱{Number(selectedEmployee.salaryRate || 0).toFixed(2)}
-        </p>
-      )}
+            {selectedEmployee && (
+              <p className="employee-field employee-field-full">
+                Hourly Rate: ₱{Number(selectedEmployee.salaryRate || 0).toFixed(2)}
+              </p>
+            )}
+          </div>
+        </section>
 
-      <input
-        type="date"
-        name="payPeriodStart"
-        value={form.payPeriodStart}
-        onChange={handleChange}
-        required
-      />
+        <section className="employee-form-section">
+          <h4>Pay Period</h4>
+          <div className="employee-form-grid">
+            <label className="employee-field">
+              <span>Period Start</span>
+              <input
+                type="date"
+                name="payPeriodStart"
+                value={form.payPeriodStart}
+                onChange={handleChange}
+                required
+              />
+            </label>
 
-      <input
-        type="date"
-        name="payPeriodEnd"
-        value={form.payPeriodEnd}
-        onChange={handleChange}
-        required
-      />
+            <label className="employee-field">
+              <span>Period End</span>
+              <input
+                type="date"
+                name="payPeriodEnd"
+                value={form.payPeriodEnd}
+                onChange={handleChange}
+                required
+              />
+            </label>
+          </div>
+        </section>
 
-      <input
-        type="number"
-        name="overtimePay"
-        placeholder="Overtime Pay"
-        value={form.overtimePay}
-        onChange={handleChange}
-      />
+        <section className="employee-form-section">
+          <h4>Adjustments</h4>
+          <div className="employee-form-grid">
+            <label className="employee-field">
+              <span>Overtime Pay</span>
+              <input
+                type="number"
+                name="overtimePay"
+                value={form.overtimePay}
+                onChange={handleChange}
+              />
+            </label>
 
-      <input
-        type="number"
-        name="deductions"
-        placeholder="Deductions"
-        value={form.deductions}
-        onChange={handleChange}
-      />
+            <label className="employee-field">
+              <span>Deductions</span>
+              <input
+                type="number"
+                name="deductions"
+                value={form.deductions}
+                onChange={handleChange}
+              />
+            </label>
+          </div>
+        </section>
+      </div>
 
-      <button type="submit">Generate Payroll</button>
+      <div className="form-actions">
+        <button type="submit">Generate Payroll</button>
+      </div>
     </form>
   );
 }

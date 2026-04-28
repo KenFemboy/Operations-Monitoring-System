@@ -30,26 +30,57 @@ function ContributionForm({ employees, onSubmit }) {
   };
 
   return (
-    <form onSubmit={handleSubmit}>
+    <form onSubmit={handleSubmit} className="employee-form">
       <h2>Record Contributions</h2>
 
-      <select name="employee" value={form.employee} onChange={handleChange} required>
-        <option value="">Select Employee</option>
-        {employees.map((emp) => (
-          <option key={emp._id} value={emp._id}>
-            {emp.firstName} {emp.lastName}
-          </option>
-        ))}
-      </select>
+      <div className="employee-form-sections">
+        <section className="employee-form-section">
+          <h4>Employee & Period</h4>
+          <div className="employee-form-grid">
+            <label className="employee-field">
+              <span>Employee</span>
+              <select name="employee" value={form.employee} onChange={handleChange} required>
+                <option value="">Select Employee</option>
+                {employees.map((emp) => (
+                  <option key={emp._id} value={emp._id}>
+                    {emp.firstName} {emp.lastName}
+                  </option>
+                ))}
+              </select>
+            </label>
 
-      <input name="month" placeholder="Example: April 2026" value={form.month} onChange={handleChange} required />
-      <input type="number" name="sss" placeholder="SSS" value={form.sss} onChange={handleChange} />
-      <input type="number" name="pagibig" placeholder="Pag-IBIG" value={form.pagibig} onChange={handleChange} />
-      <input type="number" name="philhealth" placeholder="PhilHealth" value={form.philhealth} onChange={handleChange} />
+            <label className="employee-field">
+              <span>Month</span>
+              <input name="month" value={form.month} onChange={handleChange} required />
+            </label>
+          </div>
+        </section>
 
-      <h3>Total Contribution: ₱{total}</h3>
+        <section className="employee-form-section">
+          <h4>Contribution Amounts</h4>
+          <div className="employee-form-grid">
+            <label className="employee-field">
+              <span>SSS</span>
+              <input type="number" name="sss" value={form.sss} onChange={handleChange} />
+            </label>
+            <label className="employee-field">
+              <span>Pag-IBIG</span>
+              <input type="number" name="pagibig" value={form.pagibig} onChange={handleChange} />
+            </label>
+            <label className="employee-field">
+              <span>PhilHealth</span>
+              <input type="number" name="philhealth" value={form.philhealth} onChange={handleChange} />
+            </label>
+            <p className="employee-field employee-field-full">
+              Total Contribution: ₱{total}
+            </p>
+          </div>
+        </section>
+      </div>
 
-      <button type="submit">Save Contribution</button>
+      <div className="form-actions">
+        <button type="submit">Save Contribution</button>
+      </div>
     </form>
   );
 }

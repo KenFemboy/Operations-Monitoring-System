@@ -4,7 +4,7 @@ import { AuthContext } from '../../../auth/context/AuthContext'
 import Button from '../../shared/components/Button'
 import Modal from '../../shared/components/Modal'
 import Table from '../../shared/components/Table'
-import { employeesService } from '../../employees/services/employeesService'
+import { getEmployees } from '../../../employees/api/employeeApi'
 import { useBranchContext } from '../../shared/store/branchContext'
 import useBranches from '../hooks/useBranches'
 import { philippineRegionLocations } from '../services/branchesMockService'
@@ -106,7 +106,8 @@ function BranchesPage() {
     const loadEmployeesByBranch = async () => {
       try {
         setEmployeesError('')
-        const rows = await employeesService.getAll()
+        const response = await getEmployees()
+        const rows = response?.data?.data || []
         const counts = rows.reduce((acc, employee) => {
           const branchName =
             employee.assignedBranchId?.branchName || employee.assignedBranch || employee.branch || ''

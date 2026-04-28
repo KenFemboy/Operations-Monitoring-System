@@ -49,67 +49,102 @@ function LeaveForm({ employees, onSubmit, editingLeave, onCancelEdit }) {
   };
 
   return (
-    <form onSubmit={handleSubmit}>
+    <form onSubmit={handleSubmit} className="employee-form">
       <h2>{editingLeave ? "Edit Leave" : "File Leave"}</h2>
 
-      <select
-        name="employee"
-        value={form.employee}
-        onChange={handleChange}
-        required
-      >
-        <option value="">Select Employee</option>
-        {employees.map((emp) => (
-          <option key={emp._id} value={emp._id}>
-            {emp.employeeId} - {emp.firstName} {emp.lastName}
-          </option>
-        ))}
-      </select>
+      <div className="employee-form-sections">
+        <section className="employee-form-section">
+          <h4>Employee & Type</h4>
+          <div className="employee-form-grid">
+            <label className="employee-field">
+              <span>Employee</span>
+              <select
+                name="employee"
+                value={form.employee}
+                onChange={handleChange}
+                required
+              >
+                <option value="">Select Employee</option>
+                {employees.map((emp) => (
+                  <option key={emp._id} value={emp._id}>
+                    {emp.employeeId} - {emp.firstName} {emp.lastName}
+                  </option>
+                ))}
+              </select>
+            </label>
 
-      <select name="leaveType" value={form.leaveType} onChange={handleChange}>
-        <option value="SIL">SIL</option>
-        <option value="Vacation Leave">Vacation Leave</option>
-        <option value="Sick Leave">Sick Leave</option>
-      </select>
+            <label className="employee-field">
+              <span>Leave Type</span>
+              <select name="leaveType" value={form.leaveType} onChange={handleChange}>
+                <option value="SIL">SIL</option>
+                <option value="Vacation Leave">Vacation Leave</option>
+                <option value="Sick Leave">Sick Leave</option>
+              </select>
+            </label>
+          </div>
+        </section>
 
-      <input
-        type="date"
-        name="startDate"
-        value={form.startDate}
-        onChange={handleChange}
-        required
-      />
+        <section className="employee-form-section">
+          <h4>Date Range</h4>
+          <div className="employee-form-grid">
+            <label className="employee-field">
+              <span>Start Date</span>
+              <input
+                type="date"
+                name="startDate"
+                value={form.startDate}
+                onChange={handleChange}
+                required
+              />
+            </label>
 
-      <input
-        type="date"
-        name="endDate"
-        value={form.endDate}
-        onChange={handleChange}
-        required
-      />
+            <label className="employee-field">
+              <span>End Date</span>
+              <input
+                type="date"
+                name="endDate"
+                value={form.endDate}
+                onChange={handleChange}
+                required
+              />
+            </label>
 
-      <textarea
-        name="reason"
-        placeholder="Reason"
-        value={form.reason}
-        onChange={handleChange}
-      />
+            <label className="employee-field">
+              <span>Status</span>
+              <select name="status" value={form.status} onChange={handleChange}>
+                <option value="pending">Pending</option>
+                <option value="approved">Approved</option>
+                <option value="denied">Denied</option>
+              </select>
+            </label>
+          </div>
+        </section>
 
-      <select name="status" value={form.status} onChange={handleChange}>
-        <option value="pending">Pending</option>
-        <option value="approved">Approved</option>
-        <option value="denied">Denied</option>
-      </select>
+        <section className="employee-form-section">
+          <h4>Reason</h4>
+          <div className="employee-form-grid">
+            <label className="employee-field employee-field-full">
+              <textarea
+                name="reason"
+                value={form.reason}
+                onChange={handleChange}
+              />
+            </label>
+          </div>
+        </section>
+      </div>
 
-      <button type="submit">
-        {editingLeave ? "Update Leave" : "Submit Leave"}
-      </button>
-
-      {editingLeave && (
-        <button type="button" onClick={onCancelEdit}>
-          Cancel Edit
+      <div className="form-actions">
+        <button type="submit">
+          {editingLeave ? "Update Leave" : "Submit Leave"}
         </button>
-      )}
+
+        {editingLeave && (
+          <button type="button" onClick={onCancelEdit}>
+            Cancel Edit
+          </button>
+        )}
+      </div>
     </form>
   );
 }
