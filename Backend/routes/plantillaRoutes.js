@@ -1,27 +1,12 @@
-import express from "express";
 import {
-  createPlantilla,
-  deletePlantilla,
-  getPlantillasByBranch,
-  updatePlantilla,
+      createPlantilla,
+  getPlantillas,
 } from "../controllers/plantillaController.js";
-import { authMiddleware } from "../middleware/auth.js";
-import {
-  requireBranchAccessFromBody,
-  requireBranchAccessFromParam,
-} from "../middleware/plantillaBranchAccess.js";
+import express from "express";
 
 const router = express.Router();
 
-router.use(authMiddleware);
-
-router.post("/", requireBranchAccessFromBody("branchId"), createPlantilla);
-router.get(
-  "/branch/:branchId",
-  requireBranchAccessFromParam("branchId"),
-  getPlantillasByBranch
-);
-router.put("/:id", updatePlantilla);
-router.delete("/:id", deletePlantilla);
+router.post("/create", createPlantilla);
+router.get("/list", getPlantillas);
 
 export default router;

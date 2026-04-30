@@ -73,6 +73,7 @@ function PlantillaPage() {
         currentCount: "",
         status: "open",
       });
+      
 
       fetchPlantillas();
     } catch (error) {

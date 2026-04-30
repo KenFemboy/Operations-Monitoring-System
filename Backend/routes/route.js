@@ -29,7 +29,7 @@ router.get("/health", (_req, res) => {
 });
 
 router.use("/employees", employeeRoutes);
-router.use("/empoyee", employeeRoutes);
+router.use("/employees", employeeRoutes);
 router.use("/branches", branchRoutes);
 router.use("/attendance", attendanceRoutes);
 router.use("/payrolls", payrollRoutes);

@@ -1,6 +1,6 @@
 import axios from "axios";
 
-const API_URL = "http://localhost:8000/api/employees/plantilla";
+const API_URL = "http://localhost:8000/api/plantilla";
 
 export const getPlantillas = () => {
   return axios.get(`${API_URL}/list`);

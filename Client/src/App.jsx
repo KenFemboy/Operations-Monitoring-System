@@ -16,17 +16,16 @@
  import DashboardPage from "./features/dashboard/pages/DashboardPage";
  import BranchesPage from "./features/branches/pages/BranchesPage";
  import BranchUsersPage from "./features/branches/pages/BranchUsersPage";
+
+//  Under sa Employees Page: Employees Attendance Payroll Leave Contributions Incident Reports NTE 
 import EmployeesPage from "./employees/pages/EmployeesPage";
- import PlantillaPage from "./features/plantilla/pages/PlantillaPage";
-import AttendancePage from "./features/attendance/pages/AttendancePage";
- import LeavesPage from "./features/leaves/pages/LeavesPage";
+
+
+import PlantillaPage from "./plantilla/pages/PlantillaPage";
+
  import InventoryPage from "./features/inventory/pages/InventoryPage";
  import SalesPage from "./features/sales/pages/SalesPage";
  import FeedbackPage from "./features/feedback/pages/FeedbackPage";
- import IncidentsPage from "./features/incidents/pages/IncidentsPage";
- import NtePage from "./features/nte/pages/NtePage";
- import PayrollPage from "./features/payroll/pages/PayrollPage";
- import ContributionsPage from "./features/contributions/pages/ContributionsPage";
  import ReportsPage from "./features/reports/pages/ReportsPage";
  import SettingsPage from "./features/settings/pages/SettingsPage";
  import ArchivePage from "./features/settings/pages/ArchivePage";
@@ -102,17 +101,25 @@ function LegacyAppRedirect() {
              <Route path="reports" element={<ReportsPage />} />
              <Route path="branches" element={<BranchesPage />} />
              <Route path="branches/users" element={<BranchUsersPage />} />
+
+
+             {/* Employee Page */}
              <Route path="employees" element={<EmployeesPage />} />
+            <Route path="attendance" element={<EmployeesPage initialTab="attendance" />} />
+            <Route path="leave" element={<EmployeesPage initialTab="leave" />} />
+            <Route path="payroll" element={<EmployeesPage initialTab="payroll" />} />
+            <Route path="contributions" element={<EmployeesPage initialTab="contribution" />} />
+            <Route path="incident-reports" element={<EmployeesPage initialTab="ir" />} />
+            <Route path="nte" element={<EmployeesPage initialTab="nte" />} />
+
+
+
              <Route path="plantilla" element={<PlantillaPage />} />
-            <Route path="attendance" element={<AttendancePage />} />
-             <Route path="leaves" element={<LeavesPage />} />
+
+
              <Route path="inventory" element={<InventoryPage />} />
              <Route path="sales" element={<SalesPage />} />
              <Route path="feedback" element={<FeedbackPage />} />
-             <Route path="incidents" element={<IncidentsPage />} />
-             <Route path="nte" element={<NtePage />} />
-             <Route path="payroll" element={<PayrollPage />} />
-             <Route path="contributions" element={<ContributionsPage />} />
              <Route path="settings" element={<SettingsPage />} />
              <Route path="settings/archive" element={<ArchivePage />} />
            </Route>

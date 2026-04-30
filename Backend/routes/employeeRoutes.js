@@ -11,9 +11,6 @@ getEmployeeFullDetails,
   createAttendance,
   getAttendance,
 
-  createPlantilla,
-  getPlantillas,
-
   createPayroll,
   getPayrolls,
 
@@ -50,8 +47,7 @@ router.post("/attendance/create", createAttendance);
 router.get("/attendance/list", getAttendance);
 
 // Plantilla
-router.post("/plantilla/create", createPlantilla);
-router.get("/plantilla/list", getPlantillas);
+
 
 // Payroll
 router.post("/payroll/create", createPayroll);

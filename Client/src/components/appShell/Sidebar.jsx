@@ -39,20 +39,42 @@ const navGroups = [
         hint: "Employee records",
         to: "/app/employees",
       },
-      {
-        label: "Plantilla",
-        hint: "Role slots and salary basis",
-        to: "/app/plantilla",
-      },
+      
       {
         label: "Attendance",
         hint: "Daily time records",
         to: "/app/attendance",
       },
       {
+        label: "Payroll",
+        hint: 'Salary and compensation',
+        to: '/app/payroll',
+      },
+      {
         label: "Leaves",
-        hint: "Leave filing and status",
-        to: "/app/leaves",
+        hint: "Leave applications",
+        to: "/app/leave",
+      },
+      {
+        label: "Contributions",
+        hint: "Government remittances",
+        to: "/app/contributions",
+      },
+      {
+        label: "Incident Reports",
+        hint: "Incident documentation",
+        to: "/app/incident-reports",
+      },
+      {
+        label: "Notice to Explain",
+        hint: "Disciplinary notices",
+        to: "/app/nte",
+      },
+      
+      {
+        label: "Plantilla",
+        hint: "Role slots and salary basis",
+        to: "/app/plantilla",
       },
     ],
   },
@@ -76,36 +98,8 @@ const navGroups = [
       },
     ],
   },
-  {
-    title: "Finance",
-    items: [
-      {
-        label: "Payroll",
-        hint: "Payroll records",
-        to: "/app/payroll",
-      },
-      {
-        label: "Contributions",
-        hint: "Government deductions",
-        to: "/app/contributions",
-      },
-    ],
-  },
-  {
-    title: "Compliance",
-    items: [
-      {
-        label: "Incidents",
-        hint: "Issue monitoring",
-        to: "/app/incidents",
-      },
-      {
-        label: "NTE Monitoring",
-        hint: "Notice to explain tracking",
-        to: "/app/nte",
-      },
-    ],
-  },
+
+  
   {
     title: "System",
     items: [
