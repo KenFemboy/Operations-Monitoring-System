@@ -6,6 +6,7 @@ import userRoutes from "./userRoutes.js";
 import authRoutes from "./authRoutes.js";
 import plantillaRoutes from "./plantillaRoutes.js";
 import archiveRoutes from "./archiveRoutes.js";
+import inventoryRoutes from "./inventoryRoutes.js";
 const router = express.Router();
 
 router.get("/health", (_req, res) => {
@@ -32,5 +33,6 @@ router.use("/plantilla", plantillaRoutes);
 router.use("/auth", authRoutes);
 router.use("/users", userRoutes);
 router.use("/archive", archiveRoutes);
+router.use("/inventory", inventoryRoutes);
 
 export default router;

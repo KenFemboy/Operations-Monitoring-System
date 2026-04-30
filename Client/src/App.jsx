@@ -23,7 +23,10 @@ import EmployeesPage from "./employees/pages/EmployeesPage";
 
 import PlantillaPage from "./plantilla/pages/PlantillaPage";
 
- import InventoryPage from "./features/inventory/pages/InventoryPage";
+
+import InventoryPage from "./inventory/pages/InventoryPage";
+
+
  import SalesPage from "./features/sales/pages/SalesPage";
  import FeedbackPage from "./features/feedback/pages/FeedbackPage";
  import ReportsPage from "./features/reports/pages/ReportsPage";
@@ -116,8 +119,8 @@ function LegacyAppRedirect() {
 
              <Route path="plantilla" element={<PlantillaPage />} />
 
-
-             <Route path="inventory" element={<InventoryPage />} />
+            <Route path="inventory" element={<InventoryPage />} />
+            
              <Route path="sales" element={<SalesPage />} />
              <Route path="feedback" element={<FeedbackPage />} />
              <Route path="settings" element={<SettingsPage />} />
