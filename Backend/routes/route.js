@@ -2,8 +2,6 @@ import express from "express";
 import mongoose from "mongoose";
 import employeeRoutes from "./employeeRoutes.js";
 import branchRoutes from "./branchRoutes.js";
-import payrollRoutes from "./payrollRoutes.js";
-import attendanceRoutes from "./attendanceRoutes.js";
 import userRoutes from "./userRoutes.js";
 import authRoutes from "./authRoutes.js";
 import plantillaRoutes from "./plantillaRoutes.js";
@@ -29,10 +27,7 @@ router.get("/health", (_req, res) => {
 });
 
 router.use("/employees", employeeRoutes);
-router.use("/employees", employeeRoutes);
 router.use("/branches", branchRoutes);
-router.use("/attendance", attendanceRoutes);
-router.use("/payrolls", payrollRoutes);
 router.use("/plantilla", plantillaRoutes);
 router.use("/auth", authRoutes);
 router.use("/users", userRoutes);
