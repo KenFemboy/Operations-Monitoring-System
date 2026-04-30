@@ -549,7 +549,7 @@ export const createContribution = async (req, res) => {
 export const getContributions = async (req, res) => {
   try {
     const contributions = await Contribution.find()
-      .populate("employee")
+      .populate("employee", "employeeId firstName lastName")
       .sort({ createdAt: -1 });
 
     res.status(200).json({
@@ -588,7 +588,7 @@ export const createIncidentReport = async (req, res) => {
 export const getIncidentReports = async (req, res) => {
   try {
     const reports = await IncidentReport.find()
-      .populate("employee")
+      .populate("employee", "employeeId firstName lastName")
       .sort({ createdAt: -1 });
 
     res.status(200).json({
@@ -627,7 +627,7 @@ export const createNTE = async (req, res) => {
 export const getNTEs = async (req, res) => {
   try {
     const ntes = await NoticeToExplain.find()
-      .populate("employee")
+      .populate("employee", "employeeId firstName lastName")
       .sort({ createdAt: -1 });
 
     res.status(200).json({

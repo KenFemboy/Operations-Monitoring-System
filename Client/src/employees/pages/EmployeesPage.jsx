@@ -6,9 +6,12 @@ import {
   getEmployeeFullDetails,
   createEmployee,
   deleteEmployee,
-  createAttendance,
+  updateEmployee,
 
-   createLeave,
+  createAttendance,
+  getAttendance,
+
+  createLeave,
   getLeaves,
   updateLeave,
   updateLeaveStatus,
@@ -16,11 +19,14 @@ import {
   updatePayrollStatus,
   createPayroll,
   getPayrolls,
+
   createContribution,
+  getContributions,
+
   createIncidentReport,
+  getIncidentReports,
   createNTE,
-  updateEmployee,
-  getAttendance
+  getNTEs,
 } from "../api/employeeApi";
 
 import PresentEmployeesCard from "../components/PresentEmployeesCard";
@@ -33,8 +39,11 @@ import LeaveForm from "../components/LeaveForm";
 import LeaveTable from "../components/LeaveTable";
 import PayrollForm from "../components/PayrollForm";
 import ContributionForm from "../components/ContributionForm";
+import ContributionTable from "../components/ContributionTable";
 import IncidentReportForm from "../components/IncidentReportForm";
+import IncidentReportTable from "../components/IncidentReportTable";
 import NTEForm from "../components/NTEForm";
+import NTEReportTable from "../components/NTETable";
 
 function EmployeesPage({ initialTab = "employees" }) {
   const { user } = useContext(AuthContext);
@@ -48,13 +57,25 @@ function EmployeesPage({ initialTab = "employees" }) {
   );
   const [payrolls, setPayrolls] = useState([]);
   const [leaves, setLeaves] = useState([]);
+  const [incidentReports, setIncidentReports] = useState([]);
 const [editingLeave, setEditingLeave] = useState(null);
   const [addEmployeeOpen, setAddEmployeeOpen] = useState(false);
   const [statusConfirmOpen, setStatusConfirmOpen] = useState(false);
   const [statusPassword, setStatusPassword] = useState("");
   const [statusError, setStatusError] = useState("");
   const [pendingStatusChange, setPendingStatusChange] = useState(null);
+  const [contributions, setContributions] = useState([]);
+  const [ntes, setNtes] = useState([]);
 
+  const fetchNTEs = async () => {
+  try {
+    const res = await getNTEs();
+    setNtes(res.data.data || []);
+  } catch (error) {
+    console.error(error);
+    alert("Failed to fetch NTE records");
+  }
+};
 const fetchLeaves = async () => {
   try {
     const res = await getLeaves();
@@ -64,7 +85,15 @@ const fetchLeaves = async () => {
     alert("Failed to fetch leaves");
   }
 };
-
+const fetchIncidentReports = async () => {
+  try {
+    const res = await getIncidentReports();
+    setIncidentReports(res.data.data || []);
+  } catch (error) {
+    console.error(error);
+    alert("Failed to fetch incident reports");
+  }
+};
 const handleSubmitLeave = async (data) => {
   try {
     if (editingLeave) {
@@ -107,6 +136,15 @@ const handleUpdateLeaveStatus = async (id, status) => {
     }
   };
 
+  const fetchContributions = async () => {
+  try {
+    const res = await getContributions();
+    setContributions(res.data.data || []);
+  } catch (error) {
+    console.error(error);
+    alert("Failed to fetch contributions");
+  }
+};
   const handleUpdatePayrollStatus = async (id, status) => {
     try {
       await updatePayrollStatus(id, status);
@@ -196,6 +234,9 @@ const handleUpdateLeaveStatus = async (id, status) => {
     fetchAttendance();
     fetchPayrolls();
     fetchLeaves();
+    fetchContributions();
+    fetchIncidentReports();
+    fetchNTEs();
   }, []);
 
   useEffect(() => {
@@ -379,34 +420,49 @@ const handleUpdateLeaveStatus = async (id, status) => {
       )}
 
       {activeTab === "contribution" && (
-        <ContributionForm
-          employees={employees}
-          onSubmit={async (data) => {
-            await createContribution(data);
-            alert("Contribution saved");
-          }}
-        />
-      )}
+  <>
+    <ContributionForm
+      employees={employees}
+      onSubmit={async (data) => {
+        await createContribution(data);
+        alert("Contribution saved");
+        fetchContributions();
+      }}
+    />
+
+    <ContributionTable contributions={contributions} />
+  </>
+)}
 
       {activeTab === "ir" && (
-        <IncidentReportForm
-          employees={employees}
-          onSubmit={async (data) => {
-            await createIncidentReport(data);
-            alert("Incident report saved");
-          }}
-        />
-      )}
+  <>
+    <IncidentReportForm
+      employees={employees}
+      onSubmit={async (data) => {
+        await createIncidentReport(data);
+        alert("Incident report saved");
+        fetchIncidentReports();
+      }}
+    />
+
+    <IncidentReportTable reports={incidentReports} />
+  </>
+)}
 
       {activeTab === "nte" && (
-        <NTEForm
-          employees={employees}
-          onSubmit={async (data) => {
-            await createNTE(data);
-            alert("NTE saved");
-          }}
-        />
-      )}
+  <>
+    <NTEForm
+      employees={employees}
+      onSubmit={async (data) => {
+        await createNTE(data);
+        alert("NTE saved");
+        fetchNTEs();
+      }}
+    />
+
+    <NTEReportTable ntes={ntes} />
+  </>
+)}
 
       {statusConfirmOpen && (
         <div className="modal-backdrop">
