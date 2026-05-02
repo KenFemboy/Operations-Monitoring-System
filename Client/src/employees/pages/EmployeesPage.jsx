@@ -51,6 +51,7 @@ function EmployeesPage({ initialTab = "employees" }) {
   const [activeTab, setActiveTab] = useState(initialTab);
   const [loading, setLoading] = useState(false);
   const [selectedDetails, setSelectedDetails] = useState(null);
+  const [selectedEmployee, setSelectedEmployee] = useState(null);
   const [attendance, setAttendance] = useState([]);
   const [selectedDate, setSelectedDate] = useState(
     () => new Date().toISOString().split("T")[0]
@@ -155,12 +156,19 @@ const handleUpdateLeaveStatus = async (id, status) => {
       alert("Failed to update payroll status");
     }
   };
-  const handleUpdateEmployeeStatus = (employee, status) => {
-    setPendingStatusChange({ employee, status });
-    setStatusPassword("");
-    setStatusError("");
-    setStatusConfirmOpen(true);
-  };
+const handleUpdateEmployeeStatus = async (id, status) => {
+  try {
+    await updateEmployee(id, {
+      employmentStatus: status,
+    });
+
+    alert("Employee status updated");
+    fetchEmployees();
+  } catch (error) {
+    console.error(error);
+    alert(error.response?.data?.message || "Failed to update employee status");
+  }
+};
 
   const handleConfirmStatusChange = async (event) => {
     event.preventDefault();
@@ -247,28 +255,48 @@ const handleUpdateLeaveStatus = async (id, status) => {
     setSelectedDate(new Date().toISOString().split("T")[0]);
   };
 
-  const handleCreateEmployee = async (formData) => {
-    try {
+ const handleSaveEmployee = async (formData) => {
+  try {
+    if (selectedEmployee) {
+      await updateEmployee(selectedEmployee._id, formData);
+      alert("Employee updated successfully");
+    } else {
       await createEmployee(formData);
       alert("Employee added successfully");
-      fetchEmployees();
-      setAddEmployeeOpen(false);
-    } catch (error) {
-      console.error(error);
-      alert("Failed to add employee");
     }
-  };
 
-  const handleDeleteEmployee = async (id) => {
-    try {
-      await deleteEmployee(id);
-      alert("Employee deleted");
-      fetchEmployees();
-    } catch (error) {
-      console.error(error);
-      alert("Failed to delete employee");
-    }
-  };
+    setSelectedEmployee(null);
+    fetchEmployees();
+  } catch (error) {
+    console.error(error);
+    alert(error.response?.data?.message || "Failed to save employee");
+  }
+};
+const handleEditEmployee = (employee) => {
+  setSelectedEmployee(employee);
+
+  window.scrollTo({
+    top: 0,
+    behavior: "smooth",
+  });
+};
+
+const handleDeleteEmployee = async (id) => {
+  const confirmDelete = window.confirm(
+    "Warning: Are you sure you want to delete this employee? This action cannot be undone."
+  );
+
+  if (!confirmDelete) return;
+
+  try {
+    await deleteEmployee(id);
+    alert("Employee deleted successfully");
+    fetchEmployees();
+  } catch (error) {
+    console.error(error);
+    alert(error.response?.data?.message || "Failed to delete employee");
+  }
+};
 
   const tabs = [
     { key: "employees", label: "Employees" },
@@ -303,39 +331,34 @@ const handleUpdateLeaveStatus = async (id, status) => {
         ))}
       </div>
 
-      {activeTab === "employees" && (
-        <section className="employee-list-section">
-          <div className="employee-list-inner">
-            <div className="employee-list-header">
-              <div>
-                <h2>Employee List</h2>
-                <p>Manage employees, statuses, and profile records.</p>
-              </div>
-              <button type="button" className="btn btn-primary" onClick={() => setAddEmployeeOpen(true)}>
-                + Add Employee
-              </button>
-            </div>
+     {activeTab === "employees" && (
+  <>
+    <EmployeeForm
+      onSubmit={handleSaveEmployee}
+      selectedEmployee={selectedEmployee}
+      onCancelEdit={() => setSelectedEmployee(null)}
+    />
 
-            {loading ? (
-              <p>Loading employees...</p>
-            ) : (
-              <>
-                <EmployeeTable
-                  employees={employees}
-                  onDelete={handleDeleteEmployee}
-                  onViewDetails={handleViewDetails}
-                  onUpdateStatus={handleUpdateEmployeeStatus}
-                />
+    {loading ? (
+      <p>Loading employees...</p>
+    ) : (
+      <>
+        <EmployeeTable
+          employees={employees}
+          onDelete={handleDeleteEmployee}
+          onViewDetails={handleViewDetails}
+          onUpdateStatus={handleUpdateEmployeeStatus}
+          onEdit={handleEditEmployee}
+        />
 
-                <EmployeeDetails
-                  details={selectedDetails}
-                  onClose={() => setSelectedDetails(null)}
-                />
-              </>
-            )}
-          </div>
-        </section>
-      )}
+        <EmployeeDetails
+          details={selectedDetails}
+          onClose={() => setSelectedDetails(null)}
+        />
+      </>
+    )}
+  </>
+)}
 
       {activeTab === "attendance" && (
         <section className="attendance-page">

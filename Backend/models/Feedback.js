@@ -8,6 +8,18 @@ const feedbackSchema = new mongoose.Schema(
       default: "Anonymous",
     },
 
+    branch: {
+      type: String,
+      required: true,
+      trim: true,
+    },
+
+    mealSession: {
+      type: String,
+      required: true,
+      enum: ["Lunch", "Dinner"],
+    },
+
     rating: {
       type: Number,
       required: true,

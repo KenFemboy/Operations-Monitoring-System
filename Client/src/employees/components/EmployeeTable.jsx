@@ -1,120 +1,167 @@
-import { useMemo, useState } from "react";
-
-function EmployeeTable({ employees, onDelete, onViewDetails, onUpdateStatus }) {
-  const statuses = ["active", "inactive", "resigned", "terminated"];
-  const [query, setQuery] = useState("");
-
-  const filteredEmployees = useMemo(() => {
-    const keyword = query.trim().toLowerCase();
-    if (!keyword) return employees;
-
-    return employees.filter((employee) => {
-      const name = `${employee.firstName} ${employee.lastName}`.toLowerCase();
-      const id = String(employee.employeeId || "").toLowerCase();
-      const position = String(employee.position || "").toLowerCase();
-      const branch = String(employee.branch || "").toLowerCase();
-
-      return (
-        name.includes(keyword) ||
-        id.includes(keyword) ||
-        position.includes(keyword) ||
-        branch.includes(keyword)
-      );
-    });
-  }, [employees, query]);
-
+function EmployeeTable({
+  employees,
+  onDelete,
+  onViewDetails,
+  onUpdateStatus,
+  onEdit,
+}) {
   return (
-    <section className="table-card employee-table-card">
-      <div className="table-toolbar">
-        <div>
-          <h3 className="table-title">Employee List</h3>
-          <p className="table-subtitle">Search by name, ID, position, or branch.</p>
-        </div>
-        <div className="employee-table-tools">
-          <input
-            className="employee-search"
-            type="search"
-            placeholder="Search employees"
-            value={query}
-            onChange={(event) => setQuery(event.target.value)}
-          />
-          <span className="employee-count">{filteredEmployees.length} total</span>
-        </div>
-      </div>
+    <div style={styles.card}>
+      <h2>Employee List</h2>
 
-      <div className="table-wrapper">
-        <table className="employee-table">
-          <thead>
+      <table style={styles.table}>
+        <thead>
+          <tr>
+            <th style={styles.th}>Employee ID</th>
+            <th style={styles.th}>Name</th>
+            <th style={styles.th}>Position</th>
+            <th style={styles.th}>Assigned Branch</th>
+            <th style={styles.th}>Salary Rate</th>
+            <th style={styles.th}>Status</th>
+            <th style={styles.th}>Action</th>
+          </tr>
+        </thead>
+
+        <tbody>
+          {employees.length === 0 ? (
             <tr>
-              <th>Employee ID</th>
-              <th>Name</th>
-              <th>Position</th>
-              <th>Branch</th>
-              <th>Salary Rate / hr</th>
-              <th>Status</th>
-              <th>Change Status</th>
-              <th>Action</th>
+              <td style={styles.td} colSpan="7" align="center">
+                No employees found
+              </td>
             </tr>
-          </thead>
+          ) : (
+            employees.map((employee) => (
+              <tr key={employee._id}>
+                <td style={styles.td}>{employee.employeeId}</td>
 
-          <tbody>
-            {filteredEmployees.length === 0 ? (
-              <tr>
-                <td colSpan="8" align="center">
-                  No employees found
+                <td style={styles.td}>
+                  {employee.firstName} {employee.lastName}
+                </td>
+
+                <td style={styles.td}>{employee.position}</td>
+
+                <td style={styles.td}>
+                  {employee.assignedBranch || employee.branch || "-"}
+                </td>
+
+                <td style={styles.td}>
+                  ₱{Number(employee.salaryRate || 0).toFixed(2)}
+                </td>
+
+                <td style={styles.td}>
+                  <select
+                    value={employee.employmentStatus}
+                    onChange={(e) =>
+                      onUpdateStatus(employee._id, e.target.value)
+                    }
+                    style={styles.statusSelect}
+                  >
+                    <option value="active">Active</option>
+                    <option value="inactive">Inactive</option>
+                    <option value="resigned">Resigned</option>
+                    <option value="terminated">Terminated</option>
+                  </select>
+                </td>
+
+                <td style={styles.td}>
+                  <button
+                    type="button"
+                    onClick={() => onViewDetails(employee._id)}
+                    style={styles.viewButton}
+                  >
+                    View
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => onEdit(employee)}
+                    style={styles.editButton}
+                  >
+                    Edit
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => onDelete(employee._id)}
+                    style={styles.deleteButton}
+                  >
+                    Delete
+                  </button>
                 </td>
               </tr>
-            ) : (
-              filteredEmployees.map((employee) => (
-                <tr key={employee._id}>
-                  <td>{employee.employeeId}</td>
-                  <td>
-                    {employee.firstName} {employee.lastName}
-                  </td>
-                  <td>{employee.position}</td>
-                  <td>{employee.branch}</td>
-                  <td>₱{employee.salaryRate}</td>
-                  <td>
-                    <span className="status-pill">
-                      {employee.employmentStatus}
-                    </span>
-                  </td>
-
-                  <td>
-                    <div className="status-chip-group">
-                      {statuses.map((status) => (
-                        <button
-                          key={status}
-                          type="button"
-                          className={`status-chip ${employee.employmentStatus === status ? "is-active" : ""}`}
-                          onClick={() => onUpdateStatus(employee, status)}
-                          disabled={employee.employmentStatus === status}
-                        >
-                          {status}
-                        </button>
-                      ))}
-                    </div>
-                  </td>
-
-                  <td>
-                    <div className="employee-action-row">
-                      <button
-                        type="button"
-                        className="btn btn-secondary action-btn"
-                        onClick={() => onViewDetails(employee._id)}
-                      >
-                        View
-                      </button>
-                    </div>
-                  </td>
-                </tr>
-              ))
-            )}
-          </tbody>
-        </table>
-      </div>
-    </section>
+            ))
+          )}
+        </tbody>
+      </table>
+    </div>
   );
 }
+
+const styles = {
+  card: {
+    backgroundColor: "#fff",
+    border: "1px solid #ddd",
+    borderRadius: "10px",
+    padding: "20px",
+    overflowX: "auto",
+  },
+
+  table: {
+    width: "100%",
+    borderCollapse: "collapse",
+    minWidth: "1000px",
+  },
+
+  th: {
+    borderBottom: "1px solid #ddd",
+    padding: "12px",
+    textAlign: "left",
+    backgroundColor: "#f9fafb",
+    whiteSpace: "nowrap",
+  },
+
+  td: {
+    borderBottom: "1px solid #eee",
+    padding: "12px",
+    whiteSpace: "nowrap",
+  },
+
+  statusSelect: {
+    padding: "7px 10px",
+    border: "1px solid #ccc",
+    borderRadius: "6px",
+    backgroundColor: "#fff",
+    cursor: "pointer",
+  },
+
+  viewButton: {
+    padding: "6px 10px",
+    backgroundColor: "#16a34a",
+    color: "#fff",
+    border: "none",
+    borderRadius: "5px",
+    cursor: "pointer",
+    marginRight: "6px",
+  },
+
+  editButton: {
+    padding: "6px 10px",
+    backgroundColor: "#2563eb",
+    color: "#fff",
+    border: "none",
+    borderRadius: "5px",
+    cursor: "pointer",
+    marginRight: "6px",
+  },
+
+  deleteButton: {
+    padding: "6px 10px",
+    backgroundColor: "#dc2626",
+    color: "#fff",
+    border: "none",
+    borderRadius: "5px",
+    cursor: "pointer",
+  },
+};
 
 export default EmployeeTable;

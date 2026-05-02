@@ -6,6 +6,12 @@ function FeedbackTable({ feedbacks, onRefresh }) {
   };
 
   const handleDelete = async (id) => {
+    const confirmed = window.confirm(
+      "Are you sure you want to delete this feedback?"
+    );
+
+    if (!confirmed) return;
+
     try {
       await deleteFeedback(id);
       onRefresh();
@@ -24,6 +30,8 @@ function FeedbackTable({ feedbacks, onRefresh }) {
           <tr>
             <th style={styles.th}>Date</th>
             <th style={styles.th}>Customer</th>
+            <th style={styles.th}>Branch</th>
+            <th style={styles.th}>Lunch / Dinner</th>
             <th style={styles.th}>Rating</th>
             <th style={styles.th}>Review</th>
             <th style={styles.th}>Action</th>
@@ -33,8 +41,8 @@ function FeedbackTable({ feedbacks, onRefresh }) {
         <tbody>
           {feedbacks.length === 0 ? (
             <tr>
-              <td style={styles.empty} colSpan="5">
-                No customer reviews yet.
+              <td style={styles.empty} colSpan="7">
+                No customer reviews found.
               </td>
             </tr>
           ) : (
@@ -45,6 +53,10 @@ function FeedbackTable({ feedbacks, onRefresh }) {
                 </td>
 
                 <td style={styles.td}>{feedback.customerName}</td>
+
+                <td style={styles.td}>{feedback.branch}</td>
+
+                <td style={styles.td}>{feedback.mealSession}</td>
 
                 <td style={styles.td}>
                   <span style={styles.starText}>
@@ -85,7 +97,7 @@ const styles = {
   table: {
     width: "100%",
     borderCollapse: "collapse",
-    minWidth: "800px",
+    minWidth: "1000px",
   },
   th: {
     borderBottom: "1px solid #ddd",
@@ -107,6 +119,7 @@ const styles = {
     color: "#f59e0b",
     fontSize: "18px",
     letterSpacing: "2px",
+    whiteSpace: "nowrap",
   },
   ratingText: {
     color: "#555",

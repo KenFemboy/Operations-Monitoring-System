@@ -2,12 +2,19 @@ import Feedback from "../models/Feedback.js";
 
 export const createFeedback = async (req, res) => {
   try {
-    const { customerName, rating, review } = req.body;
+    const { customerName, branch, mealSession, rating, review } = req.body;
 
-    if (!rating || !review) {
+    if (!branch || !mealSession || !rating || !review) {
       return res.status(400).json({
         success: false,
-        message: "Rating and review are required",
+        message: "Branch, meal session, rating, and review are required",
+      });
+    }
+
+    if (!["Lunch", "Dinner"].includes(mealSession)) {
+      return res.status(400).json({
+        success: false,
+        message: "Meal session must be Lunch or Dinner",
       });
     }
 
@@ -27,6 +34,8 @@ export const createFeedback = async (req, res) => {
 
     const feedback = await Feedback.create({
       customerName: customerName || "Anonymous",
+      branch,
+      mealSession,
       rating,
       review,
     });
@@ -47,7 +56,7 @@ export const createFeedback = async (req, res) => {
 
 export const getFeedbacks = async (req, res) => {
   try {
-    const { startDate, endDate } = req.query;
+    const { startDate, endDate, branch, mealSession } = req.query;
 
     const filter = {};
 
@@ -56,6 +65,14 @@ export const getFeedbacks = async (req, res) => {
         $gte: new Date(`${startDate}T00:00:00.000Z`),
         $lte: new Date(`${endDate}T23:59:59.999Z`),
       };
+    }
+
+    if (branch && branch !== "all") {
+      filter.branch = branch;
+    }
+
+    if (mealSession && mealSession !== "all") {
+      filter.mealSession = mealSession;
     }
 
     const feedbacks = await Feedback.find(filter).sort({ createdAt: -1 });
@@ -68,6 +85,107 @@ export const getFeedbacks = async (req, res) => {
     res.status(500).json({
       success: false,
       message: "Failed to fetch feedbacks",
+      error: error.message,
+    });
+  }
+};
+
+export const getAverageRatingByBranch = async (req, res) => {
+  try {
+    const { startDate, endDate, mealSession } = req.query;
+
+    const match = {};
+
+    if (startDate && endDate) {
+      match.createdAt = {
+        $gte: new Date(`${startDate}T00:00:00.000Z`),
+        $lte: new Date(`${endDate}T23:59:59.999Z`),
+      };
+    }
+
+    if (mealSession && mealSession !== "all") {
+      match.mealSession = mealSession;
+    }
+
+    const summary = await Feedback.aggregate([
+      { $match: match },
+      {
+        $group: {
+          _id: "$branch",
+          averageRating: { $avg: "$rating" },
+          totalReviews: { $sum: 1 },
+        },
+      },
+      {
+        $project: {
+          _id: 0,
+          branch: "$_id",
+          averageRating: { $round: ["$averageRating", 2] },
+          totalReviews: 1,
+        },
+      },
+      { $sort: { branch: 1 } },
+    ]);
+
+    res.status(200).json({
+      success: true,
+      summary,
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: "Failed to fetch average rating by branch",
+      error: error.message,
+    });
+  }
+};
+
+export const getAverageRatingByMonth = async (req, res) => {
+  try {
+    const { branch, mealSession } = req.query;
+
+    const match = {};
+
+    if (branch && branch !== "all") {
+      match.branch = branch;
+    }
+
+    if (mealSession && mealSession !== "all") {
+      match.mealSession = mealSession;
+    }
+
+    const summary = await Feedback.aggregate([
+      { $match: match },
+      {
+        $group: {
+          _id: {
+            year: { $year: "$createdAt" },
+            month: { $month: "$createdAt" },
+          },
+          averageRating: { $avg: "$rating" },
+          totalReviews: { $sum: 1 },
+        },
+      },
+      {
+        $project: {
+          _id: 0,
+          year: "$_id.year",
+          month: "$_id.month",
+          averageRating: { $round: ["$averageRating", 2] },
+          totalReviews: 1,
+        },
+      },
+      { $sort: { year: -1, month: -1 } },
+    ]);
+
+    res.status(200).json({
+      success: true,
+      summary,
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: "Failed to fetch average rating by month",
       error: error.message,
     });
   }

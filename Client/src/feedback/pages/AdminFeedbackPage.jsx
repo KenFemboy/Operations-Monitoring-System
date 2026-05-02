@@ -1,24 +1,36 @@
 import { useEffect, useState } from "react";
-import { getFeedbacks } from "../api/feedbackApi";
+import {
+  getFeedbacks,
+  getAverageRatingByBranch,
+  getAverageRatingByMonth,
+} from "../api/feedbackApi";
+
 import FeedbackTable from "../components/FeedbackTable";
 import FeedbackDateFilter from "../components/FeedbackDateFilter";
+import AverageRatingByBranchTable from "../components/AverageRatingByBranchTable";
+import AverageRatingByMonthTable from "../components/AverageRatingByMonthTable";
 
 function AdminFeedbackPage() {
   const [feedbacks, setFeedbacks] = useState([]);
+  const [branchSummary, setBranchSummary] = useState([]);
+  const [monthSummary, setMonthSummary] = useState([]);
+
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
   const [activeFilter, setActiveFilter] = useState({
     startDate: "",
     endDate: "",
+    branch: "all",
+    mealSession: "all",
   });
 
-  const fetchFeedbacks = async (startDate = "", endDate = "") => {
+  const fetchFeedbacks = async (filter = activeFilter) => {
     try {
       setLoading(true);
       setError("");
 
-      const res = await getFeedbacks(startDate, endDate);
+      const res = await getFeedbacks(filter);
       setFeedbacks(res.data.feedbacks || []);
     } catch (err) {
       console.error(err);
@@ -28,49 +40,82 @@ function AdminFeedbackPage() {
     }
   };
 
-  const handleFilter = async (startDate, endDate) => {
-    setActiveFilter({ startDate, endDate });
-    await fetchFeedbacks(startDate, endDate);
+  const fetchBranchSummary = async (filter = activeFilter) => {
+    try {
+      const res = await getAverageRatingByBranch({
+        startDate: filter.startDate,
+        endDate: filter.endDate,
+        mealSession: filter.mealSession,
+      });
+
+      setBranchSummary(res.data.summary || []);
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  const fetchMonthSummary = async (filter = activeFilter) => {
+    try {
+      const res = await getAverageRatingByMonth({
+        branch: filter.branch,
+        mealSession: filter.mealSession,
+      });
+
+      setMonthSummary(res.data.summary || []);
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  const fetchAll = async (filter = activeFilter) => {
+    await fetchFeedbacks(filter);
+    await fetchBranchSummary(filter);
+    await fetchMonthSummary(filter);
+  };
+
+  const handleFilter = async (filter) => {
+    setActiveFilter(filter);
+    await fetchAll(filter);
   };
 
   const handleClearFilter = async () => {
-    setActiveFilter({
+    const clearedFilter = {
       startDate: "",
       endDate: "",
-    });
+      branch: "all",
+      mealSession: "all",
+    };
 
-    await fetchFeedbacks();
+    setActiveFilter(clearedFilter);
+    await fetchAll(clearedFilter);
   };
 
   useEffect(() => {
-    fetchFeedbacks();
+    fetchAll();
   }, []);
 
   return (
     <div style={styles.page}>
       <h1>Feedback Management</h1>
-      <p>View customer ratings and short reviews.</p>
+      <p>View customer ratings, short reviews, and rating summaries.</p>
 
       <FeedbackDateFilter
         onFilter={handleFilter}
         onClear={handleClearFilter}
       />
 
-      {activeFilter.startDate && activeFilter.endDate && (
-        <p style={styles.filterText}>
-          Showing reviews from{" "}
-          <strong>{activeFilter.startDate}</strong> to{" "}
-          <strong>{activeFilter.endDate}</strong>
-        </p>
-      )}
+      <div style={styles.summaryGrid}>
+        <AverageRatingByBranchTable data={branchSummary} />
+        <AverageRatingByMonthTable data={monthSummary} />
+      </div>
 
       {loading && <p>Loading reviews...</p>}
       {error && <p style={styles.error}>{error}</p>}
 
-      <FeedbackTable feedbacks={feedbacks} onRefresh={() => fetchFeedbacks(
-        activeFilter.startDate,
-        activeFilter.endDate
-      )} />
+      <FeedbackTable
+        feedbacks={feedbacks}
+        onRefresh={() => fetchAll(activeFilter)}
+      />
     </div>
   );
 }
@@ -82,16 +127,14 @@ const styles = {
     backgroundColor: "#f3f4f6",
     minHeight: "100vh",
   },
+  summaryGrid: {
+    display: "grid",
+    gridTemplateColumns: "repeat(auto-fit, minmax(350px, 1fr))",
+    gap: "20px",
+  },
   error: {
     color: "red",
     fontWeight: "bold",
-  },
-  filterText: {
-    backgroundColor: "#e0f2fe",
-    color: "#075985",
-    padding: "10px",
-    borderRadius: "8px",
-    marginBottom: "16px",
   },
 };
 

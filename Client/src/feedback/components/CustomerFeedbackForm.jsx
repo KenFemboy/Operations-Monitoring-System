@@ -1,9 +1,17 @@
 import { useState } from "react";
 import { createFeedback } from "../api/feedbackApi";
 
+const branches = [
+  "Tagum City - Main Branch",
+  "Panabo City Branch",
+  "Pantukan Branch",
+];
+
 function CustomerFeedbackForm() {
   const [form, setForm] = useState({
     customerName: "",
+    branch: "",
+    mealSession: "",
     rating: 0,
     review: "",
   });
@@ -13,6 +21,16 @@ function CustomerFeedbackForm() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+
+    if (!form.branch) {
+      alert("Please select a branch");
+      return;
+    }
+
+    if (!form.mealSession) {
+      alert("Please select lunch or dinner");
+      return;
+    }
 
     if (form.rating === 0) {
       alert("Please select a star rating");
@@ -27,6 +45,8 @@ function CustomerFeedbackForm() {
     try {
       await createFeedback({
         customerName: form.customerName || "Anonymous",
+        branch: form.branch,
+        mealSession: form.mealSession,
         rating: form.rating,
         review: form.review,
       });
@@ -35,6 +55,8 @@ function CustomerFeedbackForm() {
 
       setForm({
         customerName: "",
+        branch: "",
+        mealSession: "",
         rating: 0,
         review: "",
       });
@@ -61,6 +83,33 @@ function CustomerFeedbackForm() {
           }
           style={styles.input}
         />
+
+        <select
+          value={form.branch}
+          onChange={(e) => setForm({ ...form, branch: e.target.value })}
+          required
+          style={styles.input}
+        >
+          <option value="">Select Branch</option>
+          {branches.map((branch) => (
+            <option key={branch} value={branch}>
+              {branch}
+            </option>
+          ))}
+        </select>
+
+        <select
+          value={form.mealSession}
+          onChange={(e) =>
+            setForm({ ...form, mealSession: e.target.value })
+          }
+          required
+          style={styles.input}
+        >
+          <option value="">Select Lunch / Dinner</option>
+          <option value="Lunch">Lunch</option>
+          <option value="Dinner">Dinner</option>
+        </select>
 
         <div>
           <label style={styles.label}>Rating</label>
@@ -109,7 +158,7 @@ function CustomerFeedbackForm() {
 
 const styles = {
   card: {
-    maxWidth: "500px",
+    maxWidth: "520px",
     margin: "40px auto",
     backgroundColor: "#fff",
     border: "1px solid #ddd",

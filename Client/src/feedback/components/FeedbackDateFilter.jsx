@@ -1,34 +1,40 @@
 import { useState } from "react";
 
+const branches = [
+  "Tagum City - Main Branch",
+  "Panabo City Branch",
+  "Pantukan Branch",
+];
+
 function FeedbackDateFilter({ onFilter, onClear }) {
   const [filter, setFilter] = useState({
     startDate: "",
     endDate: "",
+    branch: "all",
+    mealSession: "all",
   });
 
   const handleSubmit = (e) => {
     e.preventDefault();
 
-    if (!filter.startDate || !filter.endDate) {
-      alert("Please select start date and end date");
-      return;
-    }
-
-    onFilter(filter.startDate, filter.endDate);
+    onFilter(filter);
   };
 
   const handleClear = () => {
-    setFilter({
+    const clearedFilter = {
       startDate: "",
       endDate: "",
-    });
+      branch: "all",
+      mealSession: "all",
+    };
 
+    setFilter(clearedFilter);
     onClear();
   };
 
   return (
     <div style={styles.card}>
-      <h2>Filter Reviews by Date</h2>
+      <h2>Filter Reviews</h2>
 
       <form onSubmit={handleSubmit} style={styles.form}>
         <div>
@@ -53,6 +59,37 @@ function FeedbackDateFilter({ onFilter, onClear }) {
             }
             style={styles.input}
           />
+        </div>
+
+        <div>
+          <label style={styles.label}>Branch</label>
+          <select
+            value={filter.branch}
+            onChange={(e) => setFilter({ ...filter, branch: e.target.value })}
+            style={styles.input}
+          >
+            <option value="all">All Branches</option>
+            {branches.map((branch) => (
+              <option key={branch} value={branch}>
+                {branch}
+              </option>
+            ))}
+          </select>
+        </div>
+
+        <div>
+          <label style={styles.label}>Lunch / Dinner</label>
+          <select
+            value={filter.mealSession}
+            onChange={(e) =>
+              setFilter({ ...filter, mealSession: e.target.value })
+            }
+            style={styles.input}
+          >
+            <option value="all">All</option>
+            <option value="Lunch">Lunch</option>
+            <option value="Dinner">Dinner</option>
+          </select>
         </div>
 
         <button type="submit" style={styles.primaryButton}>

@@ -11,25 +11,20 @@ import NoticeToExplain from "../models/NoticeToExplain.js";
 
 export const createEmployee = async (req, res) => {
   try {
-    // Get latest employee based on employeeId
-    const lastEmployee = await Employee.findOne()
-      .sort({ createdAt: -1 });
+    const lastEmployee = await Employee.findOne().sort({ createdAt: -1 });
 
     let newEmployeeId = "EMP-0001";
 
     if (lastEmployee && lastEmployee.employeeId) {
-      // Extract number from last ID
       const lastNumber = parseInt(lastEmployee.employeeId.split("-")[1]);
-
       const nextNumber = lastNumber + 1;
-
-      // Pad with leading zeros
       newEmployeeId = `EMP-${String(nextNumber).padStart(4, "0")}`;
     }
 
     const employee = await Employee.create({
       ...req.body,
       employeeId: newEmployeeId,
+      employmentStatus: "active",
     });
 
     res.status(201).json({
@@ -549,7 +544,10 @@ export const createContribution = async (req, res) => {
 export const getContributions = async (req, res) => {
   try {
     const contributions = await Contribution.find()
-      .populate("employee", "employeeId firstName lastName")
+      .populate(
+        "employee",
+        "employeeId firstName lastName sssId gsisId pagibigId philhealthId assignedBranch"
+      )
       .sort({ createdAt: -1 });
 
     res.status(200).json({
