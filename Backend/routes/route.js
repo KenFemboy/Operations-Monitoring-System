@@ -8,6 +8,7 @@ import plantillaRoutes from "./plantillaRoutes.js";
 import archiveRoutes from "./archiveRoutes.js";
 import inventoryRoutes from "./inventoryRoutes.js";
 import saleRoutes from "./saleRoutes.js";
+import feedbackRoutes from "./feedbackRoutes.js";
 const router = express.Router();
 
 router.get("/health", (_req, res) => {
@@ -36,6 +37,6 @@ router.use("/users", userRoutes);
 router.use("/archive", archiveRoutes);
 router.use("/inventory", inventoryRoutes);
 router.use("/sales", saleRoutes);
-
+router.use("/feedback", feedbackRoutes);
 
 export default router;

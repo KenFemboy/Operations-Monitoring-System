@@ -34,6 +34,9 @@ import ReportsPage from "./features/reports/pages/ReportsPage";
 import SettingsPage from "./features/settings/pages/SettingsPage";
 import ArchivePage from "./features/settings/pages/ArchivePage";
 
+
+import CustomerFeedbackPage from "./feedback/pages/CustomerFeedbackPage";
+import AdminFeedbackPage from "./feedback/pages/AdminFeedbackPage";
 //  Protect private routes
 function ProtectedRoute({ children }) {
   const { loading, isAuthenticated } = useContext(AuthContext);
@@ -75,7 +78,13 @@ export default function App() {
   return (
     <AuthProvider>
       <BrowserRouter>
+
+
         <Routes>
+
+          <Route path="/feedback" element={<CustomerFeedbackPage />} />
+
+
           {/* Default */}
           <Route path="/" element={<AppRedirect />} />
 
@@ -124,8 +133,10 @@ export default function App() {
 
             <Route path="sales" element={<SalesPage />} />
 
+          <Route path="feedback" element={<AdminFeedbackPage /> } /> 
 
-            <Route path="feedback" element={<FeedbackPage />} />
+
+
             <Route path="settings" element={<SettingsPage />} />
             <Route path="settings/archive" element={<ArchivePage />} />
           </Route>
@@ -133,7 +144,7 @@ export default function App() {
           <Route path="/employees" element={<Navigate to="/app/employees" replace />} />
           <Route path="/plantilla" element={<Navigate to="/app/plantilla" replace />} />
           <Route path="/attendance" element={<Navigate to="/app/attendance" replace />} />
-
+          
           {/* Backward compatible entries */}
           <Route
             path="/admin-dashboard"

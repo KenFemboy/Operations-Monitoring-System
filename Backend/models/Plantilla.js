@@ -5,16 +5,19 @@ const plantillaSchema = new mongoose.Schema(
     position: {
       type: String,
       required: true,
+      trim: true,
     },
 
     branch: {
       type: String,
       required: true,
+      trim: true,
     },
 
     requiredCount: {
       type: Number,
       required: true,
+      default: 0,
     },
 
     currentCount: {
