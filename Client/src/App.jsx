@@ -12,10 +12,9 @@ import { getHomeRoute } from "./auth/utils/appRoutes";
 
 import Login from "./auth/pages/Login";
 import DashboardLayout from "./layouts/DashboardLayout";
-
-import DashboardPage from "./features/dashboard/pages/DashboardPage";
-import BranchesPage from "./features/branches/pages/BranchesPage";
 import BranchUsersPage from "./features/branches/pages/BranchUsersPage";
+import DashboardPage from "./features/dashboard/pages/DashboardPage";
+
 
 //  Under sa Employees Page: Employees Attendance Payroll Leave Contributions Incident Reports NTE 
 import EmployeesPage from "./employees/pages/EmployeesPage";
@@ -29,7 +28,7 @@ import InventoryPage from "./inventory/pages/InventoryPage";
 import SalesPage from "./sales/pages/SalesPage";
 
 
-import FeedbackPage from "./features/feedback/pages/FeedbackPage";
+
 import ReportsPage from "./features/reports/pages/ReportsPage";
 import SettingsPage from "./features/settings/pages/SettingsPage";
 import ArchivePage from "./features/settings/pages/ArchivePage";
@@ -112,7 +111,7 @@ export default function App() {
             <Route index element={<Navigate to="dashboard" replace />} />
             <Route path="dashboard" element={<DashboardPage />} />
             <Route path="reports" element={<ReportsPage />} />
-            <Route path="branches" element={<BranchesPage />} />
+
             <Route path="branches/users" element={<BranchUsersPage />} />
 
 
