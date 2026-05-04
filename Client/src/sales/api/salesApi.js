@@ -1,13 +1,13 @@
-import axios from "axios";
+import api from "../../api/axios";
 
-const API_URL = "http://localhost:8000/api/sales";
+const API_URL = "/sales";
 
 export const createSale = (data) => {
-  return axios.post(API_URL, data);
+  return api.post(API_URL, data);
 };
 
 export const getSales = (startDate, endDate, serviceType = "all") => {
-  return axios.get(API_URL, {
+  return api.get(API_URL, {
     params: {
       startDate,
       endDate,
@@ -17,17 +17,17 @@ export const getSales = (startDate, endDate, serviceType = "all") => {
 };
 
 export const getDailySales = (date) => {
-  return axios.get(`${API_URL}/daily`, {
+  return api.get(`${API_URL}/daily`, {
     params: { date },
   });
 };
 
 export const getMonthlySales = (year, month) => {
-  return axios.get(`${API_URL}/monthly`, {
+  return api.get(`${API_URL}/monthly`, {
     params: { year, month },
   });
 };
 
 export const deleteSale = (id) => {
-  return axios.delete(`${API_URL}/${id}`);
+  return api.delete(`${API_URL}/${id}`);
 };

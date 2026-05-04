@@ -1,9 +1,9 @@
-import axios from "axios";
+import api from "../../api/axios";
 
-const API_URL = "http://localhost:8000/api/feedback";
+const API_URL = "/feedback";
 
 export const createFeedback = (data) => {
-  return axios.post(API_URL, data);
+  return api.post(API_URL, data);
 };
 
 export const getFeedbacks = ({
@@ -12,7 +12,7 @@ export const getFeedbacks = ({
   branch = "all",
   mealSession = "all",
 } = {}) => {
-  return axios.get(API_URL, {
+  return api.get(API_URL, {
     params: {
       startDate,
       endDate,
@@ -27,7 +27,7 @@ export const getAverageRatingByBranch = ({
   endDate = "",
   mealSession = "all",
 } = {}) => {
-  return axios.get(`${API_URL}/summary/by-branch`, {
+  return api.get(`${API_URL}/summary/by-branch`, {
     params: {
       startDate,
       endDate,
@@ -40,7 +40,7 @@ export const getAverageRatingByMonth = ({
   branch = "all",
   mealSession = "all",
 } = {}) => {
-  return axios.get(`${API_URL}/summary/by-month`, {
+  return api.get(`${API_URL}/summary/by-month`, {
     params: {
       branch,
       mealSession,
@@ -49,5 +49,5 @@ export const getAverageRatingByMonth = ({
 };
 
 export const deleteFeedback = (id) => {
-  return axios.delete(`${API_URL}/${id}`);
+  return api.delete(`${API_URL}/${id}`);
 };
