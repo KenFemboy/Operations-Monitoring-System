@@ -9,6 +9,8 @@ import archiveRoutes from "./archiveRoutes.js";
 import inventoryRoutes from "./inventoryRoutes.js";
 import saleRoutes from "./saleRoutes.js";
 import feedbackRoutes from "./feedbackRoutes.js";
+
+import dashboardRoutes from "./dashboardRoutes.js";
 const router = express.Router();
 
 router.get("/health", (_req, res) => {
@@ -38,5 +40,5 @@ router.use("/archive", archiveRoutes);
 router.use("/inventory", inventoryRoutes);
 router.use("/sales", saleRoutes);
 router.use("/feedback", feedbackRoutes);
-
+router.use("/dashboard", dashboardRoutes);
 export default router;

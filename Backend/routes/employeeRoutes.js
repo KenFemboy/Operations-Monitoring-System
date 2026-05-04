@@ -17,7 +17,7 @@ getEmployeeFullDetails,
   createLeave,
   getLeaves,
   updateLeaveStatus,
-updateLeave,
+  updateLeave,
   createContribution,
   getContributions,
 

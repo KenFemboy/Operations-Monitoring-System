@@ -13,7 +13,7 @@ import { getHomeRoute } from "./auth/utils/appRoutes";
 import Login from "./auth/pages/Login";
 import DashboardLayout from "./layouts/DashboardLayout";
 import BranchUsersPage from "./features/branches/pages/BranchUsersPage";
-import DashboardPage from "./features/dashboard/pages/DashboardPage";
+import DashboardPage from "./dashboard/pages/DashboardPage";
 
 
 //  Under sa Employees Page: Employees Attendance Payroll Leave Contributions Incident Reports NTE 
