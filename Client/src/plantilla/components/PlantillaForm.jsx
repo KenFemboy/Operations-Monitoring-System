@@ -96,6 +96,7 @@ function PlantillaForm({ selectedPlantilla, onSubmit, onCancelEdit }) {
         value={form.requiredCount}
         onChange={handleChange}
         required
+        min="0"
         style={styles.input}
       />
 
@@ -106,6 +107,7 @@ function PlantillaForm({ selectedPlantilla, onSubmit, onCancelEdit }) {
         value={form.currentCount}
         onChange={handleChange}
         style={styles.input}
+         min="0"
       />
 
       <input

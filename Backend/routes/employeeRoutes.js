@@ -13,6 +13,7 @@ getEmployeeFullDetails,
 
   createPayroll,
   getPayrolls,
+  updatePayrollStatus,
 
   createLeave,
   getLeaves,
@@ -23,12 +24,12 @@ getEmployeeFullDetails,
 
   createIncidentReport,
   getIncidentReports,
+  updateIncidentReportStatus,
 
   createNTE,
   getNTEs,
+  updateNTEStatus,
 
-
-  updatePayrollStatus,
   
 } from "../controllers/employeeController.js";
 
@@ -66,9 +67,10 @@ router.get("/contribution/list", getContributions);
 // Incident Reports
 router.post("/ir/create", createIncidentReport);
 router.get("/ir/list", getIncidentReports);
-
+router.put("/ir/:id/status", updateIncidentReportStatus);
 // Notice to Explain
 router.post("/nte/create", createNTE);
 router.get("/nte/list", getNTEs);
+router.put("/nte/:id/status", updateNTEStatus);
 
 export default router;

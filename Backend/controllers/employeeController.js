@@ -567,7 +567,10 @@ export const getContributions = async (req, res) => {
 
 export const createIncidentReport = async (req, res) => {
   try {
-    const report = await IncidentReport.create(req.body);
+    const report = await IncidentReport.create({
+      ...req.body,
+      status: "open",
+    });
 
     res.status(201).json({
       success: true,
@@ -602,6 +605,43 @@ export const getIncidentReports = async (req, res) => {
   }
 };
 
+export const updateIncidentReportStatus = async (req, res) => {
+  try {
+    const { status } = req.body;
+
+    if (!["open", "under-review", "resolved"].includes(status)) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid incident report status",
+      });
+    }
+
+    const report = await IncidentReport.findByIdAndUpdate(
+      req.params.id,
+      { status },
+      { new: true }
+    ).populate("employee", "employeeId firstName lastName");
+
+    if (!report) {
+      return res.status(404).json({
+        success: false,
+        message: "Incident report not found",
+      });
+    }
+
+    res.status(200).json({
+      success: true,
+      message: "Incident report status updated",
+      data: report,
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: "Failed to update incident report status",
+      error: error.message,
+    });
+  }
+};
 // ================= NTE =================
 
 export const createNTE = async (req, res) => {
@@ -636,6 +676,44 @@ export const getNTEs = async (req, res) => {
     res.status(500).json({
       success: false,
       message: "Failed to fetch NTE records",
+      error: error.message,
+    });
+  }
+};
+
+export const updateNTEStatus = async (req, res) => {
+  try {
+    const { status } = req.body;
+
+    if (!["pending", "submitted", "closed"].includes(status)) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid NTE status",
+      });
+    }
+
+    const nte = await NoticeToExplain.findByIdAndUpdate(
+      req.params.id,
+      { status },
+      { new: true }
+    ).populate("employee", "employeeId firstName lastName");
+
+    if (!nte) {
+      return res.status(404).json({
+        success: false,
+        message: "NTE record not found",
+      });
+    }
+
+    res.status(200).json({
+      success: true,
+      message: "NTE status updated",
+      data: nte,
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: "Failed to update NTE status",
       error: error.message,
     });
   }

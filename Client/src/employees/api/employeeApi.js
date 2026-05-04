@@ -49,12 +49,18 @@ export const createIncidentReport = (data) =>
 export const getIncidentReports = () =>
   api.get(`${API_URL}/ir/list`);
 
+export const updateIncidentReportStatus = (id, status) =>
+  api.put(`${API_URL}/ir/${id}/status`, { status });
+
 // NTE
 export const createNTE = (data) =>
   api.post(`${API_URL}/nte/create`, data);
 
 export const getNTEs = () =>
   api.get(`${API_URL}/nte/list`);
+
+export const updateNTEStatus = (id, status) =>
+  api.put(`${API_URL}/nte/${id}/status`, { status });
 
 export const getEmployeeFullDetails = (id) =>
   api.get(`${API_URL}/${id}/details`);

@@ -103,6 +103,7 @@ function PayrollForm({ employees, onSubmit }) {
                 name="overtimePay"
                 value={form.overtimePay}
                 onChange={handleChange}
+                 min="0"
               />
             </label>
 
@@ -113,6 +114,7 @@ function PayrollForm({ employees, onSubmit }) {
                 name="deductions"
                 value={form.deductions}
                 onChange={handleChange}
+                 min="0"
               />
             </label>
           </div>

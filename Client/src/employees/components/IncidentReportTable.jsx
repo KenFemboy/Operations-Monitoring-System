@@ -1,4 +1,4 @@
-function IncidentReportTable({ reports }) {
+function IncidentReportTable({ reports, onUpdateStatus }) {
   return (
     <div style={{ marginTop: "24px" }}>
       <h2>Incident Report List</h2>
@@ -34,7 +34,18 @@ function IncidentReportTable({ reports }) {
                 <td>{item.title}</td>
                 <td>{item.description}</td>
                 <td>{item.actionTaken || "-"}</td>
-                <td>{item.status}</td>
+                <td>
+                  <select
+                    value={item.status}
+                    onChange={(e) =>
+                      onUpdateStatus(item._id, e.target.value)
+                    }
+                  >
+                    <option value="open">Open</option>
+                    <option value="under-review">Under Review</option>
+                    <option value="resolved">Resolved</option>
+                  </select>
+                </td>
               </tr>
             ))
           )}

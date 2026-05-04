@@ -1,5 +1,4 @@
-import { useContext, useEffect, useState } from "react";
-import { AuthContext } from "../../auth/context/AuthContext";
+import { useCallback, useEffect, useState } from "react";
 
 import {
   getEmployees,
@@ -7,26 +6,23 @@ import {
   createEmployee,
   deleteEmployee,
   updateEmployee,
-
   createAttendance,
   getAttendance,
-
   createLeave,
   getLeaves,
   updateLeave,
   updateLeaveStatus,
-
   updatePayrollStatus,
   createPayroll,
   getPayrolls,
-
   createContribution,
   getContributions,
-
   createIncidentReport,
   getIncidentReports,
+  updateIncidentReportStatus,
   createNTE,
   getNTEs,
+  updateNTEStatus,
 } from "../api/employeeApi";
 
 import PresentEmployeesCard from "../components/PresentEmployeesCard";
@@ -43,168 +39,58 @@ import ContributionTable from "../components/ContributionTable";
 import IncidentReportForm from "../components/IncidentReportForm";
 import IncidentReportTable from "../components/IncidentReportTable";
 import NTEForm from "../components/NTEForm";
-import NTEReportTable from "../components/NTETable";
+import NTEReportTable from "../components/NTEReportTable";
+
+const TABS = [
+  { key: "employees", label: "Employees" },
+  { key: "attendance", label: "Attendance" },
+  { key: "leave", label: "Leave" },
+  { key: "payroll", label: "Payroll" },
+  { key: "contribution", label: "Contributions" },
+  { key: "ir", label: "IR" },
+  { key: "nte", label: "NTE" },
+];
+
+const getToday = () => new Date().toISOString().split("T")[0];
+
+const getErrorMessage = (error, fallback) =>
+  error.response?.data?.message || fallback;
 
 function EmployeesPage({ initialTab = "employees" }) {
-  const { user } = useContext(AuthContext);
-  const [employees, setEmployees] = useState([]);
   const [activeTab, setActiveTab] = useState(initialTab);
   const [loading, setLoading] = useState(false);
-  const [selectedDetails, setSelectedDetails] = useState(null);
+
+  const [employees, setEmployees] = useState([]);
   const [selectedEmployee, setSelectedEmployee] = useState(null);
+  const [selectedDetails, setSelectedDetails] = useState(null);
+
   const [attendance, setAttendance] = useState([]);
-  const [selectedDate, setSelectedDate] = useState(
-    () => new Date().toISOString().split("T")[0]
-  );
-  const [payrolls, setPayrolls] = useState([]);
+  const [selectedDate, setSelectedDate] = useState(getToday);
+
   const [leaves, setLeaves] = useState([]);
-  const [incidentReports, setIncidentReports] = useState([]);
-const [editingLeave, setEditingLeave] = useState(null);
-  const [addEmployeeOpen, setAddEmployeeOpen] = useState(false);
-  const [statusConfirmOpen, setStatusConfirmOpen] = useState(false);
-  const [statusPassword, setStatusPassword] = useState("");
-  const [statusError, setStatusError] = useState("");
-  const [pendingStatusChange, setPendingStatusChange] = useState(null);
+  const [editingLeave, setEditingLeave] = useState(null);
+
+  const [payrolls, setPayrolls] = useState([]);
   const [contributions, setContributions] = useState([]);
+  const [incidentReports, setIncidentReports] = useState([]);
   const [ntes, setNtes] = useState([]);
 
-  const fetchNTEs = async () => {
-  try {
-    const res = await getNTEs();
-    setNtes(res.data.data || []);
-  } catch (error) {
-    console.error(error);
-    alert("Failed to fetch NTE records");
-  }
-};
-const fetchLeaves = async () => {
-  try {
-    const res = await getLeaves();
-    setLeaves(res.data.data || []);
-  } catch (error) {
-    console.error(error);
-    alert("Failed to fetch leaves");
-  }
-};
-const fetchIncidentReports = async () => {
-  try {
-    const res = await getIncidentReports();
-    setIncidentReports(res.data.data || []);
-  } catch (error) {
-    console.error(error);
-    alert("Failed to fetch incident reports");
-  }
-};
-const handleSubmitLeave = async (data) => {
-  try {
-    if (editingLeave) {
-      await updateLeave(editingLeave._id, data);
-      alert("Leave updated");
-      setEditingLeave(null);
-    } else {
-      await createLeave(data);
-      alert("Leave filed");
-    }
-
-    fetchLeaves();
-  } catch (error) {
-    alert(
-      error.response?.data?.message ||
-        "Failed to save leave"
-    );
-  }
-};
-
-const handleUpdateLeaveStatus = async (id, status) => {
-  try {
-    await updateLeaveStatus(id, status);
-    alert("Leave status updated");
-    fetchLeaves();
-  } catch (error) {
-    alert(
-      error.response?.data?.message ||
-        "Failed to update leave status"
-    );
-  }
-};
-  const fetchPayrolls = async () => {
+  const fetchEmployees = useCallback(async () => {
     try {
-      const res = await getPayrolls();
-      setPayrolls(res.data.data || []);
+      setLoading(true);
+
+      const res = await getEmployees();
+
+      setEmployees(res.data.data || []);
     } catch (error) {
       console.error(error);
-      alert("Failed to fetch payrolls");
+      alert("Failed to fetch employees");
+    } finally {
+      setLoading(false);
     }
-  };
+  }, []);
 
-  const fetchContributions = async () => {
-  try {
-    const res = await getContributions();
-    setContributions(res.data.data || []);
-  } catch (error) {
-    console.error(error);
-    alert("Failed to fetch contributions");
-  }
-};
-  const handleUpdatePayrollStatus = async (id, status) => {
-    try {
-      await updatePayrollStatus(id, status);
-      alert("Payroll status updated");
-      fetchPayrolls();
-    } catch (error) {
-      console.error(error);
-      alert("Failed to update payroll status");
-    }
-  };
-const handleUpdateEmployeeStatus = async (id, status) => {
-  try {
-    await updateEmployee(id, {
-      employmentStatus: status,
-    });
-
-    alert("Employee status updated");
-    fetchEmployees();
-  } catch (error) {
-    console.error(error);
-    alert(error.response?.data?.message || "Failed to update employee status");
-  }
-};
-
-  const handleConfirmStatusChange = async (event) => {
-    event.preventDefault();
-
-    if (!pendingStatusChange) {
-      return;
-    }
-
-    if (user?.role !== "super_admin") {
-      setStatusError("Super admin authorization is required.");
-      return;
-    }
-
-    if (statusPassword.trim().length < 8) {
-      setStatusError("Enter the super admin password (at least 8 characters).");
-      return;
-    }
-
-    try {
-      await updateEmployee(pendingStatusChange.employee._id, {
-        employmentStatus: pendingStatusChange.status,
-      });
-
-      alert("Employee status updated");
-      fetchEmployees();
-      setStatusConfirmOpen(false);
-      setPendingStatusChange(null);
-      setStatusPassword("");
-    } catch (error) {
-      console.error(error);
-      setStatusError("Failed to update employee status");
-    }
-  };
-
-
-  const fetchAttendance = async () => {
+  const fetchAttendance = useCallback(async () => {
     try {
       const res = await getAttendance();
       setAttendance(res.data.data || []);
@@ -212,8 +98,91 @@ const handleUpdateEmployeeStatus = async (id, status) => {
       console.error(error);
       alert("Failed to fetch attendance");
     }
-  };
+  }, []);
 
+  const fetchLeaves = useCallback(async () => {
+    try {
+      const res = await getLeaves();
+      setLeaves(res.data.data || []);
+    } catch (error) {
+      console.error(error);
+      alert("Failed to fetch leaves");
+    }
+  }, []);
+
+  const fetchPayrolls = useCallback(async () => {
+    try {
+      const res = await getPayrolls();
+      setPayrolls(res.data.data || []);
+    } catch (error) {
+      console.error(error);
+      alert("Failed to fetch payrolls");
+    }
+  }, []);
+
+  const fetchContributions = useCallback(async () => {
+    try {
+      const res = await getContributions();
+      setContributions(res.data.data || []);
+    } catch (error) {
+      console.error(error);
+      alert("Failed to fetch contributions");
+    }
+  }, []);
+
+  const fetchIncidentReports = useCallback(async () => {
+    try {
+      const res = await getIncidentReports();
+      setIncidentReports(res.data.data || []);
+    } catch (error) {
+      console.error(error);
+      alert("Failed to fetch incident reports");
+    }
+  }, []);
+
+  const fetchNTEs = useCallback(async () => {
+    try {
+      const res = await getNTEs();
+      setNtes(res.data.data || []);
+    } catch (error) {
+      console.error(error);
+      alert("Failed to fetch NTE records");
+    }
+  }, []);
+
+  const fetchPageData = useCallback(() => {
+    fetchEmployees();
+    fetchAttendance();
+    fetchLeaves();
+    fetchPayrolls();
+    fetchContributions();
+    fetchIncidentReports();
+    fetchNTEs();
+  }, [
+    fetchAttendance,
+    fetchContributions,
+    fetchEmployees,
+    fetchIncidentReports,
+    fetchLeaves,
+    fetchNTEs,
+    fetchPayrolls,
+  ]);
+
+  useEffect(() => {
+    const timeoutId = window.setTimeout(fetchPageData, 0);
+
+    return () => window.clearTimeout(timeoutId);
+  }, [fetchPageData]);
+
+  useEffect(() => {
+    const timeoutId = window.setTimeout(() => setActiveTab(initialTab), 0);
+
+    return () => window.clearTimeout(timeoutId);
+  }, [initialTab]);
+
+  const handleSetToday = () => {
+    setSelectedDate(getToday());
+  };
 
   const handleViewDetails = async (id) => {
     try {
@@ -224,89 +193,178 @@ const handleUpdateEmployeeStatus = async (id, status) => {
       alert("Failed to load employee details");
     }
   };
-  const fetchEmployees = async () => {
+
+  const handleSaveEmployee = async (formData) => {
     try {
-      setLoading(true);
-      const res = await getEmployees();
-      setEmployees(res.data.data || []);
+      if (selectedEmployee) {
+        await updateEmployee(selectedEmployee._id, formData);
+        alert("Employee updated successfully");
+      } else {
+        await createEmployee(formData);
+        alert("Employee added successfully");
+      }
+
+      setSelectedEmployee(null);
+      fetchEmployees();
     } catch (error) {
       console.error(error);
-      alert("Failed to fetch employees");
-    } finally {
-      setLoading(false);
+      alert(getErrorMessage(error, "Failed to save employee"));
     }
   };
 
-  useEffect(() => {
-    fetchEmployees();
-    fetchAttendance();
-    fetchPayrolls();
-    fetchLeaves();
-    fetchContributions();
-    fetchIncidentReports();
-    fetchNTEs();
-  }, []);
+  const handleEditEmployee = (employee) => {
+    setSelectedEmployee(employee);
 
-  useEffect(() => {
-    setActiveTab(initialTab);
-  }, [initialTab]);
-
-  const handleSetToday = () => {
-    setSelectedDate(new Date().toISOString().split("T")[0]);
+    window.scrollTo({
+      top: 0,
+      behavior: "smooth",
+    });
   };
 
- const handleSaveEmployee = async (formData) => {
-  try {
-    if (selectedEmployee) {
-      await updateEmployee(selectedEmployee._id, formData);
-      alert("Employee updated successfully");
-    } else {
-      await createEmployee(formData);
-      alert("Employee added successfully");
+  const handleDeleteEmployee = async (id) => {
+    const confirmDelete = window.confirm(
+      "Warning: Are you sure you want to delete this employee? This action cannot be undone."
+    );
+
+    if (!confirmDelete) return;
+
+    try {
+      await deleteEmployee(id);
+      alert("Employee deleted successfully");
+      fetchEmployees();
+    } catch (error) {
+      console.error(error);
+      alert(getErrorMessage(error, "Failed to delete employee"));
     }
+  };
 
-    setSelectedEmployee(null);
-    fetchEmployees();
-  } catch (error) {
-    console.error(error);
-    alert(error.response?.data?.message || "Failed to save employee");
-  }
-};
-const handleEditEmployee = (employee) => {
-  setSelectedEmployee(employee);
+  const handleUpdateEmployeeStatus = async (id, status) => {
+    try {
+      await updateEmployee(id, { employmentStatus: status });
+      alert("Employee status updated");
+      fetchEmployees();
+    } catch (error) {
+      console.error(error);
+      alert(getErrorMessage(error, "Failed to update employee status"));
+    }
+  };
 
-  window.scrollTo({
-    top: 0,
-    behavior: "smooth",
-  });
-};
+  const handleSubmitAttendance = async (data) => {
+    try {
+      await createAttendance(data);
+      alert("Attendance saved");
+      fetchAttendance();
+    } catch (error) {
+      console.error(error);
+      alert(getErrorMessage(error, "Failed to save attendance"));
+    }
+  };
 
-const handleDeleteEmployee = async (id) => {
-  const confirmDelete = window.confirm(
-    "Warning: Are you sure you want to delete this employee? This action cannot be undone."
-  );
+  const handleSubmitLeave = async (data) => {
+    try {
+      if (editingLeave) {
+        await updateLeave(editingLeave._id, data);
+        alert("Leave updated");
+      } else {
+        await createLeave(data);
+        alert("Leave filed");
+      }
 
-  if (!confirmDelete) return;
+      setEditingLeave(null);
+      fetchLeaves();
+    } catch (error) {
+      console.error(error);
+      alert(getErrorMessage(error, "Failed to save leave"));
+    }
+  };
 
-  try {
-    await deleteEmployee(id);
-    alert("Employee deleted successfully");
-    fetchEmployees();
-  } catch (error) {
-    console.error(error);
-    alert(error.response?.data?.message || "Failed to delete employee");
-  }
-};
+  const handleUpdateLeaveStatus = async (id, status) => {
+    try {
+      await updateLeaveStatus(id, status);
+      alert("Leave status updated");
+      fetchLeaves();
+    } catch (error) {
+      console.error(error);
+      alert(getErrorMessage(error, "Failed to update leave status"));
+    }
+  };
 
-  const tabs = [
-    { key: "employees", label: "Employees" },
-    { key: "attendance", label: "Attendance" },
-    { key: "leave", label: "Leave" },
-    { key: "payroll", label: "Payroll" },
-    { key: "contribution", label: "Contributions" },
-    { key: "ir", label: "IR" },
-    { key: "nte", label: "NTE" },
-  ];
+  const handleSubmitPayroll = async (data) => {
+    try {
+      await createPayroll(data);
+      alert("Payroll created");
+      fetchPayrolls();
+    } catch (error) {
+      console.error(error);
+      alert(getErrorMessage(error, "Failed to create payroll"));
+    }
+  };
+
+  const handleUpdatePayrollStatus = async (id, status) => {
+    try {
+      await updatePayrollStatus(id, status);
+      alert("Payroll status updated");
+      fetchPayrolls();
+    } catch (error) {
+      console.error(error);
+      alert(getErrorMessage(error, "Failed to update payroll status"));
+    }
+  };
+
+  const handleSubmitContribution = async (data) => {
+    try {
+      await createContribution(data);
+      alert("Contribution saved");
+      fetchContributions();
+    } catch (error) {
+      console.error(error);
+      alert(getErrorMessage(error, "Failed to save contribution"));
+    }
+  };
+
+  const handleSubmitIncidentReport = async (data) => {
+    try {
+      await createIncidentReport(data);
+      alert("Incident report saved");
+      fetchIncidentReports();
+    } catch (error) {
+      console.error(error);
+      alert(getErrorMessage(error, "Failed to save incident report"));
+    }
+  };
+
+  const handleUpdateIncidentStatus = async (id, status) => {
+    try {
+      await updateIncidentReportStatus(id, status);
+      alert("Incident report status updated");
+      fetchIncidentReports();
+    } catch (error) {
+      console.error(error);
+      alert(getErrorMessage(error, "Failed to update incident report status"));
+    }
+  };
+
+  const handleSubmitNTE = async (data) => {
+    try {
+      await createNTE(data);
+      alert("NTE saved");
+      fetchNTEs();
+    } catch (error) {
+      console.error(error);
+      alert(getErrorMessage(error, "Failed to save NTE"));
+    }
+  };
+
+  const handleUpdateNTEStatus = async (id, status) => {
+    try {
+      await updateNTEStatus(id, status);
+      alert("NTE status updated");
+      fetchNTEs();
+    } catch (error) {
+      console.error(error);
+      alert(getErrorMessage(error, "Failed to update NTE status"));
+    }
+  };
 
   return (
     <div className="employee-page">
@@ -318,7 +376,7 @@ const handleDeleteEmployee = async (id) => {
       </header>
 
       <div className="tab-row" role="tablist" aria-label="Employee sections">
-        {tabs.map((tab) => (
+        {TABS.map((tab) => (
           <button
             key={tab.key}
             type="button"
@@ -331,52 +389,38 @@ const handleDeleteEmployee = async (id) => {
         ))}
       </div>
 
-     {activeTab === "employees" && (
-  <>
-    <EmployeeForm
-      onSubmit={handleSaveEmployee}
-      selectedEmployee={selectedEmployee}
-      onCancelEdit={() => setSelectedEmployee(null)}
-    />
+      {activeTab === "employees" && (
+        <>
+          <EmployeeForm
+            onSubmit={handleSaveEmployee}
+            selectedEmployee={selectedEmployee}
+            onCancelEdit={() => setSelectedEmployee(null)}
+          />
 
-    {loading ? (
-      <p>Loading employees...</p>
-    ) : (
-      <>
-        <EmployeeTable
-          employees={employees}
-          onDelete={handleDeleteEmployee}
-          onViewDetails={handleViewDetails}
-          onUpdateStatus={handleUpdateEmployeeStatus}
-          onEdit={handleEditEmployee}
-        />
+          {loading ? (
+            <p>Loading employees...</p>
+          ) : (
+            <>
+              <EmployeeTable
+                employees={employees}
+                onDelete={handleDeleteEmployee}
+                onViewDetails={handleViewDetails}
+                onUpdateStatus={handleUpdateEmployeeStatus}
+                onEdit={handleEditEmployee}
+              />
 
-        <EmployeeDetails
-          details={selectedDetails}
-          onClose={() => setSelectedDetails(null)}
-        />
-      </>
-    )}
-  </>
-)}
+              <EmployeeDetails
+                details={selectedDetails}
+                onClose={() => setSelectedDetails(null)}
+              />
+            </>
+          )}
+        </>
+      )}
 
       {activeTab === "attendance" && (
         <section className="attendance-page">
-          <AttendanceForm
-            employees={employees}
-            onSubmit={async (data) => {
-              try {
-                await createAttendance(data);
-                alert("Attendance saved");
-                fetchAttendance();
-              } catch (error) {
-                alert(
-                  error.response?.data?.message ||
-                  "Failed to save attendance"
-                );
-              }
-            }}
-          />
+          <AttendanceForm employees={employees} onSubmit={handleSubmitAttendance} />
 
           <div className="attendance-filters">
             <div className="attendance-filter-field">
@@ -385,10 +429,14 @@ const handleDeleteEmployee = async (id) => {
                 id="attendance-date"
                 type="date"
                 value={selectedDate}
-                onChange={(e) => setSelectedDate(e.target.value)}
+                onChange={(event) => setSelectedDate(event.target.value)}
               />
             </div>
-            <button type="button" className="attendance-clear-btn" onClick={handleSetToday}>
+            <button
+              type="button"
+              className="attendance-clear-btn"
+              onClick={handleSetToday}
+            >
               Today
             </button>
           </div>
@@ -401,39 +449,25 @@ const handleDeleteEmployee = async (id) => {
       )}
 
       {activeTab === "leave" && (
-  <>
-    <LeaveForm
-      employees={employees}
-      onSubmit={handleSubmitLeave}
-      editingLeave={editingLeave}
-      onCancelEdit={() => setEditingLeave(null)}
-    />
+        <>
+          <LeaveForm
+            employees={employees}
+            onSubmit={handleSubmitLeave}
+            editingLeave={editingLeave}
+            onCancelEdit={() => setEditingLeave(null)}
+          />
 
-    <LeaveTable
-      leaves={leaves}
-      onUpdateStatus={handleUpdateLeaveStatus}
-      onEdit={setEditingLeave}
-    />
-  </>
-)}
+          <LeaveTable
+            leaves={leaves}
+            onUpdateStatus={handleUpdateLeaveStatus}
+            onEdit={setEditingLeave}
+          />
+        </>
+      )}
 
       {activeTab === "payroll" && (
         <>
-          <PayrollForm
-            employees={employees}
-            onSubmit={async (data) => {
-              try {
-                await createPayroll(data);
-                alert("Payroll created");
-                fetchPayrolls();
-              } catch (error) {
-                alert(
-                  error.response?.data?.message ||
-                  "Failed to create payroll"
-                );
-              }
-            }}
-          />
+          <PayrollForm employees={employees} onSubmit={handleSubmitPayroll} />
 
           <PayrollTable
             payrolls={payrolls}
@@ -443,115 +477,36 @@ const handleDeleteEmployee = async (id) => {
       )}
 
       {activeTab === "contribution" && (
-  <>
-    <ContributionForm
-      employees={employees}
-      onSubmit={async (data) => {
-        await createContribution(data);
-        alert("Contribution saved");
-        fetchContributions();
-      }}
-    />
+        <>
+          <ContributionForm
+            employees={employees}
+            onSubmit={handleSubmitContribution}
+          />
 
-    <ContributionTable contributions={contributions} />
-  </>
-)}
-
-      {activeTab === "ir" && (
-  <>
-    <IncidentReportForm
-      employees={employees}
-      onSubmit={async (data) => {
-        await createIncidentReport(data);
-        alert("Incident report saved");
-        fetchIncidentReports();
-      }}
-    />
-
-    <IncidentReportTable reports={incidentReports} />
-  </>
-)}
-
-      {activeTab === "nte" && (
-  <>
-    <NTEForm
-      employees={employees}
-      onSubmit={async (data) => {
-        await createNTE(data);
-        alert("NTE saved");
-        fetchNTEs();
-      }}
-    />
-
-    <NTEReportTable ntes={ntes} />
-  </>
-)}
-
-      {statusConfirmOpen && (
-        <div className="modal-backdrop">
-          <div className="modal-body">
-            <div className="modal-header">
-              <h3>Confirm Status Change</h3>
-              <button type="button" onClick={() => setStatusConfirmOpen(false)}>
-                Close
-              </button>
-            </div>
-
-            <form className="modal-form-scroll" onSubmit={handleConfirmStatusChange}>
-              <p>
-                You are changing the status for{" "}
-                <strong>
-                  {pendingStatusChange?.employee?.firstName} {pendingStatusChange?.employee?.lastName}
-                </strong>
-                to{" "}
-                <strong>{pendingStatusChange?.status}</strong>.
-              </p>
-
-              <label className="form-group">
-                <span>Super admin password</span>
-                <input
-                  type="password"
-                  value={statusPassword}
-                  onChange={(event) => setStatusPassword(event.target.value)}
-                  placeholder="Enter password"
-                  required
-                />
-              </label>
-
-              {statusError && <p style={{ color: "#cf4f45" }}>{statusError}</p>}
-
-              <div className="modal-form-actions">
-                <button type="button" onClick={() => setStatusConfirmOpen(false)}>
-                  Cancel
-                </button>
-                <button type="submit">Confirm</button>
-              </div>
-            </form>
-          </div>
-        </div>
+          <ContributionTable contributions={contributions} />
+        </>
       )}
 
-      {addEmployeeOpen && (
-        <div
-          className="modal-backdrop"
-          onClick={(event) => {
-            if (event.target === event.currentTarget) {
-              setAddEmployeeOpen(false);
-            }
-          }}
-        >
-          <div className="modal-body">
-            <div className="modal-header">
-              <h3>Add Employee</h3>
-              <button type="button" onClick={() => setAddEmployeeOpen(false)}>
-                Close
-              </button>
-            </div>
-            <div className="modal-form-scroll">
-              <EmployeeForm onSubmit={handleCreateEmployee} />
-            </div>
-          </div>
-        </div>
+      {activeTab === "ir" && (
+        <>
+          <IncidentReportForm
+            employees={employees}
+            onSubmit={handleSubmitIncidentReport}
+          />
+
+          <IncidentReportTable
+            reports={incidentReports}
+            onUpdateStatus={handleUpdateIncidentStatus}
+          />
+        </>
+      )}
+
+      {activeTab === "nte" && (
+        <>
+          <NTEForm employees={employees} onSubmit={handleSubmitNTE} />
+
+          <NTEReportTable ntes={ntes} onUpdateStatus={handleUpdateNTEStatus} />
+        </>
       )}
     </div>
   );
