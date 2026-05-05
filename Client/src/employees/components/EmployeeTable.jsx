@@ -41,7 +41,7 @@ function EmployeeTable({
                 <td style={styles.td}>{employee.position}</td>
 
                 <td style={styles.td}>
-                  {employee.assignedBranch || employee.branch || "-"}
+                  {employee.branch?.branchName || employee.assignedBranch || "-"}
                 </td>
 
                 <td style={styles.td}>

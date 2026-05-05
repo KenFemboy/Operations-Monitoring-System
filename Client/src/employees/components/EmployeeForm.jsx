@@ -1,7 +1,7 @@
 import { useContext, useEffect, useState } from "react";
 import { AuthContext } from "../../auth/context/AuthContext";
 
-function EmployeeForm({ onSubmit, selectedEmployee, onCancelEdit }) {
+function EmployeeForm({ branches = [], onSubmit, selectedEmployee, onCancelEdit }) {
   const { user } = useContext(AuthContext);
   const isSuperAdmin = ["super_admin", "superadmin"].includes(
     (user?.role || "").toLowerCase()
@@ -12,6 +12,7 @@ function EmployeeForm({ onSubmit, selectedEmployee, onCancelEdit }) {
     email: "",
     phone: "",
     position: "",
+    branchId: "",
     assignedBranch: "",
     salaryRate: "",
     sssId: "",
@@ -23,18 +24,34 @@ function EmployeeForm({ onSubmit, selectedEmployee, onCancelEdit }) {
   const [form, setForm] = useState(emptyForm);
 
   const isEditing = Boolean(selectedEmployee);
+  const getUserBranchId = () => {
+    if (!user?.branchId) return "";
+    if (typeof user.branchId === "object") return user.branchId._id || "";
+    return user.branchId;
+  };
 
   useEffect(() => {
     if (selectedEmployee) {
+      const selectedBranchName =
+        selectedEmployee.branch?.branchName ||
+        selectedEmployee.assignedBranch ||
+        "";
+      const selectedBranchId =
+        selectedEmployee.branch?._id ||
+        selectedEmployee.branch ||
+        branches.find((branch) => branch.branchName === selectedBranchName)?._id ||
+        "";
+
       setForm({
         firstName: selectedEmployee.firstName || "",
         lastName: selectedEmployee.lastName || "",
         email: selectedEmployee.email || "",
         phone: selectedEmployee.phone || "",
         position: selectedEmployee.position || "",
+        branchId: isSuperAdmin ? selectedBranchId : getUserBranchId(),
         assignedBranch: isSuperAdmin
-          ? selectedEmployee.assignedBranch || selectedEmployee.branch || ""
-          : user?.branch || "",
+          ? selectedBranchName
+          : user?.branchName || user?.branch || "",
         salaryRate: selectedEmployee.salaryRate ?? "",
         sssId: selectedEmployee.sssId || "",
         gsisId: selectedEmployee.gsisId || "",
@@ -44,15 +61,27 @@ function EmployeeForm({ onSubmit, selectedEmployee, onCancelEdit }) {
     } else {
       setForm({
         ...emptyForm,
-        assignedBranch: isSuperAdmin ? "" : user?.branch || "",
+        branchId: isSuperAdmin ? "" : getUserBranchId(),
+        assignedBranch: isSuperAdmin ? "" : user?.branchName || user?.branch || "",
       });
     }
-  }, [selectedEmployee, isSuperAdmin, user?.branch]);
+  }, [branches, selectedEmployee, isSuperAdmin, user]);
 
   const handleChange = (e) => {
     setForm({
       ...form,
       [e.target.name]: e.target.value,
+    });
+  };
+
+  const handleBranchChange = (e) => {
+    const branchId = e.target.value;
+    const selectedBranch = branches.find((branch) => branch._id === branchId);
+
+    setForm({
+      ...form,
+      branchId,
+      assignedBranch: selectedBranch?.branchName || "",
     });
   };
 
@@ -65,7 +94,11 @@ function EmployeeForm({ onSubmit, selectedEmployee, onCancelEdit }) {
     });
 
     if (!isEditing) {
-      setForm(emptyForm);
+      setForm({
+        ...emptyForm,
+        branchId: isSuperAdmin ? "" : getUserBranchId(),
+        assignedBranch: isSuperAdmin ? "" : user?.branchName || user?.branch || "",
+      });
     }
   };
 
@@ -117,15 +150,32 @@ function EmployeeForm({ onSubmit, selectedEmployee, onCancelEdit }) {
           style={styles.input}
         />
 
-        <input
-          name="assignedBranch"
-          placeholder="Assigned Branch"
-          value={form.assignedBranch}
-          onChange={handleChange}
-          required
-          disabled={!isSuperAdmin}
-          style={styles.input}
-        />
+        {isSuperAdmin ? (
+          <select
+            name="branchId"
+            value={form.branchId}
+            onChange={handleBranchChange}
+            required
+            style={styles.input}
+          >
+            <option value="">Select Branch</option>
+            {branches.map((branch) => (
+              <option key={branch._id} value={branch._id}>
+                {branch.branchName} - {branch.location}
+              </option>
+            ))}
+          </select>
+        ) : (
+          <input
+            name="assignedBranch"
+            placeholder="Assigned Branch"
+            value={form.assignedBranch}
+            onChange={handleChange}
+            required
+            disabled
+            style={styles.input}
+          />
+        )}
 
         <input
           type="number"

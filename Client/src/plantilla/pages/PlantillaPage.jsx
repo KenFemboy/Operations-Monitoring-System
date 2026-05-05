@@ -6,12 +6,14 @@ import {
   updatePlantilla,
   deletePlantilla,
 } from "../api/plantillaApi";
+import { getBranches } from "../../branches/api/branchApi";
 
 import PlantillaForm from "../components/PlantillaForm";
 import PlantillaTable from "../components/PlantillaTable";
 
 function PlantillaPage() {
   const [plantillas, setPlantillas] = useState([]);
+  const [branches, setBranches] = useState([]);
   const [selectedPlantilla, setSelectedPlantilla] = useState(null);
   const [loading, setLoading] = useState(false);
 
@@ -30,7 +32,18 @@ function PlantillaPage() {
     }
   };
 
+  const fetchBranches = async () => {
+    try {
+      const res = await getBranches();
+      setBranches(res.data.data || []);
+    } catch (error) {
+      console.error(error);
+      alert("Failed to fetch branches");
+    }
+  };
+
   useEffect(() => {
+    fetchBranches();
     fetchPlantillas();
   }, []);
 
@@ -79,6 +92,7 @@ const handleEditPlantilla = (plantilla) => {
       <p>Manage staffing requirements per position and branch.</p>
 
       <PlantillaForm
+        branches={branches}
         selectedPlantilla={selectedPlantilla}
         onSubmit={handleSubmitPlantilla}
         onCancelEdit={() => setSelectedPlantilla(null)}

@@ -43,7 +43,7 @@ export const restoreArchiveEntry = async (req, res) => {
       });
     }
 
-    if (currentUser.role !== "super_admin") {
+    if (!["super_admin", "superadmin"].includes(currentUser.role)) {
       return res.status(403).json({
         success: false,
         message: "Only super admins can restore archive entries.",
@@ -147,7 +147,7 @@ export const clearArchive = async (req, res) => {
       });
     }
 
-    if (currentUser.role !== "super_admin") {
+    if (!["super_admin", "superadmin"].includes(currentUser.role)) {
       return res.status(403).json({
         success: false,
         message: "Only super admins can clear archive.",

@@ -54,7 +54,9 @@ function PlantillaTable({ plantillas, onEdit, onDelete }) {
             plantillas.map((plantilla) => (
               <tr key={plantilla._id}>
                 <td style={styles.td}>{plantilla.position}</td>
-                <td style={styles.td}>{plantilla.branch}</td>
+                <td style={styles.td}>
+                  {plantilla.branch?.branchName || plantilla.branch || "-"}
+                </td>
                 <td style={styles.td}>{plantilla.requiredCount}</td>
                 <td style={styles.td}>{plantilla.currentCount}</td>
                 <td style={styles.td}>

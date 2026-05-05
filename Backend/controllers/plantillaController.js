@@ -1,4 +1,6 @@
 import Plantilla from "../models/Plantilla.js";
+import Branch from "../models/Branch.js";
+
 const getPlantillaStatus = (requiredCount, currentCount) => {
   const required = Number(requiredCount || 0);
   const current = Number(currentCount || 0);
@@ -11,13 +13,39 @@ const getPlantillaStatus = (requiredCount, currentCount) => {
   return "open";
 };
 
+const resolveBranch = async ({ branch, branchId, branchName }) => {
+  const selectedBranch = branchId || branch;
+  let resolvedBranch = null;
+
+  if (selectedBranch) {
+    resolvedBranch = await Branch.findById(selectedBranch).catch(() => null);
+  }
+
+  if (!resolvedBranch) {
+    const selectedBranchName = branchName || branch;
+
+    if (selectedBranchName) {
+      resolvedBranch = await Branch.findOne({ branchName: selectedBranchName });
+    }
+  }
+
+  if (!resolvedBranch) {
+    const error = new Error("Valid branch is required");
+    error.statusCode = 400;
+    throw error;
+  }
+
+  return resolvedBranch;
+};
+
 export const createPlantilla = async (req, res) => {
   try {
-    const { position, branch, requiredCount, currentCount } = req.body;
+    const { position, branch, branchId, branchName, requiredCount, currentCount } = req.body;
+    const resolvedBranch = await resolveBranch({ branch, branchId, branchName });
 
     const plantilla = await Plantilla.create({
       position,
-      branch,
+      branch: resolvedBranch._id,
       requiredCount: Number(requiredCount || 0),
       currentCount: Number(currentCount || 0),
       status: getPlantillaStatus(requiredCount, currentCount),
@@ -39,7 +67,9 @@ export const createPlantilla = async (req, res) => {
 
 export const getPlantillas = async (req, res) => {
   try {
-    const plantillas = await Plantilla.find().sort({ createdAt: -1 });
+    const plantillas = await Plantilla.find()
+      .populate("branch", "branchName location address status")
+      .sort({ createdAt: -1 });
 
     res.status(200).json({
       success: true,
@@ -56,7 +86,10 @@ export const getPlantillas = async (req, res) => {
 
 export const getPlantillaById = async (req, res) => {
   try {
-    const plantilla = await Plantilla.findById(req.params.id);
+    const plantilla = await Plantilla.findById(req.params.id).populate(
+      "branch",
+      "branchName location address status"
+    );
 
     if (!plantilla) {
       return res.status(404).json({
@@ -80,19 +113,20 @@ export const getPlantillaById = async (req, res) => {
 
 export const updatePlantilla = async (req, res) => {
   try {
-    const { position, branch, requiredCount, currentCount } = req.body;
+    const { position, branch, branchId, branchName, requiredCount, currentCount } = req.body;
+    const resolvedBranch = await resolveBranch({ branch, branchId, branchName });
 
     const plantilla = await Plantilla.findByIdAndUpdate(
       req.params.id,
       {
         position,
-        branch,
+        branch: resolvedBranch._id,
         requiredCount: Number(requiredCount || 0),
         currentCount: Number(currentCount || 0),
         status: getPlantillaStatus(requiredCount, currentCount),
       },
       { new: true, runValidators: true }
-    );
+    ).populate("branch", "branchName location address status");
 
     if (!plantilla) {
       return res.status(404).json({

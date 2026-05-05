@@ -1,10 +1,45 @@
 import Feedback from "../models/Feedback.js";
+import Branch from "../models/Branch.js";
+
+const resolveBranch = async ({ branch, branchId, branchName }) => {
+  const selectedBranch = branchId || branch;
+  let resolvedBranch = null;
+
+  if (selectedBranch) {
+    resolvedBranch = await Branch.findById(selectedBranch).catch(() => null);
+  }
+
+  if (!resolvedBranch) {
+    const selectedBranchName = branchName || branch;
+
+    if (selectedBranchName) {
+      resolvedBranch = await Branch.findOne({ branchName: selectedBranchName });
+    }
+  }
+
+  if (!resolvedBranch) {
+    const error = new Error("Valid branch is required");
+    error.statusCode = 400;
+    throw error;
+  }
+
+  return resolvedBranch;
+};
+
+const applyBranchFilter = async (filter, branch) => {
+  if (!branch || branch === "all") {
+    return;
+  }
+
+  const resolvedBranch = await resolveBranch({ branch });
+  filter.branch = resolvedBranch._id;
+};
 
 export const createFeedback = async (req, res) => {
   try {
-    const { customerName, branch, mealSession, rating, review } = req.body;
+    const { customerName, branch, branchId, branchName, mealSession, rating, review } = req.body;
 
-    if (!branch || !mealSession || !rating || !review) {
+    if ((!branch && !branchId && !branchName) || !mealSession || !rating || !review) {
       return res.status(400).json({
         success: false,
         message: "Branch, meal session, rating, and review are required",
@@ -32,13 +67,17 @@ export const createFeedback = async (req, res) => {
       });
     }
 
+    const resolvedBranch = await resolveBranch({ branch, branchId, branchName });
+
     const feedback = await Feedback.create({
       customerName: customerName || "Anonymous",
-      branch,
+      branch: resolvedBranch._id,
       mealSession,
       rating,
       review,
     });
+
+    await feedback.populate("branch", "branchName location address status");
 
     res.status(201).json({
       success: true,
@@ -46,7 +85,7 @@ export const createFeedback = async (req, res) => {
       feedback,
     });
   } catch (error) {
-    res.status(500).json({
+    res.status(error.statusCode || 500).json({
       success: false,
       message: "Failed to submit feedback",
       error: error.message,
@@ -67,22 +106,22 @@ export const getFeedbacks = async (req, res) => {
       };
     }
 
-    if (branch && branch !== "all") {
-      filter.branch = branch;
-    }
+    await applyBranchFilter(filter, branch);
 
     if (mealSession && mealSession !== "all") {
       filter.mealSession = mealSession;
     }
 
-    const feedbacks = await Feedback.find(filter).sort({ createdAt: -1 });
+    const feedbacks = await Feedback.find(filter)
+      .populate("branch", "branchName location address status")
+      .sort({ createdAt: -1 });
 
     res.status(200).json({
       success: true,
       feedbacks,
     });
   } catch (error) {
-    res.status(500).json({
+    res.status(error.statusCode || 500).json({
       success: false,
       message: "Failed to fetch feedbacks",
       error: error.message,
@@ -117,9 +156,24 @@ export const getAverageRatingByBranch = async (req, res) => {
         },
       },
       {
+        $lookup: {
+          from: "branches",
+          localField: "_id",
+          foreignField: "_id",
+          as: "branch",
+        },
+      },
+      {
+        $unwind: {
+          path: "$branch",
+          preserveNullAndEmptyArrays: true,
+        },
+      },
+      {
         $project: {
           _id: 0,
-          branch: "$_id",
+          branchId: "$_id",
+          branch: { $ifNull: ["$branch.branchName", "Unknown Branch"] },
           averageRating: { $round: ["$averageRating", 2] },
           totalReviews: 1,
         },
@@ -132,7 +186,7 @@ export const getAverageRatingByBranch = async (req, res) => {
       summary,
     });
   } catch (error) {
-    res.status(500).json({
+    res.status(error.statusCode || 500).json({
       success: false,
       message: "Failed to fetch average rating by branch",
       error: error.message,
@@ -146,9 +200,7 @@ export const getAverageRatingByMonth = async (req, res) => {
 
     const match = {};
 
-    if (branch && branch !== "all") {
-      match.branch = branch;
-    }
+    await applyBranchFilter(match, branch);
 
     if (mealSession && mealSession !== "all") {
       match.mealSession = mealSession;
@@ -183,7 +235,7 @@ export const getAverageRatingByMonth = async (req, res) => {
       summary,
     });
   } catch (error) {
-    res.status(500).json({
+    res.status(error.statusCode || 500).json({
       success: false,
       message: "Failed to fetch average rating by month",
       error: error.message,

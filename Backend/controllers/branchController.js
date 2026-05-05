@@ -14,8 +14,9 @@ export const createBranch = async (req, res) => {
 
     if (dedicatedAdmin) {
       await User.findByIdAndUpdate(dedicatedAdmin, {
-        branch: branch._id,
-        role: "admin",
+        branch: branch.branchName,
+        branchId: branch._id,
+        role: "console_user",
       });
     }
 
@@ -78,8 +79,9 @@ export const updateBranch = async (req, res) => {
 
     if (dedicatedAdmin) {
       await User.findByIdAndUpdate(dedicatedAdmin, {
-        branch: branch._id,
-        role: "admin",
+        branch: branch.branchName,
+        branchId: branch._id,
+        role: "console_user",
       });
     }
 

@@ -119,7 +119,7 @@ export const login = async (req, res) => {
 
 export const createAdminUser = async (req, res) => {
   try {
-    const { name, email, password, branch, branchName } = req.body;
+    const { name, email, password, branch, branchName, branchId } = req.body;
     const authorizationPassword =
       req.body.authorizationPassword || req.body.superadminPassword;
     const selectedBranchName = branchName || branch;
@@ -128,18 +128,21 @@ export const createAdminUser = async (req, res) => {
       !name ||
       !email ||
       !password ||
-      !selectedBranchName ||
+      (!selectedBranchName && !branchId) ||
       !authorizationPassword
     ) {
       return res.status(400).json({
         message:
-          "Name, email, password, branchName, and authorization password are required",
+          "Name, email, password, branch, and authorization password are required",
       });
     }
 
-    const assignedBranch = await Branch.findOne({
-      branchName: selectedBranchName,
-    });
+    const assignedBranch = branchId
+      ? await Branch.findById(branchId)
+      : await Branch.findOne({
+          branchName: selectedBranchName,
+        });
+
     if (!assignedBranch) {
       return res.status(400).json({ message: "Invalid branch assignment" });
     }
@@ -236,7 +239,7 @@ export const updateAdminUserAssignment = async (req, res) => {
     }
 
     // Do not update super admin through this branch-admin update route
-    if (targetUser.role === "super_admin") {
+    if (["super_admin", "superadmin"].includes(targetUser.role)) {
       return res.status(400).json({
         message: "Super admin does not need a branch assignment",
       });
@@ -358,7 +361,7 @@ export const deleteAdminUser = async (req, res) => {
       return res.status(404).json({ message: "User not found" });
     }
 
-    if (targetUser.role === "super_admin") {
+    if (["super_admin", "superadmin"].includes(targetUser.role)) {
       return res
         .status(403)
         .json({ message: "Super admin user cannot be deleted" });

@@ -9,8 +9,10 @@ import FeedbackTable from "../components/FeedbackTable";
 import FeedbackDateFilter from "../components/FeedbackDateFilter";
 import AverageRatingByBranchTable from "../components/AverageRatingByBranchTable";
 import AverageRatingByMonthTable from "../components/AverageRatingByMonthTable";
+import { getBranches } from "../../branches/api/branchApi";
 
 function AdminFeedbackPage() {
+  const [branches, setBranches] = useState([]);
   const [feedbacks, setFeedbacks] = useState([]);
   const [branchSummary, setBranchSummary] = useState([]);
   const [monthSummary, setMonthSummary] = useState([]);
@@ -67,7 +69,17 @@ function AdminFeedbackPage() {
     }
   };
 
+  const fetchBranches = async () => {
+    try {
+      const res = await getBranches();
+      setBranches(res.data.data || []);
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
   const fetchAll = async (filter = activeFilter) => {
+    await fetchBranches();
     await fetchFeedbacks(filter);
     await fetchBranchSummary(filter);
     await fetchMonthSummary(filter);
@@ -100,6 +112,7 @@ function AdminFeedbackPage() {
       <p>View customer ratings, short reviews, and rating summaries.</p>
 
       <FeedbackDateFilter
+        branches={branches}
         onFilter={handleFilter}
         onClear={handleClearFilter}
       />

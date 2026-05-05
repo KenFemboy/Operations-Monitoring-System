@@ -1,16 +1,12 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { createFeedback } from "../api/feedbackApi";
-
-const branches = [
-  "Tagum City - Main Branch",
-  "Panabo City Branch",
-  "Pantukan Branch",
-];
+import { getBranches } from "../../branches/api/branchApi";
 
 function CustomerFeedbackForm() {
+  const [branches, setBranches] = useState([]);
   const [form, setForm] = useState({
     customerName: "",
-    branch: "",
+    branchId: "",
     mealSession: "",
     rating: 0,
     review: "",
@@ -19,10 +15,24 @@ function CustomerFeedbackForm() {
   const [hoverRating, setHoverRating] = useState(0);
   const [message, setMessage] = useState("");
 
+  useEffect(() => {
+    const fetchBranches = async () => {
+      try {
+        const res = await getBranches();
+        setBranches(res.data.data || []);
+      } catch (err) {
+        console.error(err);
+        setMessage("Unable to load branches right now.");
+      }
+    };
+
+    fetchBranches();
+  }, []);
+
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    if (!form.branch) {
+    if (!form.branchId) {
       alert("Please select a branch");
       return;
     }
@@ -45,7 +55,7 @@ function CustomerFeedbackForm() {
     try {
       await createFeedback({
         customerName: form.customerName || "Anonymous",
-        branch: form.branch,
+        branchId: form.branchId,
         mealSession: form.mealSession,
         rating: form.rating,
         review: form.review,
@@ -55,7 +65,7 @@ function CustomerFeedbackForm() {
 
       setForm({
         customerName: "",
-        branch: "",
+        branchId: "",
         mealSession: "",
         rating: 0,
         review: "",
@@ -85,15 +95,15 @@ function CustomerFeedbackForm() {
         />
 
         <select
-          value={form.branch}
-          onChange={(e) => setForm({ ...form, branch: e.target.value })}
+          value={form.branchId}
+          onChange={(e) => setForm({ ...form, branchId: e.target.value })}
           required
           style={styles.input}
         >
           <option value="">Select Branch</option>
           {branches.map((branch) => (
-            <option key={branch} value={branch}>
-              {branch}
+            <option key={branch._id} value={branch._id}>
+              {branch.branchName} - {branch.location}
             </option>
           ))}
         </select>

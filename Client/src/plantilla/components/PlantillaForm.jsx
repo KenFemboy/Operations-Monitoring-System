@@ -1,6 +1,11 @@
 import { useEffect, useState } from "react";
 
-function PlantillaForm({ selectedPlantilla, onSubmit, onCancelEdit }) {
+function PlantillaForm({
+  branches = [],
+  selectedPlantilla,
+  onSubmit,
+  onCancelEdit,
+}) {
   const emptyForm = {
     position: "",
     branch: "",
@@ -15,9 +20,16 @@ function PlantillaForm({ selectedPlantilla, onSubmit, onCancelEdit }) {
 
   useEffect(() => {
     if (selectedPlantilla) {
+      const branchName =
+        selectedPlantilla.branch?.branchName || selectedPlantilla.branch || "";
+
       setForm({
         position: selectedPlantilla.position || "",
-        branch: selectedPlantilla.branch || "",
+        branch:
+          selectedPlantilla.branch?._id ||
+          branches.find((branch) => branch.branchName === branchName)?._id ||
+          selectedPlantilla.branch ||
+          "",
         requiredCount: selectedPlantilla.requiredCount ?? "",
         currentCount: selectedPlantilla.currentCount ?? "",
         status: selectedPlantilla.status || "open",
@@ -25,7 +37,7 @@ function PlantillaForm({ selectedPlantilla, onSubmit, onCancelEdit }) {
     } else {
       setForm(emptyForm);
     }
-  }, [selectedPlantilla]);
+  }, [branches, selectedPlantilla]);
 
   const getAutoStatus = (requiredCount, currentCount) => {
     const required = Number(requiredCount || 0);
@@ -59,6 +71,7 @@ function PlantillaForm({ selectedPlantilla, onSubmit, onCancelEdit }) {
     onSubmit({
       position: form.position,
       branch: form.branch,
+      branchId: form.branch,
       requiredCount: Number(form.requiredCount || 0),
       currentCount: Number(form.currentCount || 0),
       status: getAutoStatus(form.requiredCount, form.currentCount),
@@ -80,14 +93,20 @@ function PlantillaForm({ selectedPlantilla, onSubmit, onCancelEdit }) {
         style={styles.input}
       />
 
-      <input
+      <select
         name="branch"
-        placeholder="Branch"
         value={form.branch}
         onChange={handleChange}
         required
         style={styles.input}
-      />
+      >
+        <option value="">Select Branch</option>
+        {branches.map((branch) => (
+          <option key={branch._id} value={branch._id}>
+            {branch.branchName} - {branch.location}
+          </option>
+        ))}
+      </select>
 
       <input
         type="number"

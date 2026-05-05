@@ -34,7 +34,10 @@ function EmployeeDetails({ details, onClose }) {
         <div className="employee-details-meta">
           <p><strong>Employee ID:</strong> {employee.employeeId}</p>
           <p><strong>Position:</strong> {employee.position}</p>
-          <p><strong>Assigned Branch:</strong> {employee.assignedBranch || "-"}</p>
+          <p>
+            <strong>Assigned Branch:</strong>{" "}
+            {employee.branch?.branchName || employee.assignedBranch || "-"}
+          </p>
           <p><strong>SSS ID:</strong> {employee.sssId || "-"}</p>
           <p><strong>GSIS ID:</strong> {employee.gsisId || "-"}</p>
           <p><strong>Pag-IBIG ID:</strong> {employee.pagibigId || "-"}</p>

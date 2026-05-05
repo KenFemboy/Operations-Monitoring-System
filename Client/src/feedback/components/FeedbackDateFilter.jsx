@@ -1,12 +1,6 @@
 import { useState } from "react";
 
-const branches = [
-  "Tagum City - Main Branch",
-  "Panabo City Branch",
-  "Pantukan Branch",
-];
-
-function FeedbackDateFilter({ onFilter, onClear }) {
+function FeedbackDateFilter({ branches = [], onFilter, onClear }) {
   const [filter, setFilter] = useState({
     startDate: "",
     endDate: "",
@@ -70,8 +64,8 @@ function FeedbackDateFilter({ onFilter, onClear }) {
           >
             <option value="all">All Branches</option>
             {branches.map((branch) => (
-              <option key={branch} value={branch}>
-                {branch}
+              <option key={branch._id} value={branch._id}>
+                {branch.branchName} - {branch.location}
               </option>
             ))}
           </select>

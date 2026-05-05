@@ -6,7 +6,7 @@ export const requireSuperAdmin = (req, res, next) => {
       });
     }
 
-    if (req.user.role !== "super_admin") {
+    if (!["super_admin", "superadmin"].includes(req.user.role)) {
       return res.status(403).json({
         message: "Super admin access only.",
       });

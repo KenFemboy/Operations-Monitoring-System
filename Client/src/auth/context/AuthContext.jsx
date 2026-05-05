@@ -105,7 +105,7 @@ export function AuthProvider({ children }) {
 
   const isAuthenticated = Boolean(user && localStorage.getItem("token"));
 
-  const isSuperAdmin = user?.role === "super_admin";
+  const isSuperAdmin = ["super_admin", "superadmin"].includes(user?.role);
   const isConsoleUser = user?.role === "console_user";
 
   return (

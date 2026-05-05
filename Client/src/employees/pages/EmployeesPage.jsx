@@ -24,6 +24,7 @@ import {
   getNTEs,
   updateNTEStatus,
 } from "../api/employeeApi";
+import { getBranches } from "../../branches/api/branchApi";
 
 import PresentEmployeesCard from "../components/PresentEmployeesCard";
 import EmployeeForm from "../components/EmployeeForm";
@@ -61,6 +62,7 @@ function EmployeesPage({ initialTab = "employees" }) {
   const [loading, setLoading] = useState(false);
 
   const [employees, setEmployees] = useState([]);
+  const [branches, setBranches] = useState([]);
   const [selectedEmployee, setSelectedEmployee] = useState(null);
   const [selectedDetails, setSelectedDetails] = useState(null);
 
@@ -87,6 +89,16 @@ function EmployeesPage({ initialTab = "employees" }) {
       alert("Failed to fetch employees");
     } finally {
       setLoading(false);
+    }
+  }, []);
+
+  const fetchBranches = useCallback(async () => {
+    try {
+      const res = await getBranches();
+      setBranches(res.data.data || []);
+    } catch (error) {
+      console.error(error);
+      alert("Failed to fetch branches");
     }
   }, []);
 
@@ -151,6 +163,7 @@ function EmployeesPage({ initialTab = "employees" }) {
   }, []);
 
   const fetchPageData = useCallback(() => {
+    fetchBranches();
     fetchEmployees();
     fetchAttendance();
     fetchLeaves();
@@ -160,6 +173,7 @@ function EmployeesPage({ initialTab = "employees" }) {
     fetchNTEs();
   }, [
     fetchAttendance,
+    fetchBranches,
     fetchContributions,
     fetchEmployees,
     fetchIncidentReports,
@@ -392,6 +406,7 @@ function EmployeesPage({ initialTab = "employees" }) {
       {activeTab === "employees" && (
         <>
           <EmployeeForm
+            branches={branches}
             onSubmit={handleSaveEmployee}
             selectedEmployee={selectedEmployee}
             onCancelEdit={() => setSelectedEmployee(null)}

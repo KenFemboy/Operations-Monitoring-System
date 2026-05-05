@@ -54,7 +54,9 @@ function FeedbackTable({ feedbacks, onRefresh }) {
 
                 <td style={styles.td}>{feedback.customerName}</td>
 
-                <td style={styles.td}>{feedback.branch}</td>
+                <td style={styles.td}>
+                  {feedback.branch?.branchName || feedback.branch || "-"}
+                </td>
 
                 <td style={styles.td}>{feedback.mealSession}</td>
 

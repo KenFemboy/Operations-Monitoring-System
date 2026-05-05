@@ -27,7 +27,7 @@ function AverageRatingByBranchTable({ data }) {
             </tr>
           ) : (
             data.map((item) => (
-              <tr key={item.branch}>
+              <tr key={item.branchId || item.branch}>
                 <td style={styles.td}>{item.branch}</td>
 
                 <td style={styles.td}>

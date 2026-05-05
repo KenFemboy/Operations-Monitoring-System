@@ -1,5 +1,6 @@
 import Employee from "../models/Employee.js";
 import Attendance from "../models/Attendance.js";
+import Branch from "../models/Branch.js";
 
 import Payroll from "../models/Payroll.js";
 import Leave from "../models/Leave.js";
@@ -24,9 +25,89 @@ const getBranchName = (req) => {
   return branchName;
 };
 
+const getRequestBranchId = (req) => {
+  const branchId = req.user?.branchId;
+
+  if (!branchId) {
+    return null;
+  }
+
+  if (typeof branchId === "object" && branchId._id) {
+    return branchId._id;
+  }
+
+  return branchId;
+};
+
+const findBranchByName = async (branchName) => {
+  if (!branchName) {
+    return null;
+  }
+
+  return Branch.findOne({ branchName }).select("_id branchName").lean();
+};
+
+const resolveBranchForEmployeeCreate = async (req) => {
+  const branchName = getBranchName(req);
+  const selectedBranchName = branchName || req.body.assignedBranch;
+  const branchId = branchName
+    ? getRequestBranchId(req)
+    : req.body.branchId || req.body.branch;
+
+  if (branchId) {
+    const branch = await Branch.findById(branchId).select("_id branchName").lean();
+
+    if (branch) {
+      return {
+        branchId: branch._id,
+        branchName: branch.branchName,
+      };
+    }
+  }
+
+  const branch = await findBranchByName(selectedBranchName);
+
+  if (!branch) {
+    const error = new Error("Valid branch is required");
+    error.statusCode = 400;
+    throw error;
+  }
+
+  return {
+    branchId: branch._id,
+    branchName: branch.branchName,
+  };
+};
+
+const getEmployeeBranchId = async (employeeId) => {
+  const employee = await Employee.findById(employeeId)
+    .select("branch assignedBranch")
+    .lean();
+
+  if (!employee) {
+    const error = new Error("Employee not found");
+    error.statusCode = 404;
+    throw error;
+  }
+
+  if (employee.branch) {
+    return employee.branch;
+  }
+
+  const branch = await findBranchByName(employee.assignedBranch);
+
+  if (!branch) {
+    const error = new Error("Employee branch is missing or invalid");
+    error.statusCode = 400;
+    throw error;
+  }
+
+  return branch._id;
+};
+
 const assertEmployeeAccess = async (req, employeeId) => {
   const employee = await Employee.findById(employeeId)
-    .select("assignedBranch")
+    .select("assignedBranch branch")
     .lean();
 
   if (!employee) {
@@ -67,11 +148,12 @@ export const createEmployee = async (req, res) => {
       newEmployeeId = `EMP-${String(nextNumber).padStart(4, "0")}`;
     }
 
-    const branchName = getBranchName(req);
+    const branch = await resolveBranchForEmployeeCreate(req);
 
     const employee = await Employee.create({
       ...req.body,
-      assignedBranch: branchName || req.body.assignedBranch,
+      assignedBranch: branch.branchName,
+      branch: branch.branchId,
       employeeId: newEmployeeId,
       employmentStatus: "active",
     });
@@ -94,7 +176,9 @@ export const getEmployees = async (req, res) => {
   try {
     const branchName = getBranchName(req);
     const filter = branchName ? { assignedBranch: branchName } : {};
-    const employees = await Employee.find(filter).sort({ createdAt: -1 });
+    const employees = await Employee.find(filter)
+      .populate("branch", "branchName location address status")
+      .sort({ createdAt: -1 });
 
     res.status(200).json({
       success: true,
@@ -111,7 +195,10 @@ export const getEmployees = async (req, res) => {
 
 export const getEmployeeById = async (req, res) => {
   try {
-    const employee = await Employee.findById(req.params.id);
+    const employee = await Employee.findById(req.params.id).populate(
+      "branch",
+      "branchName location address status"
+    );
 
     if (!employee) {
       return res.status(404).json({
@@ -146,17 +233,31 @@ export const updateEmployee = async (req, res) => {
   try {
     const existingEmployee = await assertEmployeeAccess(req, req.params.id);
     const branchName = getBranchName(req);
+    const hasBranchChange =
+      req.body.branchId || req.body.branch || req.body.assignedBranch;
+    const branch = branchName
+      ? {
+          branchName,
+          branchId: getRequestBranchId(req) || existingEmployee.branch,
+        }
+      : hasBranchChange
+        ? await resolveBranchForEmployeeCreate(req)
+        : {
+            branchName: existingEmployee.assignedBranch,
+            branchId: existingEmployee.branch,
+          };
 
     const updatePayload = {
       ...req.body,
-      assignedBranch: branchName || existingEmployee.assignedBranch,
+      assignedBranch: branch.branchName || existingEmployee.assignedBranch,
+      branch: branch.branchId || existingEmployee.branch,
     };
 
     const employee = await Employee.findByIdAndUpdate(
       req.params.id,
       updatePayload,
       { new: true }
-    );
+    ).populate("branch", "branchName location address status");
 
     if (!employee) {
       return res.status(404).json({
@@ -225,6 +326,7 @@ export const createAttendance = async (req, res) => {
     }
 
     await assertEmployeeAccess(req, employee);
+    const branch = await getEmployeeBranchId(employee);
 
     // Normalize date to start and end of selected day
     const selectedDate = new Date(date);
@@ -270,6 +372,7 @@ export const createAttendance = async (req, res) => {
 
     const attendance = await Attendance.create({
       employee,
+      branch,
       date: selectedDate,
       timeIn,
       timeOut,
@@ -408,6 +511,7 @@ export const createPayroll = async (req, res) => {
 
     const payroll = await Payroll.create({
       employee,
+      branch: employeeData.branch || (await getEmployeeBranchId(employee)),
       payPeriodStart: startDate,
       payPeriodEnd: endDate,
       hourlyRate,
@@ -536,7 +640,10 @@ export const createLeave = async (req, res) => {
     }
 
     await assertEmployeeAccess(req, req.body.employee);
-    const leave = await Leave.create(req.body);
+    const leave = await Leave.create({
+      ...req.body,
+      branch: await getEmployeeBranchId(req.body.employee),
+    });
 
     res.status(201).json({
       success: true,
@@ -703,6 +810,7 @@ export const createContribution = async (req, res) => {
 
     const contribution = await Contribution.create({
       ...req.body,
+      branch: await getEmployeeBranchId(req.body.employee),
       totalContribution: sss + pagibig + philhealth,
     });
 
@@ -764,6 +872,7 @@ export const createIncidentReport = async (req, res) => {
     await assertEmployeeAccess(req, req.body.employee);
     const report = await IncidentReport.create({
       ...req.body,
+      branch: await getEmployeeBranchId(req.body.employee),
       status: "open",
     });
 
@@ -878,7 +987,10 @@ export const createNTE = async (req, res) => {
     }
 
     await assertEmployeeAccess(req, req.body.employee);
-    const nte = await NoticeToExplain.create(req.body);
+    const nte = await NoticeToExplain.create({
+      ...req.body,
+      branch: await getEmployeeBranchId(req.body.employee),
+    });
 
     res.status(201).json({
       success: true,
@@ -984,7 +1096,10 @@ export const getEmployeeFullDetails = async (req, res) => {
   try {
     const { id } = req.params;
 
-    const employee = await Employee.findById(id);
+    const employee = await Employee.findById(id).populate(
+      "branch",
+      "branchName location address status"
+    );
 
     if (!employee) {
       return res.status(404).json({
