@@ -8,6 +8,12 @@ const leaveSchema = new mongoose.Schema(
       required: true,
     },
 
+    branch: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Branch",
+      required: true,
+    },
+
     leaveType: {
       type: String,
       enum: ["SIL", "Vacation Leave", "Sick Leave"],

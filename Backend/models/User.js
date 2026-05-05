@@ -1,33 +1,40 @@
-// models/User.js
 import mongoose from "mongoose";
 
 const userSchema = new mongoose.Schema(
   {
-    name: { type: String, required: true },
+    name: {
+      type: String,
+      required: true,
+    },
 
-    email: { type: String, required: true, unique: true },
+    email: {
+      type: String,
+      required: true,
+      unique: true,
+    },
 
-    password: { type: String, required: true },
+    password: {
+      type: String,
+      required: true,
+    },
 
     role: {
       type: String,
-      enum: ["console_user", "admin", "super_admin", "sales", "hr"],
-      default: "console_user",
+      enum: ["superadmin", "admin", "console_user"],
+      default: "admin",
     },
 
     branch: {
       type: String,
-      trim: true,
-      required: function () {
-        return false;
-      },
+      ref: "Branch",
+      default: null,
     },
-
     branchId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "Branch",
+      default: null,
       required: function () {
-        return false;
+        return this.role === "console_user";
       },
     },
   },

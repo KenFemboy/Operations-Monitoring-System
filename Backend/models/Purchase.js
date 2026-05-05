@@ -13,6 +13,12 @@ const purchaseSchema = new mongoose.Schema(
       required: true,
     },
 
+    branch: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Branch",
+      required: true,
+    },
+
     supplierName: {
       type: String,
       required: true,

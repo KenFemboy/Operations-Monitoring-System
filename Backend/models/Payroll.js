@@ -8,6 +8,12 @@ const payrollSchema = new mongoose.Schema(
       required: true,
     },
 
+    branch: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Branch",
+      required: true,
+    },
+
     payPeriodStart: {
       type: Date,
       required: true,

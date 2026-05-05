@@ -79,6 +79,11 @@ const employeeSchema = new mongoose.Schema(
       type: Date,
       default: Date.now,
     },
+    branch: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Branch",
+      required: true,
+    },
   },
   { timestamps: true }
 );

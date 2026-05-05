@@ -53,6 +53,11 @@ const saleSchema = new mongoose.Schema(
       type: String,
       default: "",
     },
+    branch: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Branch",
+      required: true,
+    },
   },
   { timestamps: true }
 );

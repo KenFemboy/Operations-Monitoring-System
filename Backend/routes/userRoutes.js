@@ -1,15 +1,20 @@
 import express from "express";
+
 import {
-  getAllUsers,
-  getProfile,
-} from "../controllers/userController.js";
-import { authMiddleware } from "../middleware/auth.js";
+  createAdminUser,
+  getBranchAdmins,
+  updateAdminUserAssignment,
+  deleteAdminUser,
+} from "../controllers/authController.js";
+
+import { protect } from "../middleware/authMiddleware.js";
+import { requireSuperAdmin } from "../middleware/superAdminMiddleware.js";
 
 const router = express.Router();
 
-// self profile
-router.get("/profile", authMiddleware, getProfile);
-
-router.get("/", authMiddleware, getAllUsers);
+router.get("/", protect, requireSuperAdmin, getBranchAdmins);
+router.post("/", protect, requireSuperAdmin, createAdminUser);
+router.put("/:userId", protect, requireSuperAdmin, updateAdminUserAssignment);
+router.delete("/:userId", protect, requireSuperAdmin, deleteAdminUser);
 
 export default router;

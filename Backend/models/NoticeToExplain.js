@@ -8,6 +8,12 @@ const noticeToExplainSchema = new mongoose.Schema(
       required: true,
     },
 
+    branch: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Branch",
+      required: true,
+    },
+
     issueDate: {
       type: Date,
       default: Date.now,

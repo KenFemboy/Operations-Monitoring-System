@@ -25,6 +25,12 @@ const productSchema = new mongoose.Schema(
       trim: true,
     },
 
+    branch: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Branch",
+      required: true,
+    },
+
     currentStock: {
       type: Number,
       default: 0,

@@ -9,9 +9,9 @@ const plantillaSchema = new mongoose.Schema(
     },
 
     branch: {
-      type: String,
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Branch",
       required: true,
-      trim: true,
     },
 
     requiredCount: {

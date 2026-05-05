@@ -12,7 +12,8 @@ import { getHomeRoute } from "./auth/utils/appRoutes";
 
 import Login from "./auth/pages/Login";
 import DashboardLayout from "./layouts/DashboardLayout";
-import BranchUsersPage from "./features/branches/pages/BranchUsersPage";
+
+import BranchPage from "./branches/pages/BranchPage";
 import DashboardPage from "./dashboard/pages/DashboardPage";
 
 
@@ -36,6 +37,8 @@ import ArchivePage from "./features/settings/pages/ArchivePage";
 
 import CustomerFeedbackPage from "./feedback/pages/CustomerFeedbackPage";
 import AdminFeedbackPage from "./feedback/pages/AdminFeedbackPage";
+
+import AdminUsersPage from "./adminUsers/pages/AdminUsersPage";
 //  Protect private routes
 function ProtectedRoute({ children }) {
   const { loading, isAuthenticated } = useContext(AuthContext);
@@ -112,8 +115,8 @@ export default function App() {
             <Route path="dashboard" element={<DashboardPage />} />
             <Route path="reports" element={<ReportsPage />} />
 
-            <Route path="branches/users" element={<BranchUsersPage />} />
 
+            <Route path="branches" element={<BranchPage />} />
 
             {/* Employee Page */}
             <Route path="employees" element={<EmployeesPage />} />
@@ -138,6 +141,7 @@ export default function App() {
 
             <Route path="settings" element={<SettingsPage />} />
             <Route path="settings/archive" element={<ArchivePage />} />
+            <Route path="admin-users" element={<AdminUsersPage />} />
           </Route>
 
           <Route path="/employees" element={<Navigate to="/app/employees" replace />} />

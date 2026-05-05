@@ -8,13 +8,24 @@ import { generateToken } from "../utils/generateToken.js";
 const sanitizeUser = (userDoc) => {
   if (!userDoc) return null;
 
+  const populatedBranch =
+    userDoc.branchId && typeof userDoc.branchId === "object"
+      ? userDoc.branchId
+      : null;
+
   return {
     _id: userDoc._id,
     name: userDoc.name,
     email: userDoc.email,
     role: userDoc.role,
-    branch: userDoc.branchId?.branchName || userDoc.branch || null,
-    branchId: userDoc.branchId,
+
+    branch: populatedBranch?.branchName || userDoc.branch || null,
+
+    branchName: populatedBranch?.branchName || userDoc.branch || null,
+    branchLocation: populatedBranch?.location || null,
+    branchAddress: populatedBranch?.address || null,
+
+    branchId: populatedBranch || userDoc.branchId || null,
   };
 };
 
@@ -61,45 +72,74 @@ export const login = async (req, res) => {
     const loginIdentifier = email || username;
 
     if (!loginIdentifier || !password) {
-      return res.status(400).json({ message: "Email/username and password are required" });
+      return res.status(400).json({
+        message: "Email/username and password are required",
+      });
     }
 
-    const user = await User.findOne({ email: loginIdentifier }).populate("branchId");
+    const user = await User.findOne({ email: loginIdentifier }).populate(
+      "branchId",
+      "branchName location address status"
+    );
 
     if (!user) {
-      return res.status(404).json({ message: "User not found" });
+      return res.status(404).json({
+        message: "User not found",
+      });
     }
 
     const isMatch = await bcrypt.compare(password, user.password);
 
     if (!isMatch) {
-      return res.status(401).json({ message: "Invalid credentials" });
+      return res.status(401).json({
+        message: "Invalid credentials",
+      });
+    }
+
+    // Only branch users need a branch.
+    // Super admin can login without branchId.
+    if (user.role === "console_user" && !user.branchId) {
+      return res.status(403).json({
+        message: "This user has no assigned branch. Please contact the super admin.",
+      });
     }
 
     const token = generateToken(user);
 
-    res.json({
+    return res.json({
       token,
       user: sanitizeUser(user),
     });
   } catch (err) {
-    res.status(500).json({ message: err.message });
+    return res.status(500).json({
+      message: err.message,
+    });
   }
 };
 
 export const createAdminUser = async (req, res) => {
   try {
     const { name, email, password, branch, branchName } = req.body;
-    const authorizationPassword = req.body.authorizationPassword || req.body.superadminPassword;
+    const authorizationPassword =
+      req.body.authorizationPassword || req.body.superadminPassword;
     const selectedBranchName = branchName || branch;
 
-    if (!name || !email || !password || !selectedBranchName || !authorizationPassword) {
+    if (
+      !name ||
+      !email ||
+      !password ||
+      !selectedBranchName ||
+      !authorizationPassword
+    ) {
       return res.status(400).json({
-        message: "Name, email, password, branchName, and authorization password are required",
+        message:
+          "Name, email, password, branchName, and authorization password are required",
       });
     }
 
-    const assignedBranch = await Branch.findOne({ branchName: selectedBranchName });
+    const assignedBranch = await Branch.findOne({
+      branchName: selectedBranchName,
+    });
     if (!assignedBranch) {
       return res.status(400).json({ message: "Invalid branch assignment" });
     }
@@ -116,7 +156,9 @@ export const createAdminUser = async (req, res) => {
     );
 
     if (!isAuthorizationPasswordValid) {
-      return res.status(401).json({ message: "Invalid authorization password" });
+      return res
+        .status(401)
+        .json({ message: "Invalid authorization password" });
     }
 
     const existingUser = await User.findOne({ email });
@@ -147,84 +189,145 @@ export const createAdminUser = async (req, res) => {
 export const updateAdminUserAssignment = async (req, res) => {
   try {
     const { userId } = req.params;
-    const { branch, branchName, name, email, password } = req.body;
-    const authorizationPassword = req.body.authorizationPassword || req.body.superadminPassword;
-    const selectedBranchName = (branchName || branch || "").trim();
 
-    if (!selectedBranchName || !authorizationPassword) {
+    const {
+      branch,
+      branchName,
+      branchId,
+      name,
+      email,
+      password,
+    } = req.body;
+
+    const authorizationPassword =
+      req.body.authorizationPassword || req.body.superadminPassword;
+
+    if (!authorizationPassword) {
       return res.status(400).json({
-        message: "branchName and authorization password are required",
+        message: "Authorization password is required",
       });
     }
 
     const currentUser = await User.findById(req.user.id);
 
     if (!currentUser) {
-      return res.status(401).json({ message: "Current user not found" });
+      return res.status(401).json({
+        message: "Current user not found",
+      });
     }
 
     const isAuthorizationPasswordValid = await bcrypt.compare(
       authorizationPassword,
-      currentUser.password,
+      currentUser.password
     );
 
     if (!isAuthorizationPasswordValid) {
-      return res.status(401).json({ message: "Invalid authorization password" });
+      return res.status(401).json({
+        message: "Invalid authorization password",
+      });
     }
 
     const targetUser = await User.findById(userId);
 
     if (!targetUser) {
-      return res.status(404).json({ message: "User not found" });
+      return res.status(404).json({
+        message: "User not found",
+      });
     }
 
-    const assignedBranch = await Branch.findOne({ branchName: selectedBranchName.trim() });
+    // Do not update super admin through this branch-admin update route
+    if (targetUser.role === "super_admin") {
+      return res.status(400).json({
+        message: "Super admin does not need a branch assignment",
+      });
+    }
+
+    let assignedBranch = null;
+
+    // Prefer branchId if frontend sends it
+    if (branchId) {
+      assignedBranch = await Branch.findById(branchId);
+    }
+
+    // Fallback to branchName / branch
+    if (!assignedBranch) {
+      const selectedBranchName = (branchName || branch || "").trim();
+
+      if (selectedBranchName) {
+        assignedBranch = await Branch.findOne({
+          branchName: selectedBranchName,
+        });
+      }
+    }
 
     if (!assignedBranch) {
-      return res.status(400).json({ message: "Invalid branch assignment" });
+      return res.status(400).json({
+        message: "Valid branch assignment is required",
+      });
     }
 
     if (typeof name === "string" && name.trim()) {
       targetUser.name = name.trim();
     }
 
-    if (typeof email === "string" && email.trim() && email.trim() !== targetUser.email) {
-      const duplicateUser = await User.findOne({ email: email.trim() });
+    if (
+      typeof email === "string" &&
+      email.trim() &&
+      email.trim() !== targetUser.email
+    ) {
+      const duplicateUser = await User.findOne({
+        email: email.trim(),
+      });
 
-      if (duplicateUser && String(duplicateUser._id) !== String(targetUser._id)) {
-        return res.status(409).json({ message: "Email already exists" });
+      if (
+        duplicateUser &&
+        String(duplicateUser._id) !== String(targetUser._id)
+      ) {
+        return res.status(409).json({
+          message: "Email already exists",
+        });
       }
 
       targetUser.email = email.trim();
     }
 
+    targetUser.role = "console_user";
     targetUser.branch = assignedBranch.branchName;
     targetUser.branchId = assignedBranch._id;
 
     if (typeof password === "string" && password.trim()) {
       if (password.trim().length < 8) {
-        return res.status(400).json({ message: "Password must be at least 8 characters" });
+        return res.status(400).json({
+          message: "Password must be at least 8 characters",
+        });
       }
 
       targetUser.password = await bcrypt.hash(password.trim(), 10);
     }
 
     await targetUser.save();
-    await targetUser.populate("branchId");
+
+    await targetUser.populate(
+      "branchId",
+      "branchName location address status"
+    );
 
     return res.status(200).json({
       message: "User updated successfully",
       user: sanitizeUser(targetUser),
     });
   } catch (error) {
-    return res.status(500).json({ message: error.message });
+    return res.status(500).json({
+      message: error.message,
+    });
   }
 };
 
 export const deleteAdminUser = async (req, res) => {
   try {
     const { userId } = req.params;
-    const authorizationPassword = req.body.authorizationPassword || req.body.superadminPassword;
+    const authorizationPassword =
+      req.body.authorizationPassword || req.body.superadminPassword;
 
     if (!authorizationPassword) {
       return res.status(400).json({
@@ -244,7 +347,9 @@ export const deleteAdminUser = async (req, res) => {
     );
 
     if (!isAuthorizationPasswordValid) {
-      return res.status(401).json({ message: "Invalid authorization password" });
+      return res
+        .status(401)
+        .json({ message: "Invalid authorization password" });
     }
 
     const targetUser = await User.findById(userId).populate("branchId");
@@ -254,11 +359,15 @@ export const deleteAdminUser = async (req, res) => {
     }
 
     if (targetUser.role === "super_admin") {
-      return res.status(403).json({ message: "Super admin user cannot be deleted" });
+      return res
+        .status(403)
+        .json({ message: "Super admin user cannot be deleted" });
     }
 
     if (String(targetUser._id) === String(currentUser._id)) {
-      return res.status(400).json({ message: "You cannot delete your own account" });
+      return res
+        .status(400)
+        .json({ message: "You cannot delete your own account" });
     }
 
     await ArchiveEntry.create({
@@ -281,8 +390,7 @@ export const deleteAdminUser = async (req, res) => {
 
 export const getProfile = async (req, res) => {
   try {
-    const user = await User.findById(req.user.id)
-      .populate("branchId");
+    const user = await User.findById(req.user.id).populate("branchId");
 
     res.json({
       success: true,
@@ -295,8 +403,7 @@ export const getProfile = async (req, res) => {
 
 export const getAllUsers = async (req, res) => {
   try {
-    const users = await User.find()
-      .populate("branchId");
+    const users = await User.find().populate("branchId");
 
     res.json({
       success: true,
@@ -314,8 +421,7 @@ export const getMe = async (req, res) => {
       return res.status(401).json({ message: "Unauthorized" });
     }
 
-    const user = await User.findById(req.user.id)
-      .populate("branchId");
+    const user = await User.findById(req.user.id).populate("branchId");
 
     if (!user) {
       return res.status(404).json({ message: "User not found" });
@@ -327,5 +433,28 @@ export const getMe = async (req, res) => {
   } catch (err) {
     console.error("GET /me error:", err);
     res.status(500).json({ message: "Server error" });
+  }
+};
+
+
+export const getBranchAdmins = async (req, res) => {
+  try {
+    const users = await User.find({
+      role: "console_user",
+    })
+      .populate("branchId", "branchName location address status")
+      .sort({ createdAt: -1 });
+
+    res.status(200).json({
+      success: true,
+      count: users.length,
+      data: users.map(sanitizeUser),
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: "Failed to fetch branch admins",
+      error: error.message,
+    });
   }
 };

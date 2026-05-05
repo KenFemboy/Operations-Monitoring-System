@@ -14,6 +14,11 @@ const navGroups = [
         hint: "Summaries and exports",
         to: "/app/reports",
       },
+      {
+        label: "Admin Users",
+        hint: "Manage branch admins",
+        to: "/app/admin-users",
+      },
     ],
   },
   {
@@ -24,11 +29,7 @@ const navGroups = [
         hint: "Locations and setup",
         to: "/app/branches",
       },
-      {
-        label: "Branch Users",
-        hint: "Account assignment",
-        to: "/app/branches/users",
-      },
+      
     ],
   },
   {

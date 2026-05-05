@@ -8,6 +8,12 @@ const contributionSchema = new mongoose.Schema(
       required: true,
     },
 
+    branch: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Branch",
+      required: true,
+    },
+
     month: {
       type: String,
       required: true,

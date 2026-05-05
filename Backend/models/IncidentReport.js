@@ -8,6 +8,12 @@ const incidentReportSchema = new mongoose.Schema(
       required: true,
     },
 
+    branch: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Branch",
+      required: true,
+    },
+
     incidentDate: {
       type: Date,
       required: true,
