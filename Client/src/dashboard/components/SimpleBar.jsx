@@ -7,12 +7,15 @@ function SimpleBar({ label, value, max, color = "#2563eb" }) {
         style={{
           display: "flex",
           justifyContent: "space-between",
+          alignItems: "center",
           marginBottom: "6px",
           fontSize: "14px",
+          lineHeight: 1.4,
+          color: "#374151",
         }}
       >
         <span>{label}</span>
-        <strong>{value}</strong>
+        <strong style={{ color: "#111827" }}>{value}</strong>
       </div>
 
       <div

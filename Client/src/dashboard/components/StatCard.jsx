@@ -40,11 +40,21 @@ function StatCard({ title, value, subtitle, tone = "blue" }) {
         backgroundColor: color.bg,
         border: `1px solid ${color.border}`,
         borderRadius: "14px",
-        padding: "18px",
-        minHeight: "110px",
+        padding: "16px",
+        minHeight: "96px",
+        display: "flex",
+        flexDirection: "column",
+        justifyContent: "space-between",
       }}
     >
-      <p style={{ margin: 0, color: "#6b7280", fontSize: "14px" }}>
+      <p
+        style={{
+          margin: 0,
+          color: "#6b7280",
+          fontSize: "14px",
+          lineHeight: 1.5,
+        }}
+      >
         {title}
       </p>
 
@@ -52,14 +62,22 @@ function StatCard({ title, value, subtitle, tone = "blue" }) {
         style={{
           margin: "8px 0",
           color: color.text,
-          fontSize: "30px",
+          fontSize: "26px",
+          lineHeight: 1.15,
         }}
       >
         {value}
       </h2>
 
       {subtitle && (
-        <p style={{ margin: 0, color: "#6b7280", fontSize: "13px" }}>
+        <p
+          style={{
+            margin: 0,
+            color: "#6b7280",
+            fontSize: "13px",
+            lineHeight: 1.5,
+          }}
+        >
           {subtitle}
         </p>
       )}

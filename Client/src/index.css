@@ -518,6 +518,11 @@ button:active {
   overflow-x: auto;
 }
 
+.employee-attendance-scroll {
+  max-height: 240px;
+  overflow-y: auto;
+}
+
 .inline-link {
   color: var(--brand);
   font-weight: 600;
@@ -953,13 +958,14 @@ button:active {
 
 .employee-details-card {
   width: min(960px, 92vw);
-  max-height: 88vh;
+  max-height: 90vh;
   background: var(--bg-panel);
   border-radius: 0.9rem;
   border: 1px solid var(--border-color);
   box-shadow: 0 18px 36px rgba(19, 34, 56, 0.2);
   display: flex;
   flex-direction: column;
+  overflow-y: auto;
   animation: modal-pop 0.22s ease;
 }
 
@@ -984,24 +990,40 @@ button:active {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
   gap: 0.35rem 1rem;
-  padding: 0 1.2rem 0.8rem;
-  color: var(--text-secondary);
+  padding: 0 1.2rem 0.9rem;
+  color: var(--text-primary);
+  border-bottom: 1px solid var(--border-color);
+}
+
+.employee-details-meta p {
+  margin: 0;
+  font-size: 0.9rem;
+  line-height: 1.4;
 }
 
 .employee-details-meta strong {
-  color: var(--text-primary);
+  color: var(--text-secondary);
+  font-weight: 600;
 }
 
 .employee-details-scroll {
   padding: 0 1.2rem 1.2rem;
-  overflow-y: auto;
+  overflow: visible;
   display: grid;
   gap: 1rem;
 }
 
-.employee-details-table th,
-.employee-details-table td {
+.employee-details-table {
+  width: 100%;
+}
+
+.employee-details-table th {
   white-space: nowrap;
+}
+
+.employee-details-table td {
+  white-space: normal;
+  vertical-align: top;
 }
 
 .select-search-input {

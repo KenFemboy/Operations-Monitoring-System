@@ -1,4 +1,5 @@
 import express from "express";
+import { authMiddleware } from "../middleware/auth.js";
 
 import {
   createEmployee,
@@ -34,6 +35,8 @@ getEmployeeFullDetails,
 } from "../controllers/employeeController.js";
 
 const router = express.Router();
+
+router.use(authMiddleware);
 
 // Employee
 router.post("/", createEmployee);

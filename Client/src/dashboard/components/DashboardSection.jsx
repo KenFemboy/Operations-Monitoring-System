@@ -4,18 +4,19 @@ function DashboardSection({ title, children }) {
       style={{
         backgroundColor: "#ffffff",
         border: "1px solid #e5e7eb",
-        borderRadius: "16px",
-        padding: "20px",
-        marginBottom: "24px",
-        boxShadow: "0 2px 8px rgba(0,0,0,0.04)",
+        borderRadius: "18px",
+        padding: "22px",
+        marginBottom: "20px",
+        boxShadow: "0 8px 20px rgba(15, 23, 42, 0.06)",
       }}
     >
       <h2
         style={{
           marginTop: 0,
-          marginBottom: "16px",
+          marginBottom: "14px",
           color: "#111827",
           fontSize: "20px",
+          lineHeight: 1.35,
         }}
       >
         {title}

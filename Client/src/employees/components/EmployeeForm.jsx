@@ -1,6 +1,11 @@
-import { useEffect, useState } from "react";
+import { useContext, useEffect, useState } from "react";
+import { AuthContext } from "../../auth/context/AuthContext";
 
 function EmployeeForm({ onSubmit, selectedEmployee, onCancelEdit }) {
+  const { user } = useContext(AuthContext);
+  const isSuperAdmin = ["super_admin", "superadmin"].includes(
+    (user?.role || "").toLowerCase()
+  );
   const emptyForm = {
     firstName: "",
     lastName: "",
@@ -27,8 +32,9 @@ function EmployeeForm({ onSubmit, selectedEmployee, onCancelEdit }) {
         email: selectedEmployee.email || "",
         phone: selectedEmployee.phone || "",
         position: selectedEmployee.position || "",
-        assignedBranch:
-          selectedEmployee.assignedBranch || selectedEmployee.branch || "",
+        assignedBranch: isSuperAdmin
+          ? selectedEmployee.assignedBranch || selectedEmployee.branch || ""
+          : user?.branch || "",
         salaryRate: selectedEmployee.salaryRate ?? "",
         sssId: selectedEmployee.sssId || "",
         gsisId: selectedEmployee.gsisId || "",
@@ -36,9 +42,12 @@ function EmployeeForm({ onSubmit, selectedEmployee, onCancelEdit }) {
         philhealthId: selectedEmployee.philhealthId || "",
       });
     } else {
-      setForm(emptyForm);
+      setForm({
+        ...emptyForm,
+        assignedBranch: isSuperAdmin ? "" : user?.branch || "",
+      });
     }
-  }, [selectedEmployee]);
+  }, [selectedEmployee, isSuperAdmin, user?.branch]);
 
   const handleChange = (e) => {
     setForm({
@@ -114,6 +123,7 @@ function EmployeeForm({ onSubmit, selectedEmployee, onCancelEdit }) {
           value={form.assignedBranch}
           onChange={handleChange}
           required
+          disabled={!isSuperAdmin}
           style={styles.input}
         />
 

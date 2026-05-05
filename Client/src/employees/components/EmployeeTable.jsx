@@ -64,29 +64,31 @@ function EmployeeTable({
                 </td>
 
                 <td style={styles.td}>
-                  <button
-                    type="button"
-                    onClick={() => onViewDetails(employee._id)}
-                    style={styles.viewButton}
-                  >
-                    View
-                  </button>
+                  <div style={styles.actionGroup}>
+                    <button
+                      type="button"
+                      onClick={() => onViewDetails(employee._id)}
+                      style={styles.viewButton}
+                    >
+                      View
+                    </button>
 
-                  <button
-                    type="button"
-                    onClick={() => onEdit(employee)}
-                    style={styles.editButton}
-                  >
-                    Edit
-                  </button>
+                    <button
+                      type="button"
+                      onClick={() => onEdit(employee)}
+                      style={styles.editButton}
+                    >
+                      Edit
+                    </button>
 
-                  <button
-                    type="button"
-                    onClick={() => onDelete(employee._id)}
-                    style={styles.deleteButton}
-                  >
-                    Delete
-                  </button>
+                    <button
+                      type="button"
+                      onClick={() => onDelete(employee._id)}
+                      style={styles.deleteButton}
+                    >
+                      Delete
+                    </button>
+                  </div>
                 </td>
               </tr>
             ))
@@ -109,7 +111,7 @@ const styles = {
   table: {
     width: "100%",
     borderCollapse: "collapse",
-    minWidth: "1000px",
+    minWidth: "720px",
   },
 
   th: {
@@ -117,13 +119,24 @@ const styles = {
     padding: "12px",
     textAlign: "left",
     backgroundColor: "#f9fafb",
-    whiteSpace: "nowrap",
+    whiteSpace: "normal",
+    fontSize: "14px",
+    lineHeight: 1.4,
   },
 
   td: {
     borderBottom: "1px solid #eee",
     padding: "12px",
-    whiteSpace: "nowrap",
+    whiteSpace: "normal",
+    wordBreak: "break-word",
+    fontSize: "14px",
+    lineHeight: 1.4,
+  },
+
+  actionGroup: {
+    display: "flex",
+    flexWrap: "wrap",
+    gap: "6px",
   },
 
   statusSelect: {

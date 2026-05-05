@@ -12,7 +12,8 @@
 
 .sd-shell {
   min-height: 100vh;
-  height: 100vh;
+  min-height: 100dvh;
+  height: auto;
   display: flex;
   background:
     radial-gradient(circle at 15% -10%, #ffffff 0%, transparent 42%),
@@ -126,7 +127,8 @@
   display: flex;
   flex-direction: column;
   min-height: 100vh;
-  height: 100vh;
+  min-height: 100dvh;
+  height: auto;
   width: calc(100% - 260px);
 }
 
@@ -221,6 +223,13 @@
   box-shadow: var(--sd-shadow);
   padding: 22px;
   min-height: 0;
+  width: 100%;
+  max-width: 1600px;
+  margin: 0 auto;
+}
+
+.sd-page-transition {
+  width: 100%;
 }
 
 .sd-page-title {
@@ -372,11 +381,31 @@
 }
 
 .sd-backdrop {
-  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(10, 18, 14, 0.4);
+  border: none;
+  padding: 0;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.2s ease;
+  z-index: 15;
+}
+
+.sd-backdrop.is-visible {
+  opacity: 1;
+  pointer-events: auto;
 }
 
 @media (max-width: 980px) {
+  .sd-menu-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+  }
+
   .sd-sidebar {
+    width: min(280px, 82vw);
     transform: translateX(-100%);
     transition: transform 0.25s ease;
   }
@@ -390,6 +419,24 @@
     width: 100%;
   }
 
+  .sd-navbar {
+    height: 68px;
+    padding: 0 16px;
+  }
+
+  .sd-navbar-title {
+    font-size: 20px;
+  }
+
+  .sd-content {
+    padding: 16px;
+  }
+
+  .sd-page {
+    padding: 16px;
+    border-radius: 14px;
+  }
+
   .sd-section-header {
     align-items: stretch;
     flex-direction: column;
@@ -399,6 +446,60 @@
     min-height: 220px;
   }
 
+
+@media (max-width: 640px) {
+  .sd-navbar {
+    height: auto;
+    padding: 12px 14px;
+    align-items: flex-start;
+  }
+
+  .sd-navbar-left {
+    gap: 10px;
+  }
+
+  .sd-navbar-label {
+    font-size: 10px;
+  }
+
+  .sd-navbar-title {
+    font-size: 18px;
+  }
+
+  .sd-navbar-right {
+    gap: 8px;
+  }
+
+  .sd-user-name {
+    display: none;
+  }
+
+  .sd-logout-btn {
+    padding: 7px 10px;
+    font-size: 13px;
+  }
+
+  .sd-content {
+    padding: 12px;
+  }
+
+  .sd-page {
+    padding: 14px;
+  }
+
+  .sd-page-title {
+    font-size: 22px;
+  }
+
+  .sd-section-header {
+    gap: 8px;
+  }
+
+  .sd-empty-card {
+    min-height: 180px;
+    padding: 18px;
+  }
+}
   .sd-menu-btn {
     display: inline-flex;
   }

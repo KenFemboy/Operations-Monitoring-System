@@ -49,7 +49,7 @@ function EmployeeDetails({ details, onClose }) {
             {attendance.length === 0 ? (
               <div className="table-empty">No attendance records.</div>
             ) : (
-              <div className="table-wrapper">
+              <div className="table-wrapper employee-attendance-scroll">
                 <table className="employee-details-table">
                   <thead>
                     <tr>

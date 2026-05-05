@@ -6,6 +6,52 @@ import Leave from "../models/Leave.js";
 import Contribution from "../models/Contribution.js";
 import IncidentReport from "../models/IncidentReport.js";
 import NoticeToExplain from "../models/NoticeToExplain.js";
+import { isSuperAdmin } from "../middleware/accessControl.js";
+
+const getBranchName = (req) => {
+  if (isSuperAdmin(req.user)) {
+    return null;
+  }
+
+  const branchName = (req.user?.branch || "").trim();
+
+  if (!branchName) {
+    const error = new Error("Forbidden: no branch assigned");
+    error.statusCode = 403;
+    throw error;
+  }
+
+  return branchName;
+};
+
+const assertEmployeeAccess = async (req, employeeId) => {
+  const employee = await Employee.findById(employeeId)
+    .select("assignedBranch")
+    .lean();
+
+  if (!employee) {
+    const error = new Error("Employee not found");
+    error.statusCode = 404;
+    throw error;
+  }
+
+  const branchName = getBranchName(req);
+
+  if (branchName && employee.assignedBranch !== branchName) {
+    const error = new Error("Forbidden: you can only access your assigned branch");
+    error.statusCode = 403;
+    throw error;
+  }
+
+  return employee;
+};
+
+const getEmployeeIdsForBranch = async (branchName) => {
+  const employees = await Employee.find({ assignedBranch: branchName })
+    .select("_id")
+    .lean();
+  return employees.map((employee) => employee._id);
+};
 
 // ================= EMPLOYEE =================
 
@@ -21,8 +67,11 @@ export const createEmployee = async (req, res) => {
       newEmployeeId = `EMP-${String(nextNumber).padStart(4, "0")}`;
     }
 
+    const branchName = getBranchName(req);
+
     const employee = await Employee.create({
       ...req.body,
+      assignedBranch: branchName || req.body.assignedBranch,
       employeeId: newEmployeeId,
       employmentStatus: "active",
     });
@@ -33,7 +82,7 @@ export const createEmployee = async (req, res) => {
       data: employee,
     });
   } catch (error) {
-    res.status(500).json({
+    res.status(error.statusCode || 500).json({
       success: false,
       message: "Failed to create employee",
       error: error.message,
@@ -43,14 +92,16 @@ export const createEmployee = async (req, res) => {
 
 export const getEmployees = async (req, res) => {
   try {
-    const employees = await Employee.find().sort({ createdAt: -1 });
+    const branchName = getBranchName(req);
+    const filter = branchName ? { assignedBranch: branchName } : {};
+    const employees = await Employee.find(filter).sort({ createdAt: -1 });
 
     res.status(200).json({
       success: true,
       data: employees,
     });
   } catch (error) {
-    res.status(500).json({
+    res.status(error.statusCode || 500).json({
       success: false,
       message: "Failed to fetch employees",
       error: error.message,
@@ -69,12 +120,21 @@ export const getEmployeeById = async (req, res) => {
       });
     }
 
+    const branchName = getBranchName(req);
+
+    if (branchName && employee.assignedBranch !== branchName) {
+      return res.status(403).json({
+        success: false,
+        message: "Forbidden: you can only access your assigned branch",
+      });
+    }
+
     res.status(200).json({
       success: true,
       data: employee,
     });
   } catch (error) {
-    res.status(500).json({
+    res.status(error.statusCode || 500).json({
       success: false,
       message: "Failed to fetch employee",
       error: error.message,
@@ -84,9 +144,19 @@ export const getEmployeeById = async (req, res) => {
 
 export const updateEmployee = async (req, res) => {
   try {
-    const employee = await Employee.findByIdAndUpdate(req.params.id, req.body, {
-      new: true,
-    });
+    const existingEmployee = await assertEmployeeAccess(req, req.params.id);
+    const branchName = getBranchName(req);
+
+    const updatePayload = {
+      ...req.body,
+      assignedBranch: branchName || existingEmployee.assignedBranch,
+    };
+
+    const employee = await Employee.findByIdAndUpdate(
+      req.params.id,
+      updatePayload,
+      { new: true }
+    );
 
     if (!employee) {
       return res.status(404).json({
@@ -101,7 +171,7 @@ export const updateEmployee = async (req, res) => {
       data: employee,
     });
   } catch (error) {
-    res.status(500).json({
+    res.status(error.statusCode || 500).json({
       success: false,
       message: "Failed to update employee",
       error: error.message,
@@ -111,6 +181,7 @@ export const updateEmployee = async (req, res) => {
 
 export const deleteEmployee = async (req, res) => {
   try {
+    await assertEmployeeAccess(req, req.params.id);
     const employee = await Employee.findByIdAndDelete(req.params.id);
 
     if (!employee) {
@@ -125,7 +196,7 @@ export const deleteEmployee = async (req, res) => {
       message: "Employee deleted successfully",
     });
   } catch (error) {
-    res.status(500).json({
+    res.status(error.statusCode || 500).json({
       success: false,
       message: "Failed to delete employee",
       error: error.message,
@@ -152,6 +223,8 @@ export const createAttendance = async (req, res) => {
         message: "Employee and date are required",
       });
     }
+
+    await assertEmployeeAccess(req, employee);
 
     // Normalize date to start and end of selected day
     const selectedDate = new Date(date);
@@ -211,7 +284,7 @@ export const createAttendance = async (req, res) => {
       data: attendance,
     });
   } catch (error) {
-    res.status(500).json({
+    res.status(error.statusCode || 500).json({
       success: false,
       message: "Failed to record attendance",
       error: error.message,
@@ -220,7 +293,15 @@ export const createAttendance = async (req, res) => {
 };
 export const getAttendance = async (req, res) => {
   try {
-    const attendance = await Attendance.find()
+    const branchName = getBranchName(req);
+    let filter = {};
+
+    if (branchName) {
+      const employeeIds = await getEmployeeIdsForBranch(branchName);
+      filter = { employee: { $in: employeeIds } };
+    }
+
+    const attendance = await Attendance.find(filter)
       .populate("employee")
       .sort({ date: -1 });
 
@@ -229,7 +310,7 @@ export const getAttendance = async (req, res) => {
       data: attendance,
     });
   } catch (error) {
-    res.status(500).json({
+    res.status(error.statusCode || 500).json({
       success: false,
       message: "Failed to fetch attendance",
       error: error.message,
@@ -259,6 +340,8 @@ export const createPayroll = async (req, res) => {
         message: "Employee, start date, and end date are required",
       });
     }
+
+    await assertEmployeeAccess(req, employee);
 
     const employeeData = await Employee.findById(employee);
 
@@ -349,7 +432,7 @@ export const createPayroll = async (req, res) => {
   } catch (error) {
     console.error("CREATE PAYROLL ERROR:", error);
 
-    res.status(500).json({
+    res.status(error.statusCode || 500).json({
       success: false,
       message: "Failed to create payroll",
       error: error.message,
@@ -359,7 +442,15 @@ export const createPayroll = async (req, res) => {
 
 export const getPayrolls = async (req, res) => {
   try {
-    const payrolls = await Payroll.find()
+    const branchName = getBranchName(req);
+    let filter = {};
+
+    if (branchName) {
+      const employeeIds = await getEmployeeIdsForBranch(branchName);
+      filter = { employee: { $in: employeeIds } };
+    }
+
+    const payrolls = await Payroll.find(filter)
       .populate("employee", "employeeId firstName lastName salaryRate")
       .sort({ createdAt: -1 });
 
@@ -368,7 +459,7 @@ export const getPayrolls = async (req, res) => {
       data: payrolls,
     });
   } catch (error) {
-    res.status(500).json({
+    res.status(error.statusCode || 500).json({
       success: false,
       message: "Failed to fetch payrolls",
       error: error.message,
@@ -383,6 +474,27 @@ export const updatePayrollStatus = async (req, res) => {
       return res.status(400).json({
         success: false,
         message: "Invalid payroll status",
+      });
+    }
+
+    const existingPayroll = await Payroll.findById(req.params.id).populate(
+      "employee",
+      "assignedBranch"
+    );
+
+    if (!existingPayroll) {
+      return res.status(404).json({
+        success: false,
+        message: "Payroll not found",
+      });
+    }
+
+    const branchName = getBranchName(req);
+
+    if (branchName && existingPayroll.employee?.assignedBranch !== branchName) {
+      return res.status(403).json({
+        success: false,
+        message: "Forbidden: you can only access your assigned branch",
       });
     }
 
@@ -405,7 +517,7 @@ export const updatePayrollStatus = async (req, res) => {
       data: payroll,
     });
   } catch (error) {
-    res.status(500).json({
+    res.status(error.statusCode || 500).json({
       success: false,
       message: "Failed to update payroll status",
       error: error.message,
@@ -416,6 +528,14 @@ export const updatePayrollStatus = async (req, res) => {
 
 export const createLeave = async (req, res) => {
   try {
+    if (!req.body.employee) {
+      return res.status(400).json({
+        success: false,
+        message: "Employee is required",
+      });
+    }
+
+    await assertEmployeeAccess(req, req.body.employee);
     const leave = await Leave.create(req.body);
 
     res.status(201).json({
@@ -424,7 +544,7 @@ export const createLeave = async (req, res) => {
       data: leave,
     });
   } catch (error) {
-    res.status(500).json({
+    res.status(error.statusCode || 500).json({
       success: false,
       message: "Failed to file leave",
       error: error.message,
@@ -434,7 +554,15 @@ export const createLeave = async (req, res) => {
 
 export const getLeaves = async (req, res) => {
   try {
-    const leaves = await Leave.find()
+    const branchName = getBranchName(req);
+    let filter = {};
+
+    if (branchName) {
+      const employeeIds = await getEmployeeIdsForBranch(branchName);
+      filter = { employee: { $in: employeeIds } };
+    }
+
+    const leaves = await Leave.find(filter)
       .populate("employee", "employeeId firstName lastName")
       .sort({ createdAt: -1 });
 
@@ -443,7 +571,7 @@ export const getLeaves = async (req, res) => {
       data: leaves,
     });
   } catch (error) {
-    res.status(500).json({
+    res.status(error.statusCode || 500).json({
       success: false,
       message: "Failed to fetch leaves",
       error: error.message,
@@ -452,6 +580,27 @@ export const getLeaves = async (req, res) => {
 };
 export const updateLeave = async (req, res) => {
   try {
+    const existingLeave = await Leave.findById(req.params.id).populate(
+      "employee",
+      "assignedBranch"
+    );
+
+    if (!existingLeave) {
+      return res.status(404).json({
+        success: false,
+        message: "Leave not found",
+      });
+    }
+
+    const branchName = getBranchName(req);
+
+    if (branchName && existingLeave.employee?.assignedBranch !== branchName) {
+      return res.status(403).json({
+        success: false,
+        message: "Forbidden: you can only access your assigned branch",
+      });
+    }
+
     const leave = await Leave.findByIdAndUpdate(
       req.params.id,
       req.body,
@@ -471,7 +620,7 @@ export const updateLeave = async (req, res) => {
       data: leave,
     });
   } catch (error) {
-    res.status(500).json({
+    res.status(error.statusCode || 500).json({
       success: false,
       message: "Failed to update leave",
       error: error.message,
@@ -486,6 +635,27 @@ export const updateLeaveStatus = async (req, res) => {
       return res.status(400).json({
         success: false,
         message: "Invalid leave status",
+      });
+    }
+
+    const existingLeave = await Leave.findById(req.params.id).populate(
+      "employee",
+      "assignedBranch"
+    );
+
+    if (!existingLeave) {
+      return res.status(404).json({
+        success: false,
+        message: "Leave not found",
+      });
+    }
+
+    const branchName = getBranchName(req);
+
+    if (branchName && existingLeave.employee?.assignedBranch !== branchName) {
+      return res.status(403).json({
+        success: false,
+        message: "Forbidden: you can only access your assigned branch",
       });
     }
 
@@ -508,7 +678,7 @@ export const updateLeaveStatus = async (req, res) => {
       data: leave,
     });
   } catch (error) {
-    res.status(500).json({
+    res.status(error.statusCode || 500).json({
       success: false,
       message: "Failed to update leave status",
       error: error.message,
@@ -522,6 +692,15 @@ export const createContribution = async (req, res) => {
   try {
     const { sss = 0, pagibig = 0, philhealth = 0 } = req.body;
 
+    if (!req.body.employee) {
+      return res.status(400).json({
+        success: false,
+        message: "Employee is required",
+      });
+    }
+
+    await assertEmployeeAccess(req, req.body.employee);
+
     const contribution = await Contribution.create({
       ...req.body,
       totalContribution: sss + pagibig + philhealth,
@@ -533,7 +712,7 @@ export const createContribution = async (req, res) => {
       data: contribution,
     });
   } catch (error) {
-    res.status(500).json({
+    res.status(error.statusCode || 500).json({
       success: false,
       message: "Failed to record contribution",
       error: error.message,
@@ -543,7 +722,15 @@ export const createContribution = async (req, res) => {
 
 export const getContributions = async (req, res) => {
   try {
-    const contributions = await Contribution.find()
+    const branchName = getBranchName(req);
+    let filter = {};
+
+    if (branchName) {
+      const employeeIds = await getEmployeeIdsForBranch(branchName);
+      filter = { employee: { $in: employeeIds } };
+    }
+
+    const contributions = await Contribution.find(filter)
       .populate(
         "employee",
         "employeeId firstName lastName sssId gsisId pagibigId philhealthId assignedBranch"
@@ -555,7 +742,7 @@ export const getContributions = async (req, res) => {
       data: contributions,
     });
   } catch (error) {
-    res.status(500).json({
+    res.status(error.statusCode || 500).json({
       success: false,
       message: "Failed to fetch contributions",
       error: error.message,
@@ -567,6 +754,14 @@ export const getContributions = async (req, res) => {
 
 export const createIncidentReport = async (req, res) => {
   try {
+    if (!req.body.employee) {
+      return res.status(400).json({
+        success: false,
+        message: "Employee is required",
+      });
+    }
+
+    await assertEmployeeAccess(req, req.body.employee);
     const report = await IncidentReport.create({
       ...req.body,
       status: "open",
@@ -578,7 +773,7 @@ export const createIncidentReport = async (req, res) => {
       data: report,
     });
   } catch (error) {
-    res.status(500).json({
+    res.status(error.statusCode || 500).json({
       success: false,
       message: "Failed to create incident report",
       error: error.message,
@@ -588,7 +783,15 @@ export const createIncidentReport = async (req, res) => {
 
 export const getIncidentReports = async (req, res) => {
   try {
-    const reports = await IncidentReport.find()
+    const branchName = getBranchName(req);
+    let filter = {};
+
+    if (branchName) {
+      const employeeIds = await getEmployeeIdsForBranch(branchName);
+      filter = { employee: { $in: employeeIds } };
+    }
+
+    const reports = await IncidentReport.find(filter)
       .populate("employee", "employeeId firstName lastName")
       .sort({ createdAt: -1 });
 
@@ -597,7 +800,7 @@ export const getIncidentReports = async (req, res) => {
       data: reports,
     });
   } catch (error) {
-    res.status(500).json({
+    res.status(error.statusCode || 500).json({
       success: false,
       message: "Failed to fetch incident reports",
       error: error.message,
@@ -613,6 +816,27 @@ export const updateIncidentReportStatus = async (req, res) => {
       return res.status(400).json({
         success: false,
         message: "Invalid incident report status",
+      });
+    }
+
+    const existingReport = await IncidentReport.findById(req.params.id).populate(
+      "employee",
+      "assignedBranch"
+    );
+
+    if (!existingReport) {
+      return res.status(404).json({
+        success: false,
+        message: "Incident report not found",
+      });
+    }
+
+    const branchName = getBranchName(req);
+
+    if (branchName && existingReport.employee?.assignedBranch !== branchName) {
+      return res.status(403).json({
+        success: false,
+        message: "Forbidden: you can only access your assigned branch",
       });
     }
 
@@ -635,7 +859,7 @@ export const updateIncidentReportStatus = async (req, res) => {
       data: report,
     });
   } catch (error) {
-    res.status(500).json({
+    res.status(error.statusCode || 500).json({
       success: false,
       message: "Failed to update incident report status",
       error: error.message,
@@ -646,6 +870,14 @@ export const updateIncidentReportStatus = async (req, res) => {
 
 export const createNTE = async (req, res) => {
   try {
+    if (!req.body.employee) {
+      return res.status(400).json({
+        success: false,
+        message: "Employee is required",
+      });
+    }
+
+    await assertEmployeeAccess(req, req.body.employee);
     const nte = await NoticeToExplain.create(req.body);
 
     res.status(201).json({
@@ -654,7 +886,7 @@ export const createNTE = async (req, res) => {
       data: nte,
     });
   } catch (error) {
-    res.status(500).json({
+    res.status(error.statusCode || 500).json({
       success: false,
       message: "Failed to create NTE",
       error: error.message,
@@ -664,7 +896,15 @@ export const createNTE = async (req, res) => {
 
 export const getNTEs = async (req, res) => {
   try {
-    const ntes = await NoticeToExplain.find()
+    const branchName = getBranchName(req);
+    let filter = {};
+
+    if (branchName) {
+      const employeeIds = await getEmployeeIdsForBranch(branchName);
+      filter = { employee: { $in: employeeIds } };
+    }
+
+    const ntes = await NoticeToExplain.find(filter)
       .populate("employee", "employeeId firstName lastName")
       .sort({ createdAt: -1 });
 
@@ -673,7 +913,7 @@ export const getNTEs = async (req, res) => {
       data: ntes,
     });
   } catch (error) {
-    res.status(500).json({
+    res.status(error.statusCode || 500).json({
       success: false,
       message: "Failed to fetch NTE records",
       error: error.message,
@@ -689,6 +929,27 @@ export const updateNTEStatus = async (req, res) => {
       return res.status(400).json({
         success: false,
         message: "Invalid NTE status",
+      });
+    }
+
+    const existingNte = await NoticeToExplain.findById(req.params.id).populate(
+      "employee",
+      "assignedBranch"
+    );
+
+    if (!existingNte) {
+      return res.status(404).json({
+        success: false,
+        message: "NTE record not found",
+      });
+    }
+
+    const branchName = getBranchName(req);
+
+    if (branchName && existingNte.employee?.assignedBranch !== branchName) {
+      return res.status(403).json({
+        success: false,
+        message: "Forbidden: you can only access your assigned branch",
       });
     }
 
@@ -711,7 +972,7 @@ export const updateNTEStatus = async (req, res) => {
       data: nte,
     });
   } catch (error) {
-    res.status(500).json({
+    res.status(error.statusCode || 500).json({
       success: false,
       message: "Failed to update NTE status",
       error: error.message,
@@ -729,6 +990,15 @@ export const getEmployeeFullDetails = async (req, res) => {
       return res.status(404).json({
         success: false,
         message: "Employee not found",
+      });
+    }
+
+    const branchName = getBranchName(req);
+
+    if (branchName && employee.assignedBranch !== branchName) {
+      return res.status(403).json({
+        success: false,
+        message: "Forbidden: you can only access your assigned branch",
       });
     }
 
@@ -752,7 +1022,7 @@ export const getEmployeeFullDetails = async (req, res) => {
       },
     });
   } catch (error) {
-    res.status(500).json({
+    res.status(error.statusCode || 500).json({
       success: false,
       message: "Failed to fetch employee details",
       error: error.message,

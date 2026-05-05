@@ -15,6 +15,7 @@ import StatCard from "../components/StatCard";
 import DashboardSection from "../components/DashboardSection";
 import SimpleBar from "../components/SimpleBar";
 import SectionLoader from "../components/SectionLoader";
+import "./DashboardPage.css";
 
 function Dashboard() {
   const [overall, setOverall] = useState(null);
@@ -100,31 +101,35 @@ function Dashboard() {
   const nteMax = irNte?.nte?.total || 1;
 
   return (
-    <div style={styles.page}>
-      <div style={styles.header}>
-        <div>
-          <h1 style={styles.title}>Dashboard Analytics Report</h1>
-          <p style={styles.subtitle}>
-            Section-by-section analytics report for the business system.
-          </p>
-          {currentLoading && (
-            <p style={styles.loadingText}>
-              Loading {currentLoading} section...
+    <div className="dashboard-page">
+      <div className="dashboard-container">
+        <div className="dashboard-header">
+          <div>
+            <h1 className="dashboard-title">Dashboard Analytics Report</h1>
+            <p className="dashboard-subtitle">
+              Section-by-section analytics report for the business system.
             </p>
-          )}
+            {currentLoading && (
+              <p className="dashboard-loading">
+                Loading {currentLoading} section...
+              </p>
+            )}
+          </div>
+
+          <button
+            onClick={loadDashboardOneByOne}
+            className="dashboard-refresh"
+          >
+            Refresh
+          </button>
         </div>
 
-        <button onClick={loadDashboardOneByOne} style={styles.refreshButton}>
-          Refresh
-        </button>
-      </div>
-
-      {error && <p style={styles.error}>{error}</p>}
+        {error && <p className="dashboard-error">{error}</p>}
 
       {/* Overall Summary */}
       {overall ? (
         <DashboardSection title="Overall Summary">
-          <div style={styles.grid}>
+          <div className="dashboard-grid">
             <StatCard
               title="Monthly Sales"
               value={formatPeso(overall.monthlySales)}
@@ -161,7 +166,7 @@ function Dashboard() {
       {/* Sales */}
       {sales ? (
         <DashboardSection title="Sales Report">
-          <div style={styles.grid}>
+          <div className="dashboard-grid">
             <StatCard
               title="Monthly Total Sales"
               value={formatPeso(sales.monthlyTotal)}
@@ -177,31 +182,31 @@ function Dashboard() {
             />
           </div>
 
-          <h3 style={styles.smallHeading}>Today by Meal Type</h3>
+          <h3 className="dashboard-heading">Today by Meal Type</h3>
 
-          <div style={styles.tableWrapper}>
-            <table style={styles.table}>
+          <div className="dashboard-table-wrapper">
+            <table className="dashboard-table">
               <thead>
                 <tr>
-                  <th style={styles.th}>Meal Type</th>
-                  <th style={styles.th}>Customers</th>
-                  <th style={styles.th}>Total Sales</th>
+                  <th className="dashboard-th">Meal Type</th>
+                  <th className="dashboard-th">Customers</th>
+                  <th className="dashboard-th">Total Sales</th>
                 </tr>
               </thead>
 
               <tbody>
                 {sales.dailySales.length === 0 ? (
                   <tr>
-                    <td style={styles.td} colSpan="3">
+                    <td className="dashboard-td" colSpan="3">
                       No sales today.
                     </td>
                   </tr>
                 ) : (
                   sales.dailySales.map((item) => (
                     <tr key={item._id}>
-                      <td style={styles.td}>{item._id || "N/A"}</td>
-                      <td style={styles.td}>{item.totalCustomers}</td>
-                      <td style={styles.td}>{formatPeso(item.totalSales)}</td>
+                      <td className="dashboard-td">{item._id || "N/A"}</td>
+                      <td className="dashboard-td">{item.totalCustomers}</td>
+                      <td className="dashboard-td">{formatPeso(item.totalSales)}</td>
                     </tr>
                   ))
                 )}
@@ -216,7 +221,7 @@ function Dashboard() {
       {/* Employees */}
       {employees ? (
         <DashboardSection title="Employee Status Report">
-          <div style={styles.twoColumn}>
+          <div className="dashboard-two-col">
             <div>
               <SimpleBar
                 label="Active"
@@ -247,7 +252,7 @@ function Dashboard() {
               />
             </div>
 
-            <div style={styles.grid}>
+            <div className="dashboard-grid">
               <StatCard
                 title="Total Employees"
                 value={employees.total}
@@ -269,7 +274,7 @@ function Dashboard() {
       {/* Attendance and Payroll */}
       {attendancePayroll ? (
         <DashboardSection title="Attendance and Payroll Report">
-          <div style={styles.grid}>
+          <div className="dashboard-grid">
             <StatCard
               title="Attendance Records"
               value={attendancePayroll.attendance.totalRecords}
@@ -292,7 +297,7 @@ function Dashboard() {
             />
           </div>
 
-          <h3 style={styles.smallHeading}>Payroll Completion</h3>
+          <h3 className="dashboard-heading">Payroll Completion</h3>
 
           <SimpleBar
             label="Done"
@@ -315,7 +320,7 @@ function Dashboard() {
       {/* Inventory */}
       {inventory ? (
         <DashboardSection title="Inventory Report">
-          <div style={styles.grid}>
+          <div className="dashboard-grid">
             <StatCard
               title="Total Products"
               value={inventory.products}
@@ -364,7 +369,7 @@ function Dashboard() {
       {/* Feedback */}
       {feedback ? (
         <DashboardSection title="Customer Feedback Report">
-          <div style={styles.grid}>
+          <div className="dashboard-grid">
             <StatCard
               title="Total Reviews"
               value={feedback.totalFeedback}
@@ -380,33 +385,33 @@ function Dashboard() {
             />
           </div>
 
-          <h3 style={styles.smallHeading}>Average Rating by Branch</h3>
+          <h3 className="dashboard-heading">Average Rating by Branch</h3>
 
-          <div style={styles.tableWrapper}>
-            <table style={styles.table}>
+          <div className="dashboard-table-wrapper">
+            <table className="dashboard-table">
               <thead>
                 <tr>
-                  <th style={styles.th}>Branch</th>
-                  <th style={styles.th}>Average Rating</th>
-                  <th style={styles.th}>Reviews</th>
+                  <th className="dashboard-th">Branch</th>
+                  <th className="dashboard-th">Average Rating</th>
+                  <th className="dashboard-th">Reviews</th>
                 </tr>
               </thead>
 
               <tbody>
                 {feedback.byBranch.length === 0 ? (
                   <tr>
-                    <td style={styles.td} colSpan="3">
+                    <td className="dashboard-td" colSpan="3">
                       No branch reviews found.
                     </td>
                   </tr>
                 ) : (
                   feedback.byBranch.map((branch) => (
                     <tr key={branch._id}>
-                      <td style={styles.td}>{branch._id || "No Branch"}</td>
-                      <td style={styles.td}>
+                      <td className="dashboard-td">{branch._id || "No Branch"}</td>
+                      <td className="dashboard-td">
                         {formatRating(branch.averageRating)} ★
                       </td>
-                      <td style={styles.td}>{branch.totalFeedback}</td>
+                      <td className="dashboard-td">{branch.totalFeedback}</td>
                     </tr>
                   ))
                 )}
@@ -421,9 +426,9 @@ function Dashboard() {
       {/* IR and NTE */}
       {irNte ? (
         <DashboardSection title="IR and NTE Monitoring Report">
-          <div style={styles.twoColumn}>
+          <div className="dashboard-two-col">
             <div>
-              <h3 style={styles.smallHeading}>Incident Reports</h3>
+              <h3 className="dashboard-heading">Incident Reports</h3>
 
               <SimpleBar
                 label="Open"
@@ -441,7 +446,7 @@ function Dashboard() {
             </div>
 
             <div>
-              <h3 style={styles.smallHeading}>Notice to Explain</h3>
+              <h3 className="dashboard-heading">Notice to Explain</h3>
 
               <SimpleBar
                 label="Pending"
@@ -459,7 +464,7 @@ function Dashboard() {
             </div>
           </div>
 
-          <div style={styles.grid}>
+          <div className="dashboard-grid">
             <StatCard
               title="Total IR"
               value={irNte.incidentReports.total}
@@ -480,7 +485,7 @@ function Dashboard() {
       {/* Leave and Plantilla */}
       {leavePlantilla ? (
         <DashboardSection title="Leave and Plantilla Report">
-          <div style={styles.grid}>
+          <div className="dashboard-grid">
             <StatCard
               title="Leave Records"
               value={leavePlantilla.leaves.total}
@@ -513,101 +518,9 @@ function Dashboard() {
       ) : (
         <SectionLoader title="Leave and Plantilla Report" />
       )}
+      </div>
     </div>
   );
 }
-
-const styles = {
-  page: {
-    padding: "24px",
-    backgroundColor: "#f3f4f6",
-    minHeight: "100vh",
-    fontFamily: "Arial, sans-serif",
-  },
-
-  header: {
-    display: "flex",
-    justifyContent: "space-between",
-    gap: "16px",
-    alignItems: "center",
-    marginBottom: "24px",
-    flexWrap: "wrap",
-  },
-
-  title: {
-    margin: 0,
-    fontSize: "30px",
-    color: "#111827",
-  },
-
-  subtitle: {
-    marginTop: "8px",
-    color: "#6b7280",
-  },
-
-  loadingText: {
-    marginTop: "8px",
-    color: "#2563eb",
-    fontWeight: "bold",
-  },
-
-  refreshButton: {
-    padding: "10px 16px",
-    backgroundColor: "#2563eb",
-    color: "#ffffff",
-    border: "none",
-    borderRadius: "8px",
-    cursor: "pointer",
-    fontWeight: "bold",
-  },
-
-  grid: {
-    display: "grid",
-    gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))",
-    gap: "16px",
-  },
-
-  twoColumn: {
-    display: "grid",
-    gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))",
-    gap: "24px",
-  },
-
-  smallHeading: {
-    marginTop: "20px",
-    marginBottom: "12px",
-    color: "#374151",
-    fontSize: "16px",
-  },
-
-  tableWrapper: {
-    overflowX: "auto",
-  },
-
-  table: {
-    width: "100%",
-    borderCollapse: "collapse",
-    minWidth: "650px",
-  },
-
-  th: {
-    textAlign: "left",
-    padding: "12px",
-    backgroundColor: "#f9fafb",
-    borderBottom: "1px solid #e5e7eb",
-    color: "#374151",
-  },
-
-  td: {
-    padding: "12px",
-    borderBottom: "1px solid #e5e7eb",
-    color: "#374151",
-  },
-
-  error: {
-    color: "#dc2626",
-    fontWeight: "bold",
-  },
-};
 
 export default Dashboard;
