@@ -1706,7 +1706,6 @@ button:active {
 
   .attendance-section-grid {
     grid-template-columns: 1fr;
-  }
     transition: transform 0.25s ease;
     z-index: 20;
     box-shadow: var(--shadow);
