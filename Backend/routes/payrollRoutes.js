@@ -6,12 +6,12 @@ import {
   getPayrolls,
   markAsPaid,
 } from "../controllers/payrollController.js";
-import { authMiddleware } from "../middleware/auth.js";
+import { protect } from "../middleware/authMiddleware.js";
 import { attachBranchScope } from "../middleware/accessControl.js";
 
 const router = express.Router();
 
-router.use(authMiddleware);
+router.use(protect);
 router.use(attachBranchScope);
 
 router.post("/generate", generatePayrollController);

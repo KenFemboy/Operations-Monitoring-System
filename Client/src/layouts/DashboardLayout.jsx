@@ -7,7 +7,6 @@ import "../styles/app-shell.css";
 
 const routeTitles = {
   dashboard: "Dashboard",
-  reports: "Reports",
   branches: "Branches",
   users: "Branch Users",
   employees: "Employees",

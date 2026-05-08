@@ -1,4 +1,4 @@
-import { useContext, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import {
   getFeedbacks,
   getAverageRatingByBranch,
@@ -9,10 +9,10 @@ import FeedbackTable from "../components/FeedbackTable";
 import FeedbackDateFilter from "../components/FeedbackDateFilter";
 import AverageRatingByBranchTable from "../components/AverageRatingByBranchTable";
 import AverageRatingByMonthTable from "../components/AverageRatingByMonthTable";
-import { AuthContext } from "../../auth/context/AuthContext";
+import { getBranches } from "../../branches/api/branchApi";
 
-function AdminFeedbackPage() {
-  const { user } = useContext(AuthContext);
+function SuperAdminFeedbackPage() {
+  const [branches, setBranches] = useState([]);
   const [feedbacks, setFeedbacks] = useState([]);
   const [branchSummary, setBranchSummary] = useState([]);
   const [monthSummary, setMonthSummary] = useState([]);
@@ -53,7 +53,7 @@ function AdminFeedbackPage() {
 
       setBranchSummary(res.data.summary || []);
     } catch (err) {
-      console.error(err);
+      console.error("Failed to fetch branch summary:", err);
     }
   };
 
@@ -66,11 +66,21 @@ function AdminFeedbackPage() {
 
       setMonthSummary(res.data.summary || []);
     } catch (err) {
+      console.error("Failed to fetch month summary:", err);
+    }
+  };
+
+  const fetchBranches = async () => {
+    try {
+      const res = await getBranches();
+      setBranches(res.data.data || []);
+    } catch (err) {
       console.error(err);
     }
   };
 
   const fetchAll = async (filter = activeFilter) => {
+    await fetchBranches();
     await fetchFeedbacks(filter);
     await fetchBranchSummary(filter);
     await fetchMonthSummary(filter);
@@ -104,14 +114,14 @@ function AdminFeedbackPage() {
 
   return (
     <div style={styles.page}>
-      <h1>Branch Feedback Management</h1>
-      <p>View customer ratings, short reviews, and rating summaries for your assigned branch.</p>
+      <h1>Feedback Management - All Branches</h1>
+      <p>View customer ratings, reviews, and performance across all branches.</p>
 
       <FeedbackDateFilter
+        branches={branches}
         onFilter={handleFilter}
         onClear={handleClearFilter}
-        showBranchFilter={false}
-        assignedBranchName={user?.branchName || user?.branch}
+        showBranchFilter={true}
       />
 
       <div style={styles.summaryGrid}>
@@ -148,4 +158,4 @@ const styles = {
   },
 };
 
-export default AdminFeedbackPage;
+export default SuperAdminFeedbackPage;

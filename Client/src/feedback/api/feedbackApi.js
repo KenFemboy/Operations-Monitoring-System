@@ -25,12 +25,14 @@ export const getFeedbacks = ({
 export const getAverageRatingByBranch = ({
   startDate = "",
   endDate = "",
+  branch = "all",
   mealSession = "all",
 } = {}) => {
   return api.get(`${API_URL}/summary/by-branch`, {
     params: {
       startDate,
       endDate,
+      branch,
       mealSession,
     },
   });

@@ -2,6 +2,8 @@ import Product from "../models/Product.js";
 import Purchase from "../models/Purchase.js";
 import StockIn from "../models/StockIn.js";
 import StockOut from "../models/StockOut.js";
+import { isSuperAdmin, getUserBranchId } from "../middleware/accessControl.js";
+import { getBranchFilter } from "../utils/branchFilter.js";
 
 const updateProductStatus = (product) => {
   if (product.currentStock === 0) {
@@ -21,12 +23,17 @@ export const createProduct = async (req, res) => {
   try {
     const { name, category, unit, minimumStock } = req.body;
 
+    const branch = isSuperAdmin(req.user)
+      ? req.body.branch || req.body.branchId
+      : getUserBranchId(req.user);
+
     const product = await Product.create({
       name,
       category,
       unit,
       minimumStock,
       currentStock: 0,
+      branch,
     });
 
     res.status(201).json({
@@ -45,7 +52,8 @@ export const createProduct = async (req, res) => {
 
 export const getProducts = async (req, res) => {
   try {
-    const products = await Product.find().sort({ createdAt: -1 });
+    const filter = getBranchFilter(req.user);
+    const products = await Product.find(filter).sort({ createdAt: -1 });
 
     res.status(200).json({
       success: true,
@@ -81,6 +89,10 @@ export const getProductById = async (req, res) => {
         success: false,
         message: "Product not found",
       });
+    }
+
+    if (!isSuperAdmin(req.user) && String(product.branch) !== String(getUserBranchId(req.user))) {
+      return res.status(403).json({ success: false, message: "Forbidden: branch mismatch" });
     }
 
     res.status(200).json({
@@ -173,6 +185,10 @@ export const createPurchase = async (req, res) => {
       remarks,
     } = req.body;
 
+    const branch = isSuperAdmin(req.user)
+      ? req.body.branch || req.body.branchId
+      : getUserBranchId(req.user);
+
     const purchase = await Purchase.create({
       product,
       supplierName,
@@ -180,6 +196,7 @@ export const createPurchase = async (req, res) => {
       unitCost,
       purchaseDate,
       remarks,
+      branch,
     });
 
     const populatedPurchase = await Purchase.findById(purchase._id).populate(
@@ -202,7 +219,8 @@ export const createPurchase = async (req, res) => {
 
 export const getPurchases = async (req, res) => {
   try {
-    const purchases = await Purchase.find()
+    const filter = getBranchFilter(req.user);
+    const purchases = await Purchase.find(filter)
       .populate("product")
       .sort({ createdAt: -1 });
 
@@ -339,12 +357,21 @@ export const createStockIn = async (req, res) => {
     updateProductStatus(existingProduct);
     await existingProduct.save();
 
+    const branch = isSuperAdmin(req.user)
+      ? req.body.branch || req.body.branchId
+      : getUserBranchId(req.user);
+
+    if (!isSuperAdmin(req.user) && String(existingProduct.branch) !== String(branch)) {
+      return res.status(403).json({ success: false, message: "Forbidden: product belongs to different branch" });
+    }
+
     const stockIn = await StockIn.create({
       product,
       quantity,
       reason,
       addedBy,
       remarks,
+      branch,
     });
 
     const populatedStockIn = await StockIn.findById(stockIn._id).populate(
@@ -368,7 +395,8 @@ export const createStockIn = async (req, res) => {
 
 export const getStockIns = async (req, res) => {
   try {
-    const stockIns = await StockIn.find()
+    const filter = getBranchFilter(req.user);
+    const stockIns = await StockIn.find(filter)
       .populate("product")
       .sort({ createdAt: -1 });
 
@@ -413,12 +441,21 @@ export const createStockOut = async (req, res) => {
     updateProductStatus(existingProduct);
     await existingProduct.save();
 
+    const branch = isSuperAdmin(req.user)
+      ? req.body.branch || req.body.branchId
+      : getUserBranchId(req.user);
+
+    if (!isSuperAdmin(req.user) && String(existingProduct.branch) !== String(branch)) {
+      return res.status(403).json({ success: false, message: "Forbidden: product belongs to different branch" });
+    }
+
     const stockOut = await StockOut.create({
       product,
       quantity,
       reason,
       releasedBy,
       remarks,
+      branch,
     });
 
     const populatedStockOut = await StockOut.findById(stockOut._id).populate(
@@ -442,7 +479,8 @@ export const createStockOut = async (req, res) => {
 
 export const getStockOuts = async (req, res) => {
   try {
-    const stockOuts = await StockOut.find()
+    const filter = getBranchFilter(req.user);
+    const stockOuts = await StockOut.find(filter)
       .populate("product")
       .sort({ createdAt: -1 });
 
@@ -474,14 +512,17 @@ export const getInventoryRecords = async (req, res) => {
     let stockIns = [];
     let stockOuts = [];
 
+    const branchFilter = getBranchFilter(req.user);
+    const combinedFilter = { ...dateFilter, ...branchFilter };
+
     if (!type || type === "all" || type === "stock-in") {
-      stockIns = await StockIn.find(dateFilter)
+      stockIns = await StockIn.find(combinedFilter)
         .populate("product")
         .sort({ createdAt: -1 });
     }
 
     if (!type || type === "all" || type === "stock-out") {
-      stockOuts = await StockOut.find(dateFilter)
+      stockOuts = await StockOut.find(combinedFilter)
         .populate("product")
         .sort({ createdAt: -1 });
     }

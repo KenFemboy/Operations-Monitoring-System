@@ -1,4 +1,6 @@
 import express from "express";
+import { protect } from "../middleware/authMiddleware.js";
+import { allowRoles } from "../middleware/roleMiddleware.js";
 
 import{
   createProduct,
@@ -22,27 +24,29 @@ import{
 } from "../controllers/inventoryController.js";
 const router = express.Router();
 
+router.use(protect);
+
 // Products
-router.post("/products", createProduct);
-router.get("/products", getProducts);
-router.get("/products/:id", getProductById);
-router.put("/products/:id", updateProduct);
-router.delete("/products/:id", deleteProduct);
+router.post("/products", allowRoles("superadmin", "admin"), createProduct);
+router.get("/products", allowRoles("superadmin", "admin", "console_user"), getProducts);
+router.get("/products/:id", allowRoles("superadmin", "admin", "console_user"), getProductById);
+router.put("/products/:id", allowRoles("superadmin", "admin"), updateProduct);
+router.delete("/products/:id", allowRoles("superadmin", "admin"), deleteProduct);
 
 // Purchases
-router.post("/purchases", createPurchase);
-router.get("/purchases", getPurchases);
-router.patch("/purchases/:id/receive", markPurchaseAsReceived);
-router.patch("/purchases/:id/cancel", cancelPurchase);
+router.post("/purchases", allowRoles("superadmin", "admin"), createPurchase);
+router.get("/purchases", allowRoles("superadmin", "admin", "console_user"), getPurchases);
+router.patch("/purchases/:id/receive", allowRoles("superadmin", "admin"), markPurchaseAsReceived);
+router.patch("/purchases/:id/cancel", allowRoles("superadmin", "admin"), cancelPurchase);
 
 // Stock In
-router.post("/stock-in", createStockIn);
-router.get("/stock-in", getStockIns);
+router.post("/stock-in", allowRoles("superadmin", "admin"), createStockIn);
+router.get("/stock-in", allowRoles("superadmin", "admin", "console_user"), getStockIns);
 
 // Stock Out
-router.post("/stock-out", createStockOut);
-router.get("/stock-out", getStockOuts);
+router.post("/stock-out", allowRoles("superadmin", "admin"), createStockOut);
+router.get("/stock-out", allowRoles("superadmin", "admin", "console_user"), getStockOuts);
 
-router.get("/records", getInventoryRecords);
+router.get("/records", allowRoles("superadmin", "admin", "console_user"), getInventoryRecords);
 
 export default router;

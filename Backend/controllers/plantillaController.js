@@ -1,5 +1,7 @@
 import Plantilla from "../models/Plantilla.js";
 import Branch from "../models/Branch.js";
+import { isSuperAdmin, getUserBranchId } from "../middleware/accessControl.js";
+import { getBranchFilter } from "../utils/branchFilter.js";
 
 const getPlantillaStatus = (requiredCount, currentCount) => {
   const required = Number(requiredCount || 0);
@@ -41,7 +43,16 @@ const resolveBranch = async ({ branch, branchId, branchName }) => {
 export const createPlantilla = async (req, res) => {
   try {
     const { position, branch, branchId, branchName, requiredCount, currentCount } = req.body;
-    const resolvedBranch = await resolveBranch({ branch, branchId, branchName });
+    let resolvedBranch = null;
+
+    if (isSuperAdmin(req.user)) {
+      resolvedBranch = await resolveBranch({ branch, branchId, branchName });
+    } else {
+      const userBranchId = getUserBranchId(req.user);
+      if (!userBranchId) throw new Error("User has no branch assigned");
+      resolvedBranch = await Branch.findById(userBranchId);
+      if (!resolvedBranch) throw new Error("Valid branch is required");
+    }
 
     const plantilla = await Plantilla.create({
       position,
@@ -67,7 +78,8 @@ export const createPlantilla = async (req, res) => {
 
 export const getPlantillas = async (req, res) => {
   try {
-    const plantillas = await Plantilla.find()
+    const filter = getBranchFilter(req.user);
+    const plantillas = await Plantilla.find(filter)
       .populate("branch", "branchName location address status")
       .sort({ createdAt: -1 });
 
@@ -96,6 +108,10 @@ export const getPlantillaById = async (req, res) => {
         success: false,
         message: "Plantilla not found",
       });
+    }
+
+    if (!isSuperAdmin(req.user) && String(plantilla.branch._id) !== String(getUserBranchId(req.user))) {
+      return res.status(403).json({ success: false, message: "Forbidden: branch mismatch" });
     }
 
     res.status(200).json({

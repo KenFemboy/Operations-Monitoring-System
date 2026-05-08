@@ -28,7 +28,8 @@ export const protect = async (req, res, next) => {
     req.user = {
       id: user._id,
       role: user.role,
-      branchId: user.branchId,
+      branch: user.branch || user.branchId || null,
+      branchId: user.branchId?._id || user.branchId || null,
     };
 
     next();

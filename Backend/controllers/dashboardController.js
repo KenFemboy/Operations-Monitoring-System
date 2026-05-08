@@ -12,6 +12,8 @@ import Sale from "../models/Sale.js";
 import Feedback from "../models/Feedback.js";
 import Leave from "../models/Leave.js";
 import Plantilla from "../models/Plantilla.js";
+import mongoose from "mongoose";
+import { getBranchFilter } from "../utils/branchFilter.js";
 
 const getDateRanges = () => {
   const today = new Date();
@@ -56,6 +58,8 @@ export const getOverallSummary = async (req, res) => {
   try {
     const { monthPrefix } = getDateRanges();
 
+    const branchFilter = getBranchFilter(req.user);
+
     const [
       totalEmployees,
       activeEmployees,
@@ -65,20 +69,16 @@ export const getOverallSummary = async (req, res) => {
       monthlySales,
       feedbackAverage,
     ] = await Promise.all([
-      Employee.countDocuments(),
-      Employee.countDocuments({ employmentStatus: "active" }),
+      Employee.countDocuments(branchFilter),
+      Employee.countDocuments({ ...branchFilter, employmentStatus: "active" }),
 
-      Product.countDocuments(),
-      Product.countDocuments({ status: "Low Stock" }),
+      Product.countDocuments(branchFilter),
+      Product.countDocuments({ ...branchFilter, status: "Low Stock" }),
 
-      Feedback.countDocuments(),
+      Feedback.countDocuments(branchFilter),
 
       Sale.aggregate([
-        {
-          $match: {
-            saleDate: { $regex: `^${monthPrefix}` },
-          },
-        },
+        { $match: { ...branchFilter, saleDate: { $regex: `^${monthPrefix}` } } },
         {
           $group: {
             _id: null,
@@ -89,6 +89,7 @@ export const getOverallSummary = async (req, res) => {
       ]),
 
       Feedback.aggregate([
+        { $match: branchFilter },
         {
           $group: {
             _id: null,
@@ -127,12 +128,10 @@ export const getSalesAnalytics = async (req, res) => {
   try {
     const { monthPrefix, todayDateString, startOfMonth } = getDateRanges();
 
+    const branchFilter = getBranchFilter(req.user);
+
     const monthlySales = await Sale.aggregate([
-      {
-        $match: {
-          saleDate: { $regex: `^${monthPrefix}` },
-        },
-      },
+      { $match: { ...branchFilter, saleDate: { $regex: `^${monthPrefix}` } } },
       {
         $group: {
           _id: null,
@@ -143,11 +142,7 @@ export const getSalesAnalytics = async (req, res) => {
     ]);
 
     const dailySales = await Sale.aggregate([
-      {
-        $match: {
-          saleDate: todayDateString,
-        },
-      },
+      { $match: { ...branchFilter, saleDate: todayDateString } },
       {
         $group: {
           _id: "$serviceType",
@@ -158,11 +153,7 @@ export const getSalesAnalytics = async (req, res) => {
     ]);
 
     const salesByDay = await Sale.aggregate([
-      {
-        $match: {
-          createdAt: { $gte: startOfMonth },
-        },
-      },
+      { $match: { ...branchFilter, createdAt: { $gte: startOfMonth } } },
       {
         $group: {
           _id: {
@@ -205,6 +196,8 @@ export const getSalesAnalytics = async (req, res) => {
 ========================= */
 export const getEmployeeAnalytics = async (req, res) => {
   try {
+    const branchFilter = getBranchFilter(req.user);
+
     const [
       total,
       active,
@@ -212,11 +205,11 @@ export const getEmployeeAnalytics = async (req, res) => {
       resigned,
       terminated,
     ] = await Promise.all([
-      Employee.countDocuments(),
-      Employee.countDocuments({ employmentStatus: "active" }),
-      Employee.countDocuments({ employmentStatus: "inactive" }),
-      Employee.countDocuments({ employmentStatus: "resigned" }),
-      Employee.countDocuments({ employmentStatus: "terminated" }),
+      Employee.countDocuments(branchFilter),
+      Employee.countDocuments({ ...branchFilter, employmentStatus: "active" }),
+      Employee.countDocuments({ ...branchFilter, employmentStatus: "inactive" }),
+      Employee.countDocuments({ ...branchFilter, employmentStatus: "resigned" }),
+      Employee.countDocuments({ ...branchFilter, employmentStatus: "terminated" }),
     ]);
 
     res.status(200).json({
@@ -245,6 +238,8 @@ export const getAttendancePayrollAnalytics = async (req, res) => {
   try {
     const { startOfToday, endOfToday } = getDateRanges();
 
+    const branchFilter = getBranchFilter(req.user);
+
     const [
       totalAttendance,
       todayAttendance,
@@ -255,19 +250,14 @@ export const getAttendancePayrollAnalytics = async (req, res) => {
 
       totalContributions,
     ] = await Promise.all([
-      Attendance.countDocuments(),
-      Attendance.countDocuments({
-        date: {
-          $gte: startOfToday,
-          $lt: endOfToday,
-        },
-      }),
+      Attendance.countDocuments(branchFilter),
+      Attendance.countDocuments({ ...branchFilter, date: { $gte: startOfToday, $lt: endOfToday } }),
 
-      Payroll.countDocuments(),
-      Payroll.countDocuments({ status: "pending" }),
-      Payroll.countDocuments({ status: "done" }),
+      Payroll.countDocuments(branchFilter),
+      Payroll.countDocuments({ ...branchFilter, status: "pending" }),
+      Payroll.countDocuments({ ...branchFilter, status: "done" }),
 
-      Contribution.countDocuments(),
+      Contribution.countDocuments(branchFilter),
     ]);
 
     res.status(200).json({
@@ -303,6 +293,8 @@ export const getAttendancePayrollAnalytics = async (req, res) => {
 ========================= */
 export const getInventoryAnalytics = async (req, res) => {
   try {
+    const branchFilter = getBranchFilter(req.user);
+
     const [
       products,
       lowStock,
@@ -314,15 +306,15 @@ export const getInventoryAnalytics = async (req, res) => {
       stockIn,
       stockOut,
     ] = await Promise.all([
-      Product.countDocuments(),
-      Product.countDocuments({ status: "Low Stock" }),
-      Product.countDocuments({ status: "Out of Stock" }),
+      Product.countDocuments(branchFilter),
+      Product.countDocuments({ ...branchFilter, status: "Low Stock" }),
+      Product.countDocuments({ ...branchFilter, status: "Out of Stock" }),
 
-      Purchase.countDocuments(),
-      Purchase.countDocuments({ status: "Pending" }),
+      Purchase.countDocuments(branchFilter),
+      Purchase.countDocuments({ ...branchFilter, status: "Pending" }),
 
-      StockIn.countDocuments(),
-      StockOut.countDocuments(),
+      StockIn.countDocuments(branchFilter),
+      StockOut.countDocuments(branchFilter),
     ]);
 
     res.status(200).json({
@@ -351,9 +343,22 @@ export const getInventoryAnalytics = async (req, res) => {
 ========================= */
 export const getFeedbackAnalytics = async (req, res) => {
   try {
-    const totalFeedback = await Feedback.countDocuments();
+    const branchFilter = getBranchFilter(req.user);
+    const feedbackBranchMatch = { ...branchFilter };
+
+    if (
+      feedbackBranchMatch.branch &&
+      mongoose.Types.ObjectId.isValid(feedbackBranchMatch.branch)
+    ) {
+      feedbackBranchMatch.branch = new mongoose.Types.ObjectId(
+        feedbackBranchMatch.branch
+      );
+    }
+
+    const totalFeedback = await Feedback.countDocuments(branchFilter);
 
     const feedbackAverage = await Feedback.aggregate([
+      { $match: feedbackBranchMatch },
       {
         $group: {
           _id: null,
@@ -363,11 +368,35 @@ export const getFeedbackAnalytics = async (req, res) => {
     ]);
 
     const feedbackByBranch = await Feedback.aggregate([
+      { $match: feedbackBranchMatch },
       {
         $group: {
           _id: "$branch",
           averageRating: { $avg: "$rating" },
           totalFeedback: { $sum: 1 },
+        },
+      },
+      {
+        $lookup: {
+          from: "branches",
+          localField: "_id",
+          foreignField: "_id",
+          as: "branch",
+        },
+      },
+      {
+        $unwind: {
+          path: "$branch",
+          preserveNullAndEmptyArrays: true,
+        },
+      },
+      {
+        $project: {
+          _id: 0,
+          branchId: "$_id",
+          branchName: { $ifNull: ["$branch.branchName", "Unknown Branch"] },
+          averageRating: 1,
+          totalFeedback: 1,
         },
       },
       {
@@ -397,6 +426,8 @@ export const getFeedbackAnalytics = async (req, res) => {
 ========================= */
 export const getIRNTEAnalytics = async (req, res) => {
   try {
+    const branchFilter = getBranchFilter(req.user);
+
     const [
       totalIR,
       openIR,
@@ -406,13 +437,13 @@ export const getIRNTEAnalytics = async (req, res) => {
       pendingNTE,
       answeredNTE,
     ] = await Promise.all([
-      IncidentReport.countDocuments(),
-      IncidentReport.countDocuments({ status: "open" }),
-      IncidentReport.countDocuments({ status: "resolved" }),
+      IncidentReport.countDocuments(branchFilter),
+      IncidentReport.countDocuments({ ...branchFilter, status: "open" }),
+      IncidentReport.countDocuments({ ...branchFilter, status: "resolved" }),
 
-      NoticeToExplain.countDocuments(),
-      NoticeToExplain.countDocuments({ status: "pending" }),
-      NoticeToExplain.countDocuments({ status: "answered" }),
+      NoticeToExplain.countDocuments(branchFilter),
+      NoticeToExplain.countDocuments({ ...branchFilter, status: "pending" }),
+      NoticeToExplain.countDocuments({ ...branchFilter, status: "answered" }),
     ]);
 
     res.status(200).json({
@@ -445,6 +476,8 @@ export const getIRNTEAnalytics = async (req, res) => {
 ========================= */
 export const getLeavePlantillaAnalytics = async (req, res) => {
   try {
+    const branchFilter = getBranchFilter(req.user);
+
     const [
       totalLeaves,
       pendingLeaves,
@@ -456,15 +489,15 @@ export const getLeavePlantillaAnalytics = async (req, res) => {
       understaffedPlantilla,
       overstaffedPlantilla,
     ] = await Promise.all([
-      Leave.countDocuments(),
-      Leave.countDocuments({ status: "pending" }),
-      Leave.countDocuments({ status: "approved" }),
+      Leave.countDocuments(branchFilter),
+      Leave.countDocuments({ ...branchFilter, status: "pending" }),
+      Leave.countDocuments({ ...branchFilter, status: "approved" }),
 
-      Plantilla.countDocuments(),
-      Plantilla.countDocuments({ status: "open" }),
-      Plantilla.countDocuments({ status: "filled" }),
-      Plantilla.countDocuments({ status: "understaffed" }),
-      Plantilla.countDocuments({ status: "overstaffed" }),
+      Plantilla.countDocuments(branchFilter),
+      Plantilla.countDocuments({ ...branchFilter, status: "open" }),
+      Plantilla.countDocuments({ ...branchFilter, status: "filled" }),
+      Plantilla.countDocuments({ ...branchFilter, status: "understaffed" }),
+      Plantilla.countDocuments({ ...branchFilter, status: "overstaffed" }),
     ]);
 
     res.status(200).json({

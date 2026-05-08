@@ -1,5 +1,6 @@
 import express from "express";
-import { authMiddleware } from "../middleware/auth.js";
+import { protect } from "../middleware/authMiddleware.js";
+import { allowRoles } from "../middleware/roleMiddleware.js";
 
 import {
   createEmployee,
@@ -36,7 +37,7 @@ getEmployeeFullDetails,
 
 const router = express.Router();
 
-router.use(authMiddleware);
+router.use(protect);
 
 // Employee
 router.post("/", createEmployee);
@@ -47,8 +48,8 @@ router.put("/:id", updateEmployee);
 router.delete("/:id", deleteEmployee);
 
 // Attendance
-router.post("/attendance/create", createAttendance);
-router.get("/attendance/list", getAttendance);
+router.post("/attendance/create", allowRoles("superadmin", "admin", "console_user"), createAttendance);
+router.get("/attendance/list", allowRoles("superadmin", "admin", "console_user"), getAttendance);
 
 // Plantilla
 

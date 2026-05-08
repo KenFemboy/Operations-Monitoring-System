@@ -1,6 +1,12 @@
 import { useState } from "react";
 
-function FeedbackDateFilter({ branches = [], onFilter, onClear }) {
+function FeedbackDateFilter({
+  branches = [],
+  onFilter,
+  onClear,
+  showBranchFilter = true,
+  assignedBranchName = "",
+}) {
   const [filter, setFilter] = useState({
     startDate: "",
     endDate: "",
@@ -55,21 +61,32 @@ function FeedbackDateFilter({ branches = [], onFilter, onClear }) {
           />
         </div>
 
-        <div>
-          <label style={styles.label}>Branch</label>
-          <select
-            value={filter.branch}
-            onChange={(e) => setFilter({ ...filter, branch: e.target.value })}
-            style={styles.input}
-          >
-            <option value="all">All Branches</option>
-            {branches.map((branch) => (
-              <option key={branch._id} value={branch._id}>
-                {branch.branchName} - {branch.location}
-              </option>
-            ))}
-          </select>
-        </div>
+        {showBranchFilter ? (
+          <div>
+            <label style={styles.label}>Branch</label>
+            <select
+              value={filter.branch}
+              onChange={(e) => setFilter({ ...filter, branch: e.target.value })}
+              style={styles.input}
+            >
+              <option value="all">All Branches</option>
+              {branches.map((branch) => (
+                <option key={branch._id} value={branch._id}>
+                  {branch.branchName} - {branch.location}
+                </option>
+              ))}
+            </select>
+          </div>
+        ) : (
+          <div>
+            <label style={styles.label}>Branch</label>
+            <input
+              value={assignedBranchName || "Assigned branch"}
+              readOnly
+              style={{ ...styles.input, ...styles.readOnlyInput }}
+            />
+          </div>
+        )}
 
         <div>
           <label style={styles.label}>Lunch / Dinner</label>
@@ -124,6 +141,10 @@ const styles = {
     padding: "10px",
     border: "1px solid #ccc",
     borderRadius: "6px",
+  },
+  readOnlyInput: {
+    backgroundColor: "#f9fafb",
+    color: "#374151",
   },
   primaryButton: {
     padding: "10px",

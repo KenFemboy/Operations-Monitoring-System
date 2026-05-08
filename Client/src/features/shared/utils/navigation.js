@@ -1,6 +1,5 @@
 export const navigationItems = [
   { label: 'Dashboard', path: '/app/dashboard', icon: 'DB' },
-  { label: 'Reports', path: '/app/reports', icon: 'RP' },
   {
     label: 'Branch Management',
     path: '/app/branches',

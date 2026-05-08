@@ -1,5 +1,7 @@
 import Feedback from "../models/Feedback.js";
 import Branch from "../models/Branch.js";
+import { isSuperAdmin, getUserBranchId } from "../middleware/accessControl.js";
+import { getBranchFilter } from "../utils/branchFilter.js";
 
 const resolveBranch = async ({ branch, branchId, branchName }) => {
   const selectedBranch = branchId || branch;
@@ -39,7 +41,7 @@ export const createFeedback = async (req, res) => {
   try {
     const { customerName, branch, branchId, branchName, mealSession, rating, review } = req.body;
 
-    if ((!branch && !branchId && !branchName) || !mealSession || !rating || !review) {
+    if ((!isSuperAdmin(req.user) && !getUserBranchId(req.user)) && (!branch && !branchId && !branchName)) {
       return res.status(400).json({
         success: false,
         message: "Branch, meal session, rating, and review are required",
@@ -67,7 +69,25 @@ export const createFeedback = async (req, res) => {
       });
     }
 
-    const resolvedBranch = await resolveBranch({ branch, branchId, branchName });
+    let resolvedBranch = null;
+
+    if (isSuperAdmin(req.user)) {
+      resolvedBranch = await resolveBranch({ branch, branchId, branchName });
+    } else {
+      const userBranchId = getUserBranchId(req.user);
+      if (!userBranchId) {
+        const error = new Error("User has no branch assigned");
+        error.statusCode = 400;
+        throw error;
+      }
+
+      resolvedBranch = await Branch.findById(userBranchId);
+      if (!resolvedBranch) {
+        const error = new Error("Valid branch is required");
+        error.statusCode = 400;
+        throw error;
+      }
+    }
 
     const feedback = await Feedback.create({
       customerName: customerName || "Anonymous",
@@ -106,7 +126,13 @@ export const getFeedbacks = async (req, res) => {
       };
     }
 
-    await applyBranchFilter(filter, branch);
+    // prefer user branch when not superadmin
+    const branchFilter = getBranchFilter(req.user);
+    if (Object.keys(branchFilter).length) {
+      filter.branch = branchFilter.branch;
+    } else if (branch && branch !== "all") {
+      await applyBranchFilter(filter, branch);
+    }
 
     if (mealSession && mealSession !== "all") {
       filter.mealSession = mealSession;
@@ -131,7 +157,7 @@ export const getFeedbacks = async (req, res) => {
 
 export const getAverageRatingByBranch = async (req, res) => {
   try {
-    const { startDate, endDate, mealSession } = req.query;
+    const { startDate, endDate, branch, mealSession } = req.query;
 
     const match = {};
 
@@ -146,8 +172,15 @@ export const getAverageRatingByBranch = async (req, res) => {
       match.mealSession = mealSession;
     }
 
+    const branchFilter = getBranchFilter(req.user);
+    const matchWithBranch = { ...match, ...branchFilter };
+
+    if (!Object.keys(branchFilter).length && branch && branch !== "all") {
+      await applyBranchFilter(matchWithBranch, branch);
+    }
+
     const summary = await Feedback.aggregate([
-      { $match: match },
+      { $match: matchWithBranch },
       {
         $group: {
           _id: "$branch",
@@ -200,7 +233,12 @@ export const getAverageRatingByMonth = async (req, res) => {
 
     const match = {};
 
-    await applyBranchFilter(match, branch);
+    const branchFilter = getBranchFilter(req.user);
+    if (Object.keys(branchFilter).length) {
+      Object.assign(match, branchFilter);
+    } else if (branch && branch !== "all") {
+      await applyBranchFilter(match, branch);
+    }
 
     if (mealSession && mealSession !== "all") {
       match.mealSession = mealSession;
@@ -246,8 +284,9 @@ export const getAverageRatingByMonth = async (req, res) => {
 export const deleteFeedback = async (req, res) => {
   try {
     const { id } = req.params;
+    const filter = { _id: id, ...getBranchFilter(req.user) };
 
-    const feedback = await Feedback.findByIdAndDelete(id);
+    const feedback = await Feedback.findOneAndDelete(filter);
 
     if (!feedback) {
       return res.status(404).json({

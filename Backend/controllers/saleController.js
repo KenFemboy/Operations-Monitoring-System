@@ -1,4 +1,6 @@
 import Sale from "../models/Sale.js";
+import { getBranchFilter } from "../utils/branchFilter.js";
+import { isSuperAdmin, getUserBranchId } from "../middleware/accessControl.js";
 
 const calculateBuffetPrice = ({ customerType, isSenior, isPWD }) => {
   let basePrice = 0;
@@ -65,6 +67,8 @@ export const createSale = async (req, res) => {
       isPWD: Boolean(isPWD),
     });
 
+    const branch = isSuperAdmin(req.user) ? req.body.branch || req.body.branchId : getUserBranchId(req.user);
+
     const sale = await Sale.create({
       saleDate,
       serviceType,
@@ -76,6 +80,7 @@ export const createSale = async (req, res) => {
       discount: price.discount,
       totalAmount: price.totalAmount,
       remarks,
+      branch,
     });
 
     res.status(201).json({
@@ -96,7 +101,7 @@ export const getSales = async (req, res) => {
   try {
     const { startDate, endDate, serviceType } = req.query;
 
-    const filter = {};
+    const filter = getBranchFilter(req.user);
 
     if (startDate && endDate) {
       filter.saleDate = {
@@ -138,12 +143,10 @@ export const getDailySales = async (req, res) => {
       });
     }
 
+    const match = { ...getBranchFilter(req.user), saleDate: date };
+
     const summary = await Sale.aggregate([
-      {
-        $match: {
-          saleDate: date,
-        },
-      },
+      { $match: match },
       {
         $group: {
           _id: "$serviceType",
@@ -203,15 +206,10 @@ export const getMonthlySales = async (req, res) => {
     const startDate = `${year}-${monthString}-01`;
     const endDate = `${year}-${monthString}-31`;
 
+    const match = { ...getBranchFilter(req.user), saleDate: { $gte: startDate, $lte: endDate } };
+
     const summary = await Sale.aggregate([
-      {
-        $match: {
-          saleDate: {
-            $gte: startDate,
-            $lte: endDate,
-          },
-        },
-      },
+      { $match: match },
       {
         $group: {
           _id: {

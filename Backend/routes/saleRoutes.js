@@ -1,5 +1,6 @@
 import express from "express";
-
+import { protect } from "../middleware/authMiddleware.js";
+import { allowRoles } from "../middleware/roleMiddleware.js";
 import {
   createSale,
   getSales,
@@ -10,14 +11,16 @@ import {
 
 const router = express.Router();
 
-router.post("/", createSale);
+router.use(protect);
 
-router.get("/", getSales);
+router.post("/", allowRoles("superadmin", "admin"), createSale);
 
-router.get("/daily", getDailySales);
+router.get("/", allowRoles("superadmin", "admin", "console_user"), getSales);
 
-router.get("/monthly", getMonthlySales);
+router.get("/daily", allowRoles("superadmin", "admin", "console_user"), getDailySales);
 
-router.delete("/:id", deleteSale);
+router.get("/monthly", allowRoles("superadmin", "admin", "console_user"), getMonthlySales);
+
+router.delete("/:id", allowRoles("superadmin", "admin"), deleteSale);
 
 export default router;

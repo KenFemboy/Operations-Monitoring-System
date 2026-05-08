@@ -12,6 +12,8 @@ import { getHomeRoute } from "./auth/utils/appRoutes";
 
 import Login from "./auth/pages/Login";
 import DashboardLayout from "./layouts/DashboardLayout";
+import RoleRoute from "./auth/components/RoleRoute";
+import Unauthorized from "./auth/pages/Unauthorized";
 
 import BranchPage from "./branches/pages/BranchPage";
 import DashboardPage from "./dashboard/pages/DashboardPage";
@@ -30,13 +32,13 @@ import SalesPage from "./sales/pages/SalesPage";
 
 
 
-import ReportsPage from "./features/reports/pages/ReportsPage";
 import SettingsPage from "./features/settings/pages/SettingsPage";
 import ArchivePage from "./features/settings/pages/ArchivePage";
 
 
 import CustomerFeedbackPage from "./feedback/pages/CustomerFeedbackPage";
 import AdminFeedbackPage from "./feedback/pages/AdminFeedbackPage";
+import SuperAdminFeedbackPage from "./feedback/pages/SuperAdminFeedbackPage";
 
 import AdminUsersPage from "./adminUsers/pages/AdminUsersPage";
 //  Protect private routes
@@ -76,6 +78,13 @@ function LegacyAdminRedirect() {
   return <Navigate to={`/app/${legacyPage}`} replace />;
 }
 
+function FeedbackRoutePage() {
+  const { user } = useContext(AuthContext);
+  const role = (user?.role || "").toString().toLowerCase().replace(/[_\s]/g, "");
+
+  return role === "superadmin" ? <SuperAdminFeedbackPage /> : <AdminFeedbackPage />;
+}
+
 export default function App() {
   return (
     <AuthProvider>
@@ -100,6 +109,72 @@ export default function App() {
             }
           />
 
+          <Route path="/unauthorized" element={<Unauthorized />} />
+
+          {/* Role specific dashboards */}
+          {/* Super admin area */}
+          <Route
+            path="/super_admin"
+            element={
+              <ProtectedRoute>
+                <RoleRoute allowedRoles={["superadmin", "super_admin"]}>
+                  <BranchProvider>
+                    <DashboardLayout />
+                  </BranchProvider>
+                </RoleRoute>
+              </ProtectedRoute>
+            }
+          >
+            <Route index element={<Navigate to="dashboard" replace />} />
+            <Route path="dashboard" element={<DashboardPage />} />
+            <Route path="branches" element={<BranchPage />} />
+            <Route path="employees" element={<EmployeesPage />} />
+            <Route path="attendance" element={<EmployeesPage initialTab="attendance" />} />
+            <Route path="leave" element={<EmployeesPage initialTab="leave" />} />
+            <Route path="payroll" element={<EmployeesPage initialTab="payroll" />} />
+            <Route path="contributions" element={<EmployeesPage initialTab="contribution" />} />
+            <Route path="incident-reports" element={<EmployeesPage initialTab="ir" />} />
+            <Route path="nte" element={<EmployeesPage initialTab="nte" />} />
+            <Route path="plantilla" element={<PlantillaPage />} />
+            <Route path="inventory" element={<InventoryPage />} />
+            <Route path="sales" element={<SalesPage />} />
+            <Route path="feedback" element={<SuperAdminFeedbackPage />} />
+            <Route path="settings" element={<SettingsPage />} />
+            <Route path="settings/archive" element={<ArchivePage />} />
+            <Route path="admin-users" element={<AdminUsersPage />} />
+          </Route>
+
+          {/* Admin / console_user area */}
+          <Route
+            path="/admin"
+            element={
+              <ProtectedRoute>
+                <RoleRoute allowedRoles={["admin", "console_user", "hr"]}>
+                  <BranchProvider>
+                    <DashboardLayout />
+                  </BranchProvider>
+                </RoleRoute>
+              </ProtectedRoute>
+            }
+          >
+            <Route index element={<Navigate to="dashboard" replace />} />
+            <Route path="dashboard" element={<DashboardPage />} />
+            <Route path="branches" element={<BranchPage />} />
+            <Route path="employees" element={<EmployeesPage />} />
+            <Route path="attendance" element={<EmployeesPage initialTab="attendance" />} />
+            <Route path="leave" element={<EmployeesPage initialTab="leave" />} />
+            <Route path="payroll" element={<EmployeesPage initialTab="payroll" />} />
+            <Route path="contributions" element={<EmployeesPage initialTab="contribution" />} />
+            <Route path="incident-reports" element={<EmployeesPage initialTab="ir" />} />
+            <Route path="nte" element={<EmployeesPage initialTab="nte" />} />
+            <Route path="plantilla" element={<PlantillaPage />} />
+            <Route path="inventory" element={<InventoryPage />} />
+            <Route path="sales" element={<SalesPage />} />
+            <Route path="feedback" element={<AdminFeedbackPage />} />
+            <Route path="settings" element={<SettingsPage />} />
+            <Route path="settings/archive" element={<ArchivePage />} />
+          </Route>
+
           {/* Unified app */}
           <Route
             path="/app"
@@ -113,7 +188,6 @@ export default function App() {
           >
             <Route index element={<Navigate to="dashboard" replace />} />
             <Route path="dashboard" element={<DashboardPage />} />
-            <Route path="reports" element={<ReportsPage />} />
 
 
             <Route path="branches" element={<BranchPage />} />
@@ -135,7 +209,7 @@ export default function App() {
 
             <Route path="sales" element={<SalesPage />} />
 
-          <Route path="feedback" element={<AdminFeedbackPage /> } /> 
+          <Route path="feedback" element={<FeedbackRoutePage /> } /> 
 
 
 

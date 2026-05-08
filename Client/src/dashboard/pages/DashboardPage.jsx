@@ -92,7 +92,11 @@ function Dashboard() {
   };
 
   useEffect(() => {
-    loadDashboardOneByOne();
+    const timer = window.setTimeout(() => {
+      loadDashboardOneByOne();
+    }, 0);
+
+    return () => window.clearTimeout(timer);
   }, []);
 
   const employeeMax = employees?.total || 1;
@@ -406,8 +410,10 @@ function Dashboard() {
                   </tr>
                 ) : (
                   feedback.byBranch.map((branch) => (
-                    <tr key={branch._id}>
-                      <td className="dashboard-td">{branch._id || "No Branch"}</td>
+                    <tr key={branch.branchId || branch._id || branch.branchName}>
+                      <td className="dashboard-td">
+                        {branch.branchName || branch.branch || "No Branch"}
+                      </td>
                       <td className="dashboard-td">
                         {formatRating(branch.averageRating)} ★
                       </td>
