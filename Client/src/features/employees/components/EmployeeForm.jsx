@@ -1,0 +1,282 @@
+import { useContext, useEffect, useState } from "react";
+import { AuthContext } from "../../../auth/context/AuthContext";
+
+function EmployeeForm({ branches = [], onSubmit, selectedEmployee, onCancelEdit }) {
+  const { user } = useContext(AuthContext);
+  const isSuperAdmin = ["super_admin", "superadmin"].includes(
+    (user?.role || "").toLowerCase()
+  );
+  const emptyForm = {
+    firstName: "",
+    lastName: "",
+    email: "",
+    phone: "",
+    position: "",
+    branchId: "",
+    assignedBranch: "",
+    salaryRate: "",
+    sssId: "",
+    gsisId: "",
+    pagibigId: "",
+    philhealthId: "",
+  };
+
+  const [form, setForm] = useState(emptyForm);
+
+  const isEditing = Boolean(selectedEmployee);
+  const getUserBranchId = () => {
+    if (!user?.branchId) return "";
+    if (typeof user.branchId === "object") return user.branchId._id || "";
+    return user.branchId;
+  };
+
+  useEffect(() => {
+    if (selectedEmployee) {
+      const selectedBranchName =
+        selectedEmployee.branch?.branchName ||
+        selectedEmployee.assignedBranch ||
+        "";
+      const selectedBranchId =
+        selectedEmployee.branch?._id ||
+        selectedEmployee.branch ||
+        branches.find((branch) => branch.branchName === selectedBranchName)?._id ||
+        "";
+
+      setForm({
+        firstName: selectedEmployee.firstName || "",
+        lastName: selectedEmployee.lastName || "",
+        email: selectedEmployee.email || "",
+        phone: selectedEmployee.phone || "",
+        position: selectedEmployee.position || "",
+        branchId: isSuperAdmin ? selectedBranchId : getUserBranchId(),
+        assignedBranch: isSuperAdmin
+          ? selectedBranchName
+          : user?.branchName || user?.branch || "",
+        salaryRate: selectedEmployee.salaryRate ?? "",
+        sssId: selectedEmployee.sssId || "",
+        gsisId: selectedEmployee.gsisId || "",
+        pagibigId: selectedEmployee.pagibigId || "",
+        philhealthId: selectedEmployee.philhealthId || "",
+      });
+    } else {
+      setForm({
+        ...emptyForm,
+        branchId: isSuperAdmin ? "" : getUserBranchId(),
+        assignedBranch: isSuperAdmin ? "" : user?.branchName || user?.branch || "",
+      });
+    }
+  }, [branches, selectedEmployee, isSuperAdmin, user]);
+
+  const handleChange = (e) => {
+    setForm({
+      ...form,
+      [e.target.name]: e.target.value,
+    });
+  };
+
+  const handleBranchChange = (e) => {
+    const branchId = e.target.value;
+    const selectedBranch = branches.find((branch) => branch._id === branchId);
+
+    setForm({
+      ...form,
+      branchId,
+      assignedBranch: selectedBranch?.branchName || "",
+    });
+  };
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+
+    onSubmit({
+      ...form,
+      salaryRate: Number(form.salaryRate || 0),
+    });
+
+    if (!isEditing) {
+      setForm({
+        ...emptyForm,
+        branchId: isSuperAdmin ? "" : getUserBranchId(),
+        assignedBranch: isSuperAdmin ? "" : user?.branchName || user?.branch || "",
+      });
+    }
+  };
+
+  return (
+    <form onSubmit={handleSubmit} style={styles.formCard}>
+      <h2>{isEditing ? "Edit Employee" : "Add Employee"}</h2>
+
+      <div style={styles.grid}>
+        <input
+          name="firstName"
+          placeholder="First Name"
+          value={form.firstName}
+          onChange={handleChange}
+          required
+          style={styles.input}
+        />
+
+        <input
+          name="lastName"
+          placeholder="Last Name"
+          value={form.lastName}
+          onChange={handleChange}
+          required
+          style={styles.input}
+        />
+
+        <input
+          name="email"
+          placeholder="Email"
+          value={form.email}
+          onChange={handleChange}
+          style={styles.input}
+        />
+
+        <input
+          name="phone"
+          placeholder="Phone"
+          value={form.phone}
+          onChange={handleChange}
+          style={styles.input}
+        />
+
+        <input
+          name="position"
+          placeholder="Position"
+          value={form.position}
+          onChange={handleChange}
+          required
+          style={styles.input}
+        />
+
+        {isSuperAdmin ? (
+          <select
+            name="branchId"
+            value={form.branchId}
+            onChange={handleBranchChange}
+            required
+            style={styles.input}
+          >
+            <option value="">Select Branch</option>
+            {branches.map((branch) => (
+              <option key={branch._id} value={branch._id}>
+                {branch.branchName} - {branch.location}
+              </option>
+            ))}
+          </select>
+        ) : (
+          <input
+            name="assignedBranch"
+            placeholder="Assigned Branch"
+            value={form.assignedBranch}
+            onChange={handleChange}
+            required
+            disabled
+            style={styles.input}
+          />
+        )}
+
+        <input
+          type="number"
+          name="salaryRate"
+          placeholder="Base Salary / Hourly Rate"
+          value={form.salaryRate}
+          onChange={handleChange}
+          style={styles.input}
+        />
+
+        <input
+          name="sssId"
+          placeholder="SSS ID"
+          value={form.sssId}
+          onChange={handleChange}
+          style={styles.input}
+        />
+
+        <input
+          name="gsisId"
+          placeholder="GSIS ID"
+          value={form.gsisId}
+          onChange={handleChange}
+          style={styles.input}
+        />
+
+        <input
+          name="pagibigId"
+          placeholder="Pag-IBIG ID"
+          value={form.pagibigId}
+          onChange={handleChange}
+          style={styles.input}
+        />
+
+        <input
+          name="philhealthId"
+          placeholder="PhilHealth ID"
+          value={form.philhealthId}
+          onChange={handleChange}
+          style={styles.input}
+        />
+      </div>
+
+      <div style={styles.actions}>
+        <button type="submit" style={styles.primaryButton}>
+          {isEditing ? "Update Employee" : "Save Employee"}
+        </button>
+
+        {isEditing && (
+          <button
+            type="button"
+            onClick={onCancelEdit}
+            style={styles.cancelButton}
+          >
+            Cancel
+          </button>
+        )}
+      </div>
+    </form>
+  );
+}
+
+const styles = {
+  formCard: {
+    marginBottom: "24px",
+    padding: "20px",
+    border: "1px solid #ddd",
+    borderRadius: "10px",
+    backgroundColor: "#fff",
+  },
+  grid: {
+    display: "grid",
+    gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))",
+    gap: "12px",
+  },
+  input: {
+    padding: "10px",
+    border: "1px solid #ccc",
+    borderRadius: "6px",
+  },
+  actions: {
+    marginTop: "14px",
+    display: "flex",
+    gap: "10px",
+  },
+  primaryButton: {
+    padding: "10px 14px",
+    backgroundColor: "#2563eb",
+    color: "#fff",
+    border: "none",
+    borderRadius: "6px",
+    cursor: "pointer",
+  },
+  cancelButton: {
+    padding: "10px 14px",
+    backgroundColor: "#6b7280",
+    color: "#fff",
+    border: "none",
+    borderRadius: "6px",
+    cursor: "pointer",
+  },
+};
+
+export default EmployeeForm;

@@ -2,7 +2,7 @@ import { useContext, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { AuthContext } from "../context/AuthContext";
 import { getHomeRoute } from "../utils/appRoutes";
-import "./Login.css";
+import "../../styles/login.css";
 
 const emptyLoginForm = {
   identifier: "",

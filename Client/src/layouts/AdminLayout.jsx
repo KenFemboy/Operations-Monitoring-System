@@ -1,6 +1,6 @@
 import DashboardLayout from "./DashboardLayout";
+import { adminNavigation } from "../shared/utils/adminNavigation";
 
 export default function AdminLayout(props) {
-  // For now reuse DashboardLayout; customize later if needed.
-  return <DashboardLayout {...props} />;
+  return <DashboardLayout {...props} navGroups={adminNavigation} />;
 }

@@ -1,5 +1,5 @@
 import { createContext, useEffect, useState } from "react";
-import api from "../../api/axios";
+import { getMe, loginUser } from "../../api/authApi";
 
 export const AuthContext = createContext();
 
@@ -44,7 +44,7 @@ export function AuthProvider({ children }) {
     }
 
     try {
-      const res = await api.get("/auth/me");
+      const res = await getMe();
       const loggedInUser = normalizeUser(res.data?.user);
 
       if (!loggedInUser) {
@@ -70,7 +70,7 @@ export function AuthProvider({ children }) {
 
   // LOGIN
   const login = async (identifier, password) => {
-    const res = await api.post("/auth/login", {
+    const res = await loginUser({
       email: identifier,
       username: identifier,
       password,

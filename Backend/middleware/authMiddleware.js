@@ -15,9 +15,9 @@ export const protect = async (req, res, next) => {
 
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
 
-    const user = await User.findById(decoded.id || decoded._id).select(
-      "-password"
-    );
+    const user = await User.findById(decoded.id || decoded._id)
+      .select("-password")
+      .populate("branchId", "branchName location address status");
 
     if (!user) {
       return res.status(401).json({
@@ -28,7 +28,7 @@ export const protect = async (req, res, next) => {
     req.user = {
       id: user._id,
       role: user.role,
-      branch: user.branch || user.branchId || null,
+      branch: user.branchId?.branchName || user.branch || null,
       branchId: user.branchId?._id || user.branchId || null,
     };
 

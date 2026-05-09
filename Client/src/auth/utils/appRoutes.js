@@ -1,4 +1,4 @@
-const APP_HOME_ROUTE = "/app/dashboard";
+const APP_HOME_ROUTE = "/admin/dashboard";
 
 const getHomeRoute = () => {
 	try {
@@ -8,7 +8,7 @@ const getHomeRoute = () => {
 		const role = (user.role || "").toString().toLowerCase().replace(/[_\s]/g, "");
 
 		if (role === "superadmin") {
-			return "/super_admin/dashboard";
+			return "/superadmin/dashboard";
 		}
 
 		if (["admin", "consoleuser", "hr"].includes(role)) {

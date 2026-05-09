@@ -1,8 +1,8 @@
 import { useContext, useMemo, useState } from "react";
 import { Outlet, useLocation } from "react-router-dom";
 import { AuthContext } from "../auth/context/AuthContext";
-import Sidebar from "../components/appShell/Sidebar";
-import TopNavbar from "../components/appShell/TopNavbar";
+import Sidebar from "../shared/components/Sidebar";
+import TopNavbar from "../shared/components/TopNavbar";
 import "../styles/app-shell.css";
 
 const routeTitles = {
@@ -30,7 +30,7 @@ const getPageTitle = (pathname) => {
   return routeTitles[maybeLeaf] || "Dashboard";
 };
 
-export default function DashboardLayout() {
+export default function DashboardLayout({ navGroups }) {
   const { user, logout } = useContext(AuthContext);
   const location = useLocation();
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -46,6 +46,7 @@ export default function DashboardLayout() {
         isOpen={sidebarOpen}
         onClose={() => setSidebarOpen(false)}
         currentPath={location.pathname}
+        navGroups={navGroups}
       />
 
       <div className="sd-main">
