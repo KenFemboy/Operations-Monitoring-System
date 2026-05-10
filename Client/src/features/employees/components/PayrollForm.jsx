@@ -60,7 +60,7 @@ function PayrollForm({ employees, onSubmit }) {
 
             {selectedEmployee && (
               <p className="employee-field employee-field-full">
-                Hourly Rate: ₱{Number(selectedEmployee.salaryRate || 0).toFixed(2)}
+                Daily Rate: PHP {Number(selectedEmployee.basicRate ?? selectedEmployee.salaryRate ?? 0).toFixed(2)}
               </p>
             )}
           </div>
@@ -103,7 +103,7 @@ function PayrollForm({ employees, onSubmit }) {
                 name="overtimePay"
                 value={form.overtimePay}
                 onChange={handleChange}
-                 min="0"
+                min="0"
               />
             </label>
 
@@ -114,7 +114,7 @@ function PayrollForm({ employees, onSubmit }) {
                 name="deductions"
                 value={form.deductions}
                 onChange={handleChange}
-                 min="0"
+                min="0"
               />
             </label>
           </div>

@@ -1,6 +1,31 @@
 import Sale from "../../models/Sale.js";
 import { getBranchFilter } from "../../utils/branchFilter.js";
 import { isSuperAdmin, getUserBranchId } from "../../middleware/accessControl.js";
+import mongoose from "mongoose";
+
+const getSalesBranchFilter = (req) => {
+  if (isSuperAdmin(req.user) && req.query?.branchId) {
+    return { branch: req.query.branchId };
+  }
+
+  return getBranchFilter(req);
+};
+
+const getSalesAggregateBranchFilter = (req) => {
+  const branchFilter = getSalesBranchFilter(req);
+
+  if (
+    branchFilter.branch &&
+    mongoose.Types.ObjectId.isValid(branchFilter.branch)
+  ) {
+    return {
+      ...branchFilter,
+      branch: new mongoose.Types.ObjectId(branchFilter.branch),
+    };
+  }
+
+  return branchFilter;
+};
 
 const calculateBuffetPrice = ({ customerType, isSenior, isPWD }) => {
   let basePrice = 0;
@@ -67,7 +92,16 @@ export const createSale = async (req, res) => {
       isPWD: Boolean(isPWD),
     });
 
-    const branch = isSuperAdmin(req.user) ? req.body.branch || req.body.branchId : getUserBranchId(req.user);
+    const branch = isSuperAdmin(req.user)
+      ? req.body.branch || req.body.branchId
+      : getUserBranchId(req.user);
+
+    if (!branch) {
+      return res.status(400).json({
+        success: false,
+        message: "Branch is required",
+      });
+    }
 
     const sale = await Sale.create({
       saleDate,
@@ -101,7 +135,7 @@ export const getSales = async (req, res) => {
   try {
     const { startDate, endDate, serviceType } = req.query;
 
-    const filter = getBranchFilter(req);
+    const filter = getSalesBranchFilter(req);
 
     if (startDate && endDate) {
       filter.saleDate = {
@@ -143,7 +177,7 @@ export const getDailySales = async (req, res) => {
       });
     }
 
-    const match = { ...getBranchFilter(req), saleDate: date };
+    const match = { ...getSalesAggregateBranchFilter(req), saleDate: date };
 
     const summary = await Sale.aggregate([
       { $match: match },
@@ -206,7 +240,10 @@ export const getMonthlySales = async (req, res) => {
     const startDate = `${year}-${monthString}-01`;
     const endDate = `${year}-${monthString}-31`;
 
-    const match = { ...getBranchFilter(req), saleDate: { $gte: startDate, $lte: endDate } };
+    const match = {
+      ...getSalesAggregateBranchFilter(req),
+      saleDate: { $gte: startDate, $lte: endDate },
+    };
 
     const summary = await Sale.aggregate([
       { $match: match },
@@ -261,7 +298,10 @@ export const deleteSale = async (req, res) => {
       });
     }
 
-    if (!isSuperAdmin(req.user) && String(sale.branch) !== String(getUserBranchId(req.user))) {
+    if (
+      !isSuperAdmin(req.user) &&
+      String(sale.branch) !== String(getUserBranchId(req.user))
+    ) {
       return res.status(403).json({
         success: false,
         message: "Forbidden: branch mismatch",

@@ -1,3 +1,18 @@
+const formatMonth = (value) => {
+  if (!value) return "-";
+  const [year, month] = value.split("-");
+  const date = new Date(Number(year), Number(month) - 1);
+
+  if (Number.isNaN(date.getTime())) {
+    return value;
+  }
+
+  return date.toLocaleDateString(undefined, {
+    month: "long",
+    year: "numeric",
+  });
+};
+
 function ContributionTable({ contributions }) {
   return (
     <div style={{ marginTop: "24px", overflowX: "auto" }}>
@@ -9,14 +24,14 @@ function ContributionTable({ contributions }) {
             <th>Employee ID</th>
             <th>Name</th>
             <th>Branch</th>
-            <th>SSS ID</th>
-            <th>GSIS ID</th>
-            <th>Pag-IBIG ID</th>
-            <th>PhilHealth ID</th>
-            <th>Month</th>
             <th>SSS</th>
-            <th>Pag-IBIG</th>
             <th>PhilHealth</th>
+            <th>Pag-IBIG</th>
+            <th>TIN ID</th>
+            <th>Month</th>
+            <th>SSS Contribution</th>
+            <th>Pag-IBIG Contribution</th>
+            <th>PhilHealth Contribution</th>
             <th>Total</th>
           </tr>
         </thead>
@@ -39,16 +54,16 @@ function ContributionTable({ contributions }) {
 
                 <td>{item.employee?.assignedBranch || "-"}</td>
 
-                <td>{item.employee?.sssId || "-"}</td>
-                <td>{item.employee?.gsisId || "-"}</td>
-                <td>{item.employee?.pagibigId || "-"}</td>
-                <td>{item.employee?.philhealthId || "-"}</td>
+                <td>{item.employee?.sss || item.employee?.sssId || "-"}</td>
+                <td>{item.employee?.philhealth || item.employee?.philhealthId || "-"}</td>
+                <td>{item.employee?.pagibig || item.employee?.pagibigId || "-"}</td>
+                <td>{item.employee?.tin || "-"}</td>
 
-                <td>{item.month}</td>
-                <td>₱{Number(item.sss || 0).toFixed(2)}</td>
-                <td>₱{Number(item.pagibig || 0).toFixed(2)}</td>
-                <td>₱{Number(item.philhealth || 0).toFixed(2)}</td>
-                <td>₱{Number(item.totalContribution || 0).toFixed(2)}</td>
+                <td>{formatMonth(item.month)}</td>
+                <td>PHP {Number(item.sss || 0).toFixed(2)}</td>
+                <td>PHP {Number(item.pagibig || 0).toFixed(2)}</td>
+                <td>PHP {Number(item.philhealth || 0).toFixed(2)}</td>
+                <td>PHP {Number(item.totalContribution || 0).toFixed(2)}</td>
               </tr>
             ))
           )}

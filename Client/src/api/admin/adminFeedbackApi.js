@@ -1,24 +1,24 @@
 import api from "../axiosInstance";
 
-const ADMIN_PREFIX = "/admin";
+const FEEDBACK_PREFIX = "/feedback";
 
 export const getAdminFeedback = (params = {}) =>
-  api.get(`${ADMIN_PREFIX}/feedback`, { params });
+  api.get(FEEDBACK_PREFIX, { params });
 
 export const getAdminFeedbackAnalytics = (params = {}) =>
-  api.get(`${ADMIN_PREFIX}/feedback/analytics`, { params });
+  api.get(`${FEEDBACK_PREFIX}/analytics`, { params });
 
 export const getAdminAverageRatingByBranch = (params = {}) =>
-  api.get(`${ADMIN_PREFIX}/feedback/summary/by-branch`, { params });
+  api.get(`${FEEDBACK_PREFIX}/summary/by-branch`, { params });
 
 export const getAdminAverageRatingByMonth = (params = {}) =>
-  api.get(`${ADMIN_PREFIX}/feedback/summary/by-month`, { params });
+  api.get(`${FEEDBACK_PREFIX}/summary/by-month`, { params });
 
 export const createAdminFeedback = (data) =>
-  api.post(`${ADMIN_PREFIX}/feedback`, data);
+  api.post(FEEDBACK_PREFIX, data);
 
 export const deleteAdminFeedback = (id) =>
-  api.delete(`${ADMIN_PREFIX}/feedback/${id}`);
+  api.delete(`${FEEDBACK_PREFIX}/${id}`);
 
 export const createFeedback = createAdminFeedback;
 export const getFeedbacks = getAdminFeedback;

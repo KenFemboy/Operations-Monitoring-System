@@ -31,63 +31,57 @@ function Dashboard() {
   const [error, setError] = useState("");
 
   const formatPeso = (value) => {
-    return `₱${Number(value || 0).toLocaleString()}`;
+    return `PHP ${Number(value || 0).toLocaleString()}`;
   };
 
   const formatRating = (value) => {
     return Number(value || 0).toFixed(1);
   };
 
+  const dashboardSections = [
+    { label: "overall", request: getOverallSummary, setData: setOverall },
+    { label: "sales", request: getSalesAnalytics, setData: setSales },
+    { label: "employees", request: getEmployeeAnalytics, setData: setEmployees },
+    {
+      label: "attendance and payroll",
+      request: getAttendancePayrollAnalytics,
+      setData: setAttendancePayroll,
+    },
+    { label: "inventory", request: getInventoryAnalytics, setData: setInventory },
+    { label: "feedback", request: getFeedbackAnalytics, setData: setFeedback },
+    { label: "IR and NTE", request: getIRNTEAnalytics, setData: setIrNte },
+    { label: "leave", request: getLeavePlantillaAnalytics, setData: setLeavePlantilla },
+  ];
+
   const loadDashboardOneByOne = async () => {
-    try {
-      setError("");
+    setError("");
 
-      setOverall(null);
-      setSales(null);
-      setEmployees(null);
-      setAttendancePayroll(null);
-      setInventory(null);
-      setFeedback(null);
-      setIrNte(null);
-      setLeavePlantilla(null);
+    setOverall(null);
+    setSales(null);
+    setEmployees(null);
+    setAttendancePayroll(null);
+    setInventory(null);
+    setFeedback(null);
+    setIrNte(null);
+    setLeavePlantilla(null);
 
-      setCurrentLoading("overall");
-      const overallRes = await getOverallSummary();
-      setOverall(overallRes.data.data);
+    const failedSections = [];
 
-      setCurrentLoading("sales");
-      const salesRes = await getSalesAnalytics();
-      setSales(salesRes.data.data);
+    for (const section of dashboardSections) {
+      try {
+        setCurrentLoading(section.label);
+        const response = await section.request();
+        section.setData(response.data.data);
+      } catch (err) {
+        console.error(`Failed to load ${section.label} dashboard section`, err);
+        failedSections.push(section.label);
+      }
+    }
 
-      setCurrentLoading("employees");
-      const employeesRes = await getEmployeeAnalytics();
-      setEmployees(employeesRes.data.data);
+    setCurrentLoading("");
 
-      setCurrentLoading("attendancePayroll");
-      const attendancePayrollRes = await getAttendancePayrollAnalytics();
-      setAttendancePayroll(attendancePayrollRes.data.data);
-
-      setCurrentLoading("inventory");
-      const inventoryRes = await getInventoryAnalytics();
-      setInventory(inventoryRes.data.data);
-
-      setCurrentLoading("feedback");
-      const feedbackRes = await getFeedbackAnalytics();
-      setFeedback(feedbackRes.data.data);
-
-      setCurrentLoading("irNte");
-      const irNteRes = await getIRNTEAnalytics();
-      setIrNte(irNteRes.data.data);
-
-      setCurrentLoading("leavePlantilla");
-      const leavePlantillaRes = await getLeavePlantillaAnalytics();
-      setLeavePlantilla(leavePlantillaRes.data.data);
-
-      setCurrentLoading("");
-    } catch (err) {
-      console.error(err);
-      setError("Failed to load dashboard analytics");
-      setCurrentLoading("");
+    if (failedSections.length > 0) {
+      setError(`Some dashboard sections failed to load: ${failedSections.join(", ")}`);
     }
   };
 
@@ -157,7 +151,7 @@ function Dashboard() {
 
             <StatCard
               title="Average Rating"
-              value={`${formatRating(overall.averageRating)} ★`}
+              value={`${formatRating(overall.averageRating)} stars`}
               subtitle={`${overall.totalFeedback} total reviews`}
               tone="yellow"
             />
@@ -199,14 +193,14 @@ function Dashboard() {
               </thead>
 
               <tbody>
-                {sales.dailySales.length === 0 ? (
+                {(sales.dailySales || []).length === 0 ? (
                   <tr>
                     <td className="dashboard-td" colSpan="3">
                       No sales today.
                     </td>
                   </tr>
                 ) : (
-                  sales.dailySales.map((item) => (
+                  (sales.dailySales || []).map((item) => (
                     <tr key={item._id}>
                       <td className="dashboard-td">{item._id || "N/A"}</td>
                       <td className="dashboard-td">{item.totalCustomers}</td>
@@ -383,7 +377,7 @@ function Dashboard() {
 
             <StatCard
               title="Average Rating"
-              value={`${formatRating(feedback.averageRating)} ★`}
+              value={`${formatRating(feedback.averageRating)} stars`}
               subtitle="Overall customer rating"
               tone="yellow"
             />
@@ -402,20 +396,20 @@ function Dashboard() {
               </thead>
 
               <tbody>
-                {feedback.byBranch.length === 0 ? (
+                {(feedback.byBranch || []).length === 0 ? (
                   <tr>
                     <td className="dashboard-td" colSpan="3">
                       No branch reviews found.
                     </td>
                   </tr>
                 ) : (
-                  feedback.byBranch.map((branch) => (
+                  (feedback.byBranch || []).map((branch) => (
                     <tr key={branch.branchId || branch._id || branch.branchName}>
                       <td className="dashboard-td">
                         {branch.branchName || branch.branch || "No Branch"}
                       </td>
                       <td className="dashboard-td">
-                        {formatRating(branch.averageRating)} ★
+                        {formatRating(branch.averageRating)} stars
                       </td>
                       <td className="dashboard-td">{branch.totalFeedback}</td>
                     </tr>
@@ -462,8 +456,8 @@ function Dashboard() {
               />
 
               <SimpleBar
-                label="Answered"
-                value={irNte.nte.answered}
+                label="Submitted"
+                value={irNte.nte.submitted}
                 max={nteMax}
                 color="#16a34a"
               />
@@ -488,9 +482,9 @@ function Dashboard() {
         <SectionLoader title="IR and NTE Monitoring Report" />
       )}
 
-      {/* Leave and Plantilla */}
+      {/* Leave */}
       {leavePlantilla ? (
-        <DashboardSection title="Leave and Plantilla Report">
+        <DashboardSection title="Leave Report">
           <div className="dashboard-grid">
             <StatCard
               title="Leave Records"
@@ -498,31 +492,10 @@ function Dashboard() {
               subtitle={`${leavePlantilla.leaves.approved} approved, ${leavePlantilla.leaves.pending} pending`}
               tone="blue"
             />
-
-            <StatCard
-              title="Plantilla Records"
-              value={leavePlantilla.plantilla.total}
-              subtitle={`${leavePlantilla.plantilla.open} open, ${leavePlantilla.plantilla.filled} filled`}
-              tone="purple"
-            />
-
-            <StatCard
-              title="Understaffed"
-              value={leavePlantilla.plantilla.understaffed}
-              subtitle="Positions needing more employees"
-              tone="yellow"
-            />
-
-            <StatCard
-              title="Overstaffed"
-              value={leavePlantilla.plantilla.overstaffed}
-              subtitle="Positions with extra employees"
-              tone="red"
-            />
           </div>
         </DashboardSection>
       ) : (
-        <SectionLoader title="Leave and Plantilla Report" />
+        <SectionLoader title="Leave Report" />
       )}
       </div>
     </div>

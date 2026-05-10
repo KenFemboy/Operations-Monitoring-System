@@ -11,8 +11,23 @@ import AverageRatingByBranchTable from "../../../features/feedback/components/Av
 import AverageRatingByMonthTable from "../../../features/feedback/components/AverageRatingByMonthTable";
 import { getBranches } from "../../../api/superadmin/superAdminBranchApi";
 
+const slugify = (value = "") =>
+  value
+    .toString()
+    .trim()
+    .toLowerCase()
+    .replace(/&/g, "and")
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "");
+
+const getFeedbackSlug = (branch) =>
+  slugify(branch.branchName?.replace(/\s+branch$/i, "") || branch.location);
+
+const getFeedbackPath = (branch) => `/feedback/${getFeedbackSlug(branch)}`;
+
 function SuperAdminFeedbackPage() {
   const [branches, setBranches] = useState([]);
+  const [selectedBranch, setSelectedBranch] = useState(null);
   const [feedbacks, setFeedbacks] = useState([]);
   const [branchSummary, setBranchSummary] = useState([]);
   const [monthSummary, setMonthSummary] = useState([]);
@@ -27,12 +42,27 @@ function SuperAdminFeedbackPage() {
     mealSession: "all",
   });
 
-  const fetchFeedbacks = async (filter = activeFilter) => {
+  const withSelectedBranch = (
+    filter = activeFilter,
+    branchId = selectedBranch?._id
+  ) => ({
+    ...filter,
+    branch: branchId || filter.branch || "all",
+  });
+
+  const fetchFeedbacks = async (
+    filter = activeFilter,
+    branchId = selectedBranch?._id
+  ) => {
+    if (!branchId) {
+      return;
+    }
+
     try {
       setLoading(true);
       setError("");
 
-      const res = await getFeedbacks(filter);
+      const res = await getFeedbacks(withSelectedBranch(filter, branchId));
       setFeedbacks(res.data.feedbacks || []);
     } catch (err) {
       console.error(err);
@@ -42,13 +72,21 @@ function SuperAdminFeedbackPage() {
     }
   };
 
-  const fetchBranchSummary = async (filter = activeFilter) => {
+  const fetchBranchSummary = async (
+    filter = activeFilter,
+    branchId = selectedBranch?._id
+  ) => {
+    if (!branchId) {
+      return;
+    }
+
     try {
+      const selectedFilter = withSelectedBranch(filter, branchId);
       const res = await getAverageRatingByBranch({
-        startDate: filter.startDate,
-        endDate: filter.endDate,
-        branch: filter.branch,
-        mealSession: filter.mealSession,
+        startDate: selectedFilter.startDate,
+        endDate: selectedFilter.endDate,
+        branch: selectedFilter.branch,
+        mealSession: selectedFilter.mealSession,
       });
 
       setBranchSummary(res.data.summary || []);
@@ -57,11 +95,19 @@ function SuperAdminFeedbackPage() {
     }
   };
 
-  const fetchMonthSummary = async (filter = activeFilter) => {
+  const fetchMonthSummary = async (
+    filter = activeFilter,
+    branchId = selectedBranch?._id
+  ) => {
+    if (!branchId) {
+      return;
+    }
+
     try {
+      const selectedFilter = withSelectedBranch(filter, branchId);
       const res = await getAverageRatingByMonth({
-        branch: filter.branch,
-        mealSession: filter.mealSession,
+        branch: selectedFilter.branch,
+        mealSession: selectedFilter.mealSession,
       });
 
       setMonthSummary(res.data.summary || []);
@@ -79,23 +125,26 @@ function SuperAdminFeedbackPage() {
     }
   };
 
-  const fetchAll = async (filter = activeFilter) => {
-    await fetchBranches();
-    await fetchFeedbacks(filter);
-    await fetchBranchSummary(filter);
-    await fetchMonthSummary(filter);
+  const fetchAll = async (
+    filter = activeFilter,
+    branchId = selectedBranch?._id
+  ) => {
+    await fetchFeedbacks(filter, branchId);
+    await fetchBranchSummary(filter, branchId);
+    await fetchMonthSummary(filter, branchId);
   };
 
   const handleFilter = async (filter) => {
-    setActiveFilter(filter);
-    await fetchAll(filter);
+    const selectedFilter = withSelectedBranch(filter);
+    setActiveFilter(selectedFilter);
+    await fetchAll(selectedFilter);
   };
 
   const handleClearFilter = async () => {
     const clearedFilter = {
       startDate: "",
       endDate: "",
-      branch: "all",
+      branch: selectedBranch?._id || "all",
       mealSession: "all",
     };
 
@@ -105,37 +154,106 @@ function SuperAdminFeedbackPage() {
 
   useEffect(() => {
     const timer = window.setTimeout(() => {
-      fetchAll();
+      fetchBranches();
     }, 0);
 
     return () => window.clearTimeout(timer);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  const handleSelectBranch = (branch) => {
+    const branchFilter = {
+      startDate: "",
+      endDate: "",
+      branch: branch._id,
+      mealSession: "all",
+    };
+
+    setSelectedBranch(branch);
+    setActiveFilter(branchFilter);
+    setFeedbacks([]);
+    setBranchSummary([]);
+    setMonthSummary([]);
+    fetchAll(branchFilter, branch._id);
+  };
+
+  const handleBackToBranches = () => {
+    setSelectedBranch(null);
+    setActiveFilter({
+      startDate: "",
+      endDate: "",
+      branch: "all",
+      mealSession: "all",
+    });
+    setFeedbacks([]);
+    setBranchSummary([]);
+    setMonthSummary([]);
+  };
+
   return (
     <div style={styles.page}>
-      <h1>Feedback Management - All Branches</h1>
-      <p>View customer ratings, reviews, and performance across all branches.</p>
-
-      <FeedbackDateFilter
-        branches={branches}
-        onFilter={handleFilter}
-        onClear={handleClearFilter}
-        showBranchFilter={true}
-      />
-
-      <div style={styles.summaryGrid}>
-        <AverageRatingByBranchTable data={branchSummary} />
-        <AverageRatingByMonthTable data={monthSummary} />
-      </div>
+      <h1>Feedback Management</h1>
+      <p>Select a branch to view customer ratings, reviews, and performance.</p>
 
       {loading && <p>Loading reviews...</p>}
       {error && <p style={styles.error}>{error}</p>}
 
-      <FeedbackTable
-        feedbacks={feedbacks}
-        onRefresh={() => fetchAll(activeFilter)}
-      />
+      {!selectedBranch && (
+        <section style={styles.branchSection}>
+          <h2>Branches</h2>
+          <div style={styles.branchGrid}>
+            {branches.map((branch) => (
+              <button
+                key={branch._id}
+                type="button"
+                onClick={() => handleSelectBranch(branch)}
+                style={styles.branchCard}
+              >
+                <strong>{branch.branchName}</strong>
+                <span>{branch.location || "No location"}</span>
+                <small>{getFeedbackPath(branch)}</small>
+              </button>
+            ))}
+          </div>
+          {branches.length === 0 && !loading && <p>No branches found.</p>}
+        </section>
+      )}
+
+      {selectedBranch && (
+        <>
+          <div style={styles.selectedBranchBar}>
+            <div>
+              <strong>{selectedBranch.branchName}</strong>
+              <span>{selectedBranch.location || "No location"}</span>
+              <small>{getFeedbackPath(selectedBranch)}</small>
+            </div>
+            <button
+              type="button"
+              onClick={handleBackToBranches}
+              style={styles.backButton}
+            >
+              Back to Branches
+            </button>
+          </div>
+
+          <FeedbackDateFilter
+            onFilter={handleFilter}
+            onClear={handleClearFilter}
+            showBranchFilter={false}
+            assignedBranchName={selectedBranch.branchName}
+          />
+
+          <div style={styles.summaryGrid}>
+            <AverageRatingByBranchTable data={branchSummary} />
+            <AverageRatingByMonthTable data={monthSummary} />
+          </div>
+
+          <FeedbackTable
+            feedbacks={feedbacks}
+            onRefresh={() => fetchAll(activeFilter)}
+          />
+        </>
+      )}
     </div>
   );
 }
@@ -155,6 +273,43 @@ const styles = {
   error: {
     color: "red",
     fontWeight: "bold",
+  },
+  branchSection: {
+    marginTop: "20px",
+  },
+  branchGrid: {
+    display: "grid",
+    gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))",
+    gap: "12px",
+    marginTop: "12px",
+  },
+  branchCard: {
+    display: "grid",
+    gap: "6px",
+    padding: "16px",
+    textAlign: "left",
+    backgroundColor: "#fff",
+    border: "1px solid #ddd",
+    borderRadius: "8px",
+    cursor: "pointer",
+  },
+  selectedBranchBar: {
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "space-between",
+    gap: "12px",
+    padding: "14px",
+    margin: "16px 0",
+    border: "1px solid #ddd",
+    borderRadius: "8px",
+    backgroundColor: "#f9fafb",
+  },
+  backButton: {
+    padding: "10px 16px",
+    border: "1px solid #ccc",
+    backgroundColor: "#fff",
+    cursor: "pointer",
+    borderRadius: "6px",
   },
 };
 

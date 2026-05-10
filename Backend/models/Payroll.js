@@ -29,7 +29,17 @@ const payrollSchema = new mongoose.Schema(
       default: 0,
     },
 
+    dailyRate: {
+      type: Number,
+      default: 0,
+    },
+
     totalHoursWorked: {
+      type: Number,
+      default: 0,
+    },
+
+    totalDaysWorked: {
       type: Number,
       default: 0,
     },

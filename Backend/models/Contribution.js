@@ -17,6 +17,7 @@ const contributionSchema = new mongoose.Schema(
     month: {
       type: String,
       required: true,
+      match: [/^\d{4}-\d{2}$/, "Month must use YYYY-MM format"],
     },
 
     sss: {

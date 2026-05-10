@@ -1,26 +1,27 @@
 import api from "../axiosInstance";
 
-const ADMIN_PREFIX = "/admin";
+const SALES_PREFIX = "/sales";
 
 export const getAdminSales = (params = {}) =>
-  api.get(`${ADMIN_PREFIX}/sales`, { params });
+  api.get(SALES_PREFIX, { params });
 
 export const createAdminSale = (data) =>
-  api.post(`${ADMIN_PREFIX}/sales`, data);
+  api.post(SALES_PREFIX, data);
 
 export const getAdminDailySales = (params = {}) =>
-  api.get(`${ADMIN_PREFIX}/sales/daily`, { params });
+  api.get(`${SALES_PREFIX}/daily`, { params });
 
 export const getAdminMonthlySales = (params = {}) =>
-  api.get(`${ADMIN_PREFIX}/sales/monthly`, { params });
+  api.get(`${SALES_PREFIX}/monthly`, { params });
 
 export const deleteAdminSale = (id) =>
-  api.delete(`${ADMIN_PREFIX}/sales/${id}`);
+  api.delete(`${SALES_PREFIX}/${id}`);
 
 export const createSale = createAdminSale;
-export const getSales = (startDate, endDate, serviceType = "all") =>
-  getAdminSales({ startDate, endDate, serviceType });
-export const getDailySales = (date) => getAdminDailySales({ date });
-export const getMonthlySales = (year, month) =>
-  getAdminMonthlySales({ year, month });
+export const getSales = (startDate, endDate, serviceType = "all", branchId = "") =>
+  getAdminSales({ startDate, endDate, serviceType, ...(branchId ? { branchId } : {}) });
+export const getDailySales = (date, branchId = "") =>
+  getAdminDailySales({ date, ...(branchId ? { branchId } : {}) });
+export const getMonthlySales = (year, month, branchId = "") =>
+  getAdminMonthlySales({ year, month, ...(branchId ? { branchId } : {}) });
 export const deleteSale = deleteAdminSale;

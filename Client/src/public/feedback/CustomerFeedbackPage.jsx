@@ -1,9 +1,12 @@
 import CustomerFeedbackForm from "../../features/feedback/components/CustomerFeedbackForm";
+import { useParams } from "react-router-dom";
 
 function CustomerFeedbackPage() {
+  const { branchSlug } = useParams();
+
   return (
     <div style={styles.page}>
-      <CustomerFeedbackForm />
+      <CustomerFeedbackForm branchSlug={branchSlug || ""} />
     </div>
   );
 }

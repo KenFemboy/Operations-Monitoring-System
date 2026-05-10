@@ -1,4 +1,5 @@
-import { useEffect, useState } from "react";
+import { useContext, useEffect, useState } from "react";
+import { AuthContext } from "../../../auth/context/AuthContext";
 
 import {
   getProducts,
@@ -6,6 +7,7 @@ import {
   getStockIns,
   getStockOuts,
 } from "../../../api/admin/adminInventoryApi";
+import { getBranches } from "../../../api/admin/adminBranchApi";
 
 import ProductForm from "../../../features/inventory/components/ProductForm";
 import ProductTable from "../../../features/inventory/components/ProductTable";
@@ -23,8 +25,14 @@ import InventoryRecordsFilter from "../../../features/inventory/components/Inven
 import InventoryRecordsTable from "../../../features/inventory/components/InventoryRecordsTable";
 
 function InventoryPage() {
+  const { user } = useContext(AuthContext);
+  const isSuperAdmin = ["super_admin", "superadmin"].includes(
+    (user?.role || "").toLowerCase()
+  );
   const [activeTab, setActiveTab] = useState("products");
 
+  const [branches, setBranches] = useState([]);
+  const [selectedBranch, setSelectedBranch] = useState(null);
   const [products, setProducts] = useState([]);
   const [purchases, setPurchases] = useState([]);
   const [stockIns, setStockIns] = useState([]);
@@ -34,15 +42,35 @@ function InventoryPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
-  const fetchAllData = async () => {
+  const fetchBranches = async () => {
     try {
       setLoading(true);
       setError("");
 
-      const productRes = await getProducts();
-      const purchaseRes = await getPurchases();
-      const stockInRes = await getStockIns();
-      const stockOutRes = await getStockOuts();
+      const response = await getBranches();
+      setBranches(response.data.data || []);
+    } catch (err) {
+      console.error(err);
+      setError("Failed to load branches");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const fetchAllData = async (branchId = selectedBranch?._id) => {
+    if (isSuperAdmin && !branchId) {
+      return;
+    }
+
+    try {
+      setLoading(true);
+      setError("");
+
+      const params = branchId ? { branchId } : {};
+      const productRes = await getProducts(params);
+      const purchaseRes = await getPurchases(params);
+      const stockInRes = await getStockIns(params);
+      const stockOutRes = await getStockOuts(params);
 
       setProducts(productRes.data.products || []);
       setPurchases(purchaseRes.data.purchases || []);
@@ -57,86 +85,170 @@ function InventoryPage() {
   };
 
   useEffect(() => {
+    if (isSuperAdmin) {
+      fetchBranches();
+      return;
+    }
+
     fetchAllData();
-  }, []);
+  }, [isSuperAdmin]);
+
+  const handleSelectBranch = (branch) => {
+    setSelectedBranch(branch);
+    setInventoryRecords([]);
+    setActiveTab("products");
+    fetchAllData(branch._id);
+  };
+
+  const handleBackToBranches = () => {
+    setSelectedBranch(null);
+    setProducts([]);
+    setPurchases([]);
+    setStockIns([]);
+    setStockOuts([]);
+    setInventoryRecords([]);
+  };
+
+  const refreshSelectedInventory = () => {
+    fetchAllData(selectedBranch?._id);
+  };
 
   return (
     <div style={styles.page}>
       <h1>Inventory Management</h1>
-      <p>Manage products, purchases, stock in, stock out, and inventory records.</p>
+      <p>
+        {isSuperAdmin
+          ? "Select a branch to view and manage its inventory."
+          : "Manage products, purchases, stock in, stock out, and inventory records."}
+      </p>
 
       {error && <p style={styles.error}>{error}</p>}
       {loading && <p>Loading inventory...</p>}
 
-      <div style={styles.tabs}>
-        <button
-          onClick={() => setActiveTab("products")}
-          style={activeTab === "products" ? styles.activeTab : styles.tab}
-        >
-          Products
-        </button>
-
-        <button
-          onClick={() => setActiveTab("purchases")}
-          style={activeTab === "purchases" ? styles.activeTab : styles.tab}
-        >
-          Purchases
-        </button>
-
-        <button
-          onClick={() => setActiveTab("stockIn")}
-          style={activeTab === "stockIn" ? styles.activeTab : styles.tab}
-        >
-          Stock In
-        </button>
-
-        <button
-          onClick={() => setActiveTab("stockOut")}
-          style={activeTab === "stockOut" ? styles.activeTab : styles.tab}
-        >
-          Stock Out
-        </button>
-
-        <button
-          onClick={() => setActiveTab("records")}
-          style={activeTab === "records" ? styles.activeTab : styles.tab}
-        >
-          Inventory Records
-        </button>
-      </div>
-
-      {activeTab === "products" && (
-        <>
-          <ProductForm onRefresh={fetchAllData} />
-          <ProductTable products={products} />
-        </>
+      {isSuperAdmin && !selectedBranch && (
+        <section style={styles.branchSection}>
+          <h2>Branches</h2>
+          <div style={styles.branchGrid}>
+            {branches.map((branch) => (
+              <button
+                key={branch._id}
+                type="button"
+                onClick={() => handleSelectBranch(branch)}
+                style={styles.branchCard}
+              >
+                <strong>{branch.branchName}</strong>
+                <span>{branch.location || "No location"}</span>
+                <small>{branch.address || "No address"}</small>
+              </button>
+            ))}
+          </div>
+          {branches.length === 0 && !loading && <p>No branches found.</p>}
+        </section>
       )}
 
-      {activeTab === "purchases" && (
-        <>
-          <PurchaseForm products={products} onRefresh={fetchAllData} />
-          <PurchaseTable purchases={purchases} onRefresh={fetchAllData} />
-        </>
+      {isSuperAdmin && selectedBranch && (
+        <div style={styles.selectedBranchBar}>
+          <div>
+            <strong>{selectedBranch.branchName}</strong>
+            <span>{selectedBranch.location || "No location"}</span>
+          </div>
+          <button type="button" onClick={handleBackToBranches} style={styles.tab}>
+            Back to Branches
+          </button>
+        </div>
       )}
 
-      {activeTab === "stockIn" && (
+      {isSuperAdmin && !selectedBranch ? null : (
         <>
-          <StockInForm products={products} onRefresh={fetchAllData} />
-          <StockInTable stockIns={stockIns} />
-        </>
-      )}
+          <div style={styles.tabs}>
+            <button
+              onClick={() => setActiveTab("products")}
+              style={activeTab === "products" ? styles.activeTab : styles.tab}
+            >
+              Products
+            </button>
 
-      {activeTab === "stockOut" && (
-        <>
-          <StockOutForm products={products} onRefresh={fetchAllData} />
-          <StockOutTable stockOuts={stockOuts} />
-        </>
-      )}
+            <button
+              onClick={() => setActiveTab("purchases")}
+              style={activeTab === "purchases" ? styles.activeTab : styles.tab}
+            >
+              Purchases
+            </button>
 
-      {activeTab === "records" && (
-        <>
-          <InventoryRecordsFilter onRecordsLoaded={setInventoryRecords} />
-          <InventoryRecordsTable records={inventoryRecords} />
+            <button
+              onClick={() => setActiveTab("stockIn")}
+              style={activeTab === "stockIn" ? styles.activeTab : styles.tab}
+            >
+              Stock In
+            </button>
+
+            <button
+              onClick={() => setActiveTab("stockOut")}
+              style={activeTab === "stockOut" ? styles.activeTab : styles.tab}
+            >
+              Stock Out
+            </button>
+
+            <button
+              onClick={() => setActiveTab("records")}
+              style={activeTab === "records" ? styles.activeTab : styles.tab}
+            >
+              Inventory Records
+            </button>
+          </div>
+
+          {activeTab === "products" && (
+            <>
+              <ProductForm
+                onRefresh={isSuperAdmin ? refreshSelectedInventory : fetchAllData}
+                branchId={selectedBranch?._id || ""}
+              />
+              <ProductTable products={products} />
+            </>
+          )}
+
+          {activeTab === "purchases" && (
+            <>
+              <PurchaseForm
+                products={products}
+                onRefresh={isSuperAdmin ? refreshSelectedInventory : fetchAllData}
+              />
+              <PurchaseTable
+                purchases={purchases}
+                onRefresh={isSuperAdmin ? refreshSelectedInventory : fetchAllData}
+              />
+            </>
+          )}
+
+          {activeTab === "stockIn" && (
+            <>
+              <StockInForm
+                products={products}
+                onRefresh={isSuperAdmin ? refreshSelectedInventory : fetchAllData}
+              />
+              <StockInTable stockIns={stockIns} />
+            </>
+          )}
+
+          {activeTab === "stockOut" && (
+            <>
+              <StockOutForm
+                products={products}
+                onRefresh={isSuperAdmin ? refreshSelectedInventory : fetchAllData}
+              />
+              <StockOutTable stockOuts={stockOuts} />
+            </>
+          )}
+
+          {activeTab === "records" && (
+            <>
+              <InventoryRecordsFilter
+                onRecordsLoaded={setInventoryRecords}
+                branchId={selectedBranch?._id || ""}
+              />
+              <InventoryRecordsTable records={inventoryRecords} />
+            </>
+          )}
         </>
       )}
     </div>
@@ -172,6 +284,36 @@ const styles = {
   error: {
     color: "red",
     fontWeight: "bold",
+  },
+  branchSection: {
+    marginTop: "20px",
+  },
+  branchGrid: {
+    display: "grid",
+    gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))",
+    gap: "12px",
+    marginTop: "12px",
+  },
+  branchCard: {
+    display: "grid",
+    gap: "6px",
+    padding: "16px",
+    textAlign: "left",
+    backgroundColor: "#fff",
+    border: "1px solid #ddd",
+    borderRadius: "8px",
+    cursor: "pointer",
+  },
+  selectedBranchBar: {
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "space-between",
+    gap: "12px",
+    padding: "14px",
+    marginTop: "16px",
+    border: "1px solid #ddd",
+    borderRadius: "8px",
+    backgroundColor: "#f9fafb",
   },
 };
 

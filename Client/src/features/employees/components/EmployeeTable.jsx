@@ -16,7 +16,8 @@ function EmployeeTable({
             <th style={styles.th}>Name</th>
             <th style={styles.th}>Position</th>
             <th style={styles.th}>Assigned Branch</th>
-            <th style={styles.th}>Salary Rate</th>
+            <th style={styles.th}>Daily Rate</th>
+            <th style={styles.th}>TIN</th>
             <th style={styles.th}>Status</th>
             <th style={styles.th}>Action</th>
           </tr>
@@ -25,7 +26,7 @@ function EmployeeTable({
         <tbody>
           {employees.length === 0 ? (
             <tr>
-              <td style={styles.td} colSpan="7" align="center">
+              <td style={styles.td} colSpan="8" align="center">
                 No employees found
               </td>
             </tr>
@@ -35,7 +36,7 @@ function EmployeeTable({
                 <td style={styles.td}>{employee.employeeId}</td>
 
                 <td style={styles.td}>
-                  {employee.firstName} {employee.lastName}
+                  {employee.firstName} {employee.middleName} {employee.lastName}
                 </td>
 
                 <td style={styles.td}>{employee.position}</td>
@@ -45,12 +46,14 @@ function EmployeeTable({
                 </td>
 
                 <td style={styles.td}>
-                  ₱{Number(employee.salaryRate || 0).toFixed(2)}
+                  PHP {Number(employee.basicRate ?? employee.salaryRate ?? 0).toFixed(2)}
                 </td>
+
+                <td style={styles.td}>{employee.tin || "-"}</td>
 
                 <td style={styles.td}>
                   <select
-                    value={employee.employmentStatus}
+                    value={employee.employmentStatus || "active"}
                     onChange={(e) =>
                       onUpdateStatus(employee._id, e.target.value)
                     }
@@ -58,8 +61,6 @@ function EmployeeTable({
                   >
                     <option value="active">Active</option>
                     <option value="inactive">Inactive</option>
-                    <option value="resigned">Resigned</option>
-                    <option value="terminated">Terminated</option>
                   </select>
                 </td>
 
@@ -111,7 +112,7 @@ const styles = {
   table: {
     width: "100%",
     borderCollapse: "collapse",
-    minWidth: "720px",
+    minWidth: "840px",
   },
 
   th: {

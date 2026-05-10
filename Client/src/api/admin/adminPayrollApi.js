@@ -1,15 +1,15 @@
 import api from "../axiosInstance";
 
-const ADMIN_PREFIX = "/admin";
+const EMPLOYEE_PREFIX = "/employees";
 
-export const getAdminPayrolls = () =>
-  api.get(`${ADMIN_PREFIX}/employees/payroll/list`);
+export const getAdminPayrolls = (params = {}) =>
+  api.get(`${EMPLOYEE_PREFIX}/payroll/list`, { params });
 
 export const createAdminPayroll = (data) =>
-  api.post(`${ADMIN_PREFIX}/employees/payroll/create`, data);
+  api.post(`${EMPLOYEE_PREFIX}/payroll/create`, data);
 
 export const updateAdminPayrollStatus = (id, data) =>
-  api.put(`${ADMIN_PREFIX}/employees/payroll/${id}/status`, data);
+  api.put(`${EMPLOYEE_PREFIX}/payroll/${id}/status`, data);
 
 export const getPayrolls = getAdminPayrolls;
 export const createPayroll = createAdminPayroll;

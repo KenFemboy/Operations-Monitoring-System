@@ -4,11 +4,10 @@ import {
   getPublicFeedbackFormConfig,
 } from "../../../api/public/feedbackPublicApi";
 
-function CustomerFeedbackForm() {
-  const [branches, setBranches] = useState([]);
+function CustomerFeedbackForm({ branchSlug = "" }) {
+  const [branch, setBranch] = useState(null);
   const [form, setForm] = useState({
     customerName: "",
-    branchId: "",
     mealSession: "",
     rating: 0,
     review: "",
@@ -18,24 +17,29 @@ function CustomerFeedbackForm() {
   const [message, setMessage] = useState("");
 
   useEffect(() => {
-    const fetchBranches = async () => {
+    const fetchBranch = async () => {
+      if (!branchSlug) {
+        setMessage("Please use the feedback QR code for your branch.");
+        return;
+      }
+
       try {
-        const res = await getPublicFeedbackFormConfig();
-        setBranches(res.data.branches || res.data.data || []);
+        const res = await getPublicFeedbackFormConfig(branchSlug);
+        setBranch(res.data.branch || res.data.data || null);
       } catch (err) {
         console.error(err);
-        setMessage("Unable to load branches right now.");
+        setMessage("Unable to load this feedback branch right now.");
       }
     };
 
-    fetchBranches();
-  }, []);
+    fetchBranch();
+  }, [branchSlug]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    if (!form.branchId) {
-      alert("Please select a branch");
+    if (!branch?._id) {
+      alert("Feedback branch is not available");
       return;
     }
 
@@ -55,19 +59,20 @@ function CustomerFeedbackForm() {
     }
 
     try {
-      await createFeedback({
-        customerName: form.customerName || "Anonymous",
-        branchId: form.branchId,
-        mealSession: form.mealSession,
-        rating: form.rating,
-        review: form.review,
-      });
+      await createFeedback(
+        {
+          customerName: form.customerName || "Anonymous",
+          mealSession: form.mealSession,
+          rating: form.rating,
+          review: form.review,
+        },
+        branchSlug
+      );
 
       setMessage("Thank you for your feedback!");
 
       setForm({
         customerName: "",
-        branchId: "",
         mealSession: "",
         rating: 0,
         review: "",
@@ -81,9 +86,20 @@ function CustomerFeedbackForm() {
   return (
     <div style={styles.card}>
       <h2>Customer Feedback</h2>
-      <p style={styles.subtitle}>Rate your dining experience.</p>
+      <p style={styles.subtitle}>
+        {branch
+          ? `Rate your dining experience at ${branch.branchName}.`
+          : "Rate your dining experience."}
+      </p>
 
       {message && <p style={styles.success}>{message}</p>}
+
+      {branch && (
+        <div style={styles.branchBox}>
+          <strong>{branch.branchName}</strong>
+          <span>{branch.location || branch.address || ""}</span>
+        </div>
+      )}
 
       <form onSubmit={handleSubmit} style={styles.form}>
         <input
@@ -95,20 +111,6 @@ function CustomerFeedbackForm() {
           }
           style={styles.input}
         />
-
-        <select
-          value={form.branchId}
-          onChange={(e) => setForm({ ...form, branchId: e.target.value })}
-          required
-          style={styles.input}
-        >
-          <option value="">Select Branch</option>
-          {branches.map((branch) => (
-            <option key={branch._id} value={branch._id}>
-              {branch.branchName} - {branch.location}
-            </option>
-          ))}
-        </select>
 
         <select
           value={form.mealSession}
@@ -142,7 +144,7 @@ function CustomerFeedbackForm() {
                     color: active ? "#f59e0b" : "#d1d5db",
                   }}
                 >
-                  ★
+                  {"\u2605"}
                 </button>
               );
             })}
@@ -182,6 +184,16 @@ const styles = {
   subtitle: {
     color: "#666",
     marginBottom: "20px",
+  },
+  branchBox: {
+    display: "grid",
+    gap: "4px",
+    padding: "12px",
+    marginBottom: "16px",
+    backgroundColor: "#eff6ff",
+    border: "1px solid #bfdbfe",
+    borderRadius: "8px",
+    color: "#1e3a8a",
   },
   form: {
     display: "flex",

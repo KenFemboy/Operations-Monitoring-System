@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { createSale } from "../../../api/admin/adminSalesApi";
 
-function SaleForm({ onRefresh }) {
+function SaleForm({ onRefresh, branchId = "" }) {
   const today = new Date().toISOString().split("T")[0];
 
   const [form, setForm] = useState({
@@ -45,7 +45,10 @@ function SaleForm({ onRefresh }) {
     e.preventDefault();
 
     try {
-      await createSale(form);
+      await createSale({
+        ...form,
+        ...(branchId ? { branchId } : {}),
+      });
 
       alert("Sale recorded successfully");
 

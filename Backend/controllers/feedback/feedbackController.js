@@ -3,6 +3,37 @@ import Branch from "../../models/Branch.js";
 import { isSuperAdmin, getUserBranchId } from "../../middleware/accessControl.js";
 import { getBranchFilter } from "../../utils/branchFilter.js";
 
+const slugify = (value = "") =>
+  value
+    .toString()
+    .trim()
+    .toLowerCase()
+    .replace(/&/g, "and")
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "");
+
+const branchSlugCandidates = (branch) => {
+  const names = [
+    branch.branchName,
+    branch.location,
+    branch.branchName?.replace(/\s+branch$/i, ""),
+  ];
+
+  return names.filter(Boolean).map(slugify);
+};
+
+const resolveBranchBySlug = async (branchSlug) => {
+  if (!branchSlug) return null;
+
+  const slug = slugify(branchSlug);
+  const branches = await Branch.find({ status: { $ne: "inactive" } });
+
+  return (
+    branches.find((branch) => branchSlugCandidates(branch).includes(slug)) ||
+    null
+  );
+};
+
 const resolveBranch = async ({ branch, branchId, branchName }) => {
   const selectedBranch = branchId || branch;
   let resolvedBranch = null;
@@ -39,9 +70,24 @@ const applyBranchFilter = async (filter, branch) => {
 
 export const createFeedback = async (req, res) => {
   try {
-    const { customerName, branch, branchId, branchName, mealSession, rating, review } = req.body;
+    const {
+      customerName,
+      branch,
+      branchId,
+      branchName,
+      branchSlug,
+      mealSession,
+      rating,
+      review,
+    } = req.body;
+    const selectedBranchSlug = req.params?.branchSlug || branchSlug;
 
-    if ((!isSuperAdmin(req.user) && !getUserBranchId(req.user)) && (!branch && !branchId && !branchName)) {
+    if (
+      !mealSession ||
+      !rating ||
+      !review ||
+      (!req.user && !branch && !branchId && !branchName && !selectedBranchSlug)
+    ) {
       return res.status(400).json({
         success: false,
         message: "Branch, meal session, rating, and review are required",
@@ -72,7 +118,9 @@ export const createFeedback = async (req, res) => {
     let resolvedBranch = null;
 
     if (!req.user || isSuperAdmin(req.user)) {
-      resolvedBranch = await resolveBranch({ branch, branchId, branchName });
+      resolvedBranch =
+        (await resolveBranchBySlug(selectedBranchSlug)) ||
+        (await resolveBranch({ branch, branchId, branchName }));
     } else {
       const userBranchId = getUserBranchId(req.user);
       if (!userBranchId) {
@@ -108,6 +156,31 @@ export const createFeedback = async (req, res) => {
     res.status(error.statusCode || 500).json({
       success: false,
       message: "Failed to submit feedback",
+      error: error.message,
+    });
+  }
+};
+
+export const getPublicFeedbackBranchConfig = async (req, res) => {
+  try {
+    const branch = await resolveBranchBySlug(req.params.branchSlug);
+
+    if (!branch) {
+      return res.status(404).json({
+        success: false,
+        message: "Feedback branch not found",
+      });
+    }
+
+    res.status(200).json({
+      success: true,
+      branch,
+      data: branch,
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: "Failed to load feedback branch",
       error: error.message,
     });
   }

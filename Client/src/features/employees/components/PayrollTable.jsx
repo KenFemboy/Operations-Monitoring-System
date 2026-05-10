@@ -1,4 +1,12 @@
 function PayrollTable({ payrolls, onUpdateStatus }) {
+  const getDaysWorked = (payroll) => {
+    if (payroll.totalDaysWorked !== undefined && payroll.totalDaysWorked !== null) {
+      return Number(payroll.totalDaysWorked || 0);
+    }
+
+    return Number(payroll.totalHoursWorked || 0) / 8;
+  };
+
   return (
     <div style={{ marginTop: "24px" }}>
       <h2>Payroll List</h2>
@@ -9,8 +17,8 @@ function PayrollTable({ payrolls, onUpdateStatus }) {
             <th>Employee ID</th>
             <th>Name</th>
             <th>Period</th>
-            <th>Hourly Rate</th>
-            <th>Hours Worked</th>
+            <th>Daily Rate</th>
+            <th>Days Worked</th>
             <th>Basic Pay</th>
             <th>Overtime</th>
             <th>Deductions</th>
@@ -38,12 +46,12 @@ function PayrollTable({ payrolls, onUpdateStatus }) {
                   {new Date(payroll.payPeriodStart).toLocaleDateString()} -{" "}
                   {new Date(payroll.payPeriodEnd).toLocaleDateString()}
                 </td>
-                <td>₱{Number(payroll.hourlyRate || 0).toFixed(2)}</td>
-                <td>{Number(payroll.totalHoursWorked || 0).toFixed(2)} hrs</td>
-                <td>₱{Number(payroll.basicPay || 0).toFixed(2)}</td>
-                <td>₱{Number(payroll.overtimePay || 0).toFixed(2)}</td>
-                <td>₱{Number(payroll.deductions || 0).toFixed(2)}</td>
-                <td>₱{Number(payroll.netPay || 0).toFixed(2)}</td>
+                <td>PHP {Number(payroll.dailyRate ?? payroll.hourlyRate ?? 0).toFixed(2)}</td>
+                <td>{getDaysWorked(payroll).toFixed(2)}</td>
+                <td>PHP {Number(payroll.basicPay || 0).toFixed(2)}</td>
+                <td>PHP {Number(payroll.overtimePay || 0).toFixed(2)}</td>
+                <td>PHP {Number(payroll.deductions || 0).toFixed(2)}</td>
+                <td>PHP {Number(payroll.netPay || 0).toFixed(2)}</td>
                 <td>{payroll.status}</td>
                 <td>
                   {payroll.status === "pending" ? (

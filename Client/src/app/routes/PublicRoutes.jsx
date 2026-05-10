@@ -8,6 +8,7 @@ export default function PublicRoutes() {
     <Routes>
       <Route element={<PublicLayout />}>
         <Route index element={<CustomerFeedbackPage />} />
+        <Route path=":branchSlug" element={<CustomerFeedbackPage />} />
       </Route>
     </Routes>
   );

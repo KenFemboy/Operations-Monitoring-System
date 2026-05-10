@@ -1,4 +1,4 @@
-function BranchTable({ branches, onEdit, onDelete }) {
+function BranchTable({ branches, onEdit, onDelete, onView }) {
   return (
     <div style={styles.card}>
       <h2>Branch List</h2>
@@ -33,6 +33,13 @@ function BranchTable({ branches, onEdit, onDelete }) {
                 </td>
                 <td style={styles.td}>{branch.status}</td>
                 <td style={styles.td}>
+                  <button
+                    onClick={() => onView(branch)}
+                    style={styles.viewButton}
+                  >
+                    View Records
+                  </button>
+
                   <button
                     onClick={() => onEdit(branch)}
                     style={styles.editButton}
@@ -90,6 +97,15 @@ const styles = {
   empty: {
     textAlign: "center",
     padding: "20px",
+  },
+  viewButton: {
+    padding: "6px 10px",
+    backgroundColor: "#16a34a",
+    color: "#fff",
+    border: "none",
+    borderRadius: "5px",
+    marginRight: "6px",
+    cursor: "pointer",
   },
   editButton: {
     padding: "6px 10px",

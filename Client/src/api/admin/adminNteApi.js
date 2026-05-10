@@ -1,15 +1,15 @@
 import api from "../axiosInstance";
 
-const ADMIN_PREFIX = "/admin";
+const EMPLOYEE_PREFIX = "/employees";
 
-export const getAdminNTEs = () =>
-  api.get(`${ADMIN_PREFIX}/employees/nte/list`);
+export const getAdminNTEs = (params = {}) =>
+  api.get(`${EMPLOYEE_PREFIX}/nte/list`, { params });
 
 export const createAdminNTE = (data) =>
-  api.post(`${ADMIN_PREFIX}/employees/nte/create`, data);
+  api.post(`${EMPLOYEE_PREFIX}/nte/create`, data);
 
 export const updateAdminNTEStatus = (id, data) =>
-  api.put(`${ADMIN_PREFIX}/employees/nte/${id}/status`, data);
+  api.put(`${EMPLOYEE_PREFIX}/nte/${id}/status`, data);
 
 export const getNTEs = getAdminNTEs;
 export const createNTE = createAdminNTE;

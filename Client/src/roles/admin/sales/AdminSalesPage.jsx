@@ -1,10 +1,12 @@
-import { useEffect, useState } from "react";
+import { useContext, useEffect, useState } from "react";
+import { AuthContext } from "../../../auth/context/AuthContext";
 
 import {
   getSales,
   getDailySales,
   getMonthlySales,
 } from "../../../api/admin/adminSalesApi";
+import { getBranches } from "../../../api/admin/adminBranchApi";
 
 import SaleForm from "../../../features/sales/components/SaleForm";
 import SalesFilter from "../../../features/sales/components/SalesFilter";
@@ -12,10 +14,16 @@ import SalesSummaryCards from "../../../features/sales/components/SalesSummaryCa
 import SalesTable from "../../../features/sales/components/SalesTable";
 
 function SalesPage() {
+  const { user } = useContext(AuthContext);
+  const isSuperAdmin = ["super_admin", "superadmin"].includes(
+    (user?.role || "").toLowerCase()
+  );
   const today = new Date().toISOString().split("T")[0];
   const currentYear = new Date().getFullYear();
   const currentMonth = new Date().getMonth() + 1;
 
+  const [branches, setBranches] = useState([]);
+  const [selectedBranch, setSelectedBranch] = useState(null);
   const [sales, setSales] = useState([]);
   const [dailySummary, setDailySummary] = useState(null);
   const [monthlySummary, setMonthlySummary] = useState(null);
@@ -29,7 +37,26 @@ function SalesPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
-  const fetchSales = async () => {
+  const fetchBranches = async () => {
+    try {
+      setLoading(true);
+      setError("");
+
+      const response = await getBranches();
+      setBranches(response.data.data || []);
+    } catch (error) {
+      console.error(error);
+      setError("Failed to load branches");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const fetchSales = async (branchId = selectedBranch?._id) => {
+    if (isSuperAdmin && !branchId) {
+      return;
+    }
+
     try {
       setLoading(true);
       setError("");
@@ -37,7 +64,8 @@ function SalesPage() {
       const res = await getSales(
         filter.startDate,
         filter.endDate,
-        filter.serviceType
+        filter.serviceType,
+        branchId || ""
       );
 
       setSales(res.data.sales || []);
@@ -49,10 +77,14 @@ function SalesPage() {
     }
   };
 
-  const fetchSummaries = async () => {
+  const fetchSummaries = async (branchId = selectedBranch?._id) => {
+    if (isSuperAdmin && !branchId) {
+      return;
+    }
+
     try {
-      const dailyRes = await getDailySales(today);
-      const monthlyRes = await getMonthlySales(currentYear, currentMonth);
+      const dailyRes = await getDailySales(today, branchId || "");
+      const monthlyRes = await getMonthlySales(currentYear, currentMonth, branchId || "");
 
       setDailySummary(dailyRes.data);
       setMonthlySummary(monthlyRes.data);
@@ -61,37 +93,108 @@ function SalesPage() {
     }
   };
 
-  const refreshAll = async () => {
-    await fetchSales();
-    await fetchSummaries();
+  const refreshAll = async (branchId = selectedBranch?._id) => {
+    await fetchSales(branchId);
+    await fetchSummaries(branchId);
   };
 
   useEffect(() => {
-    refreshAll();
-  }, []);
+    if (isSuperAdmin) {
+      fetchBranches();
+      return;
+    }
+
+    refreshAll("");
+  }, [isSuperAdmin]);
+
+  const handleSelectBranch = (branch) => {
+    setSelectedBranch(branch);
+    setSales([]);
+    setDailySummary(null);
+    setMonthlySummary(null);
+    refreshAll(branch._id);
+  };
+
+  const handleBackToBranches = () => {
+    setSelectedBranch(null);
+    setSales([]);
+    setDailySummary(null);
+    setMonthlySummary(null);
+  };
+
+  const refreshSelectedSales = () => {
+    refreshAll(selectedBranch?._id || "");
+  };
 
   return (
     <div style={styles.page}>
       <h1>Sales Management</h1>
-      <p>Record buffet sales for lunch and dinner, then view daily and monthly totals.</p>
+      <p>
+        {isSuperAdmin
+          ? "Select a branch to view and manage its sales."
+          : "Record buffet sales for lunch and dinner, then view daily and monthly totals."}
+      </p>
 
       {error && <p style={styles.error}>{error}</p>}
       {loading && <p>Loading sales...</p>}
 
-      <SalesSummaryCards
-        dailySummary={dailySummary}
-        monthlySummary={monthlySummary}
-      />
+      {isSuperAdmin && !selectedBranch && (
+        <section style={styles.branchSection}>
+          <h2>Branches</h2>
+          <div style={styles.branchGrid}>
+            {branches.map((branch) => (
+              <button
+                key={branch._id}
+                type="button"
+                onClick={() => handleSelectBranch(branch)}
+                style={styles.branchCard}
+              >
+                <strong>{branch.branchName}</strong>
+                <span>{branch.location || "No location"}</span>
+                <small>{branch.address || "No address"}</small>
+              </button>
+            ))}
+          </div>
+          {branches.length === 0 && !loading && <p>No branches found.</p>}
+        </section>
+      )}
 
-      <SaleForm onRefresh={refreshAll} />
+      {isSuperAdmin && selectedBranch && (
+        <div style={styles.selectedBranchBar}>
+          <div>
+            <strong>{selectedBranch.branchName}</strong>
+            <span>{selectedBranch.location || "No location"}</span>
+          </div>
+          <button type="button" onClick={handleBackToBranches} style={styles.backButton}>
+            Back to Branches
+          </button>
+        </div>
+      )}
 
-      <SalesFilter
-        filter={filter}
-        setFilter={setFilter}
-        onFilter={fetchSales}
-      />
+      {isSuperAdmin && !selectedBranch ? null : (
+        <>
+          <SalesSummaryCards
+            dailySummary={dailySummary}
+            monthlySummary={monthlySummary}
+          />
 
-      <SalesTable sales={sales} onRefresh={refreshAll} />
+          <SaleForm
+            onRefresh={isSuperAdmin ? refreshSelectedSales : refreshAll}
+            branchId={selectedBranch?._id || ""}
+          />
+
+          <SalesFilter
+            filter={filter}
+            setFilter={setFilter}
+            onFilter={() => fetchSales(selectedBranch?._id || "")}
+          />
+
+          <SalesTable
+            sales={sales}
+            onRefresh={isSuperAdmin ? refreshSelectedSales : refreshAll}
+          />
+        </>
+      )}
     </div>
   );
 }
@@ -104,6 +207,43 @@ const styles = {
   error: {
     color: "red",
     fontWeight: "bold",
+  },
+  branchSection: {
+    marginTop: "20px",
+  },
+  branchGrid: {
+    display: "grid",
+    gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))",
+    gap: "12px",
+    marginTop: "12px",
+  },
+  branchCard: {
+    display: "grid",
+    gap: "6px",
+    padding: "16px",
+    textAlign: "left",
+    backgroundColor: "#fff",
+    border: "1px solid #ddd",
+    borderRadius: "8px",
+    cursor: "pointer",
+  },
+  selectedBranchBar: {
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "space-between",
+    gap: "12px",
+    padding: "14px",
+    margin: "16px 0",
+    border: "1px solid #ddd",
+    borderRadius: "8px",
+    backgroundColor: "#f9fafb",
+  },
+  backButton: {
+    padding: "10px 16px",
+    border: "1px solid #ccc",
+    backgroundColor: "#fff",
+    cursor: "pointer",
+    borderRadius: "6px",
   },
 };
 

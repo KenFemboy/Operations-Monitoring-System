@@ -1,30 +1,28 @@
 import api from "../axiosInstance";
 
-const ADMIN_PREFIX = "/admin";
-
 export const getAdminOverallSummary = () =>
-  api.get(`${ADMIN_PREFIX}/dashboard/overall`);
+  api.get("/dashboard/overall");
 
 export const getAdminSalesAnalytics = () =>
-  api.get(`${ADMIN_PREFIX}/dashboard/sales`);
+  api.get("/dashboard/sales");
 
 export const getAdminEmployeeAnalytics = () =>
-  api.get(`${ADMIN_PREFIX}/dashboard/employees`);
+  api.get("/dashboard/employees");
 
 export const getAdminAttendancePayrollAnalytics = () =>
-  api.get(`${ADMIN_PREFIX}/dashboard/attendance-payroll`);
+  api.get("/dashboard/attendance-payroll");
 
 export const getAdminInventoryAnalytics = () =>
-  api.get(`${ADMIN_PREFIX}/dashboard/inventory`);
+  api.get("/dashboard/inventory");
 
 export const getAdminFeedbackAnalytics = () =>
-  api.get(`${ADMIN_PREFIX}/dashboard/feedback`);
+  api.get("/dashboard/feedback");
 
 export const getAdminIRNTEAnalytics = () =>
-  api.get(`${ADMIN_PREFIX}/dashboard/ir-nte`);
+  api.get("/dashboard/ir-nte");
 
 export const getAdminLeavePlantillaAnalytics = () =>
-  api.get(`${ADMIN_PREFIX}/dashboard/leave-plantilla`);
+  api.get("/dashboard/leave-plantilla");
 
 export const getOverallSummary = getAdminOverallSummary;
 export const getSalesAnalytics = getAdminSalesAnalytics;

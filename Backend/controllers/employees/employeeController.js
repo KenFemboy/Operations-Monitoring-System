@@ -127,11 +127,177 @@ const assertEmployeeAccess = async (req, employeeId) => {
   return employee;
 };
 
-const getEmployeeIdsForBranch = async (branchName) => {
-  const employees = await Employee.find({ assignedBranch: branchName })
+const getBranchScopeFromRequest = async (req) => {
+  if (isSuperAdmin(req.user)) {
+    if (!req.query?.branchId) {
+      return null;
+    }
+
+    const branch = await Branch.findById(req.query.branchId)
+      .select("_id branchName")
+      .lean();
+
+    if (!branch) {
+      const error = new Error("Valid branch is required");
+      error.statusCode = 400;
+      throw error;
+    }
+
+    return {
+      branchId: branch._id,
+      branchName: branch.branchName,
+    };
+  }
+
+  return {
+    branchId: getRequestBranchId(req),
+    branchName: getBranchName(req),
+  };
+};
+
+const getEmployeeIdsForBranchScope = async ({ branchId, branchName }) => {
+  if (!branchId && !branchName) {
+    return [];
+  }
+
+  const branchConditions = [];
+
+  if (branchId) {
+    branchConditions.push({ branch: branchId });
+  }
+
+  if (branchName) {
+    branchConditions.push({ assignedBranch: branchName });
+  }
+
+  const employees = await Employee.find({ $or: branchConditions })
     .select("_id")
     .lean();
+
   return employees.map((employee) => employee._id);
+};
+
+const buildEmployeeBranchFilter = (branchScope) => {
+  if (!branchScope) {
+    return {};
+  }
+
+  const branchConditions = [];
+
+  if (branchScope.branchId) {
+    branchConditions.push({ branch: branchScope.branchId });
+  }
+
+  if (branchScope.branchName) {
+    branchConditions.push({ assignedBranch: branchScope.branchName });
+  }
+
+  return branchConditions.length ? { $or: branchConditions } : {};
+};
+
+const buildHrRecordBranchFilter = async (branchScope) => {
+  if (!branchScope) {
+    return {};
+  }
+
+  const employeeIds = await getEmployeeIdsForBranchScope(branchScope);
+  const branchConditions = [];
+
+  if (branchScope.branchId) {
+    branchConditions.push({ branch: branchScope.branchId });
+  }
+
+  if (employeeIds.length) {
+    branchConditions.push({ employee: { $in: employeeIds } });
+  }
+
+  return branchConditions.length ? { $or: branchConditions } : {};
+};
+
+const calculateAge = (birthdate) => {
+  if (!birthdate) {
+    return 0;
+  }
+
+  const date = new Date(birthdate);
+
+  if (isNaN(date.getTime())) {
+    return 0;
+  }
+
+  const today = new Date();
+  let age = today.getFullYear() - date.getFullYear();
+  const monthDiff = today.getMonth() - date.getMonth();
+
+  if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < date.getDate())) {
+    age -= 1;
+  }
+
+  return age > 0 ? age : 0;
+};
+
+const normalizeEmployeePayload = (body = {}) => {
+  const payload = { ...body };
+
+  ["dateHired", "birthdate"].forEach((field) => {
+    if (payload[field] === "") {
+      delete payload[field];
+    }
+  });
+
+  if (payload.email === "") {
+    delete payload.email;
+  }
+
+  if ("basicRate" in payload || "salaryRate" in payload) {
+    const basicRate = payload.basicRate ?? payload.salaryRate ?? 0;
+    payload.basicRate = Number(basicRate || 0);
+    payload.salaryRate = Number(basicRate || 0);
+  }
+
+  if ("allowance" in payload) {
+    payload.allowance = Number(payload.allowance || 0);
+  }
+
+  if ("phoneNumber" in payload || "phone" in payload) {
+    const phoneNumber = payload.phoneNumber ?? payload.phone ?? "";
+    payload.phoneNumber = phoneNumber;
+    payload.phone = phoneNumber;
+  }
+
+  if ("sss" in payload || "sssId" in payload) {
+    const sss = payload.sss ?? payload.sssId ?? "";
+    payload.sss = sss;
+    payload.sssId = sss;
+  }
+
+  if ("philhealth" in payload || "philhealthId" in payload) {
+    const philhealth = payload.philhealth ?? payload.philhealthId ?? "";
+    payload.philhealth = philhealth;
+    payload.philhealthId = philhealth;
+  }
+
+  if ("pagibig" in payload || "pagibigId" in payload) {
+    const pagibig = payload.pagibig ?? payload.pagibigId ?? "";
+    payload.pagibig = pagibig;
+    payload.pagibigId = pagibig;
+  }
+
+  if (payload.gender === "M") {
+    payload.gender = "Male";
+  }
+
+  if (payload.gender === "F") {
+    payload.gender = "Female";
+  }
+
+  if (payload.birthdate) {
+    payload.age = calculateAge(payload.birthdate);
+  }
+
+  delete payload.gsisId;
+
+  return payload;
 };
 
 // ================= EMPLOYEE =================
@@ -151,11 +317,10 @@ export const createEmployee = async (req, res) => {
     const branch = await resolveBranchForEmployeeCreate(req);
 
     const employee = await Employee.create({
-      ...req.body,
+      ...normalizeEmployeePayload(req.body),
       assignedBranch: branch.branchName,
       branch: branch.branchId,
       employeeId: newEmployeeId,
-      employmentStatus: "active",
     });
 
     res.status(201).json({
@@ -174,8 +339,8 @@ export const createEmployee = async (req, res) => {
 
 export const getEmployees = async (req, res) => {
   try {
-    const branchName = getBranchName(req);
-    const filter = branchName ? { assignedBranch: branchName } : {};
+    const branchScope = await getBranchScopeFromRequest(req);
+    const filter = buildEmployeeBranchFilter(branchScope);
     const employees = await Employee.find(filter)
       .populate("branch", "branchName location address status")
       .sort({ createdAt: -1 });
@@ -248,7 +413,7 @@ export const updateEmployee = async (req, res) => {
           };
 
     const updatePayload = {
-      ...req.body,
+      ...normalizeEmployeePayload(req.body),
       assignedBranch: branch.branchName || existingEmployee.assignedBranch,
       branch: branch.branchId || existingEmployee.branch,
     };
@@ -256,7 +421,7 @@ export const updateEmployee = async (req, res) => {
     const employee = await Employee.findByIdAndUpdate(
       req.params.id,
       updatePayload,
-      { new: true }
+      { new: true, runValidators: true }
     ).populate("branch", "branchName location address status");
 
     if (!employee) {
@@ -396,13 +561,8 @@ export const createAttendance = async (req, res) => {
 };
 export const getAttendance = async (req, res) => {
   try {
-    const branchName = getBranchName(req);
-    let filter = {};
-
-    if (branchName) {
-      const employeeIds = await getEmployeeIdsForBranch(branchName);
-      filter = { employee: { $in: employeeIds } };
-    }
+    const branchScope = await getBranchScopeFromRequest(req);
+    const filter = await buildHrRecordBranchFilter(branchScope);
 
     const attendance = await Attendance.find(filter)
       .populate("employee")
@@ -503,8 +663,16 @@ export const createPayroll = async (req, res) => {
       return sum + Number(record.totalHours || 0);
     }, 0);
 
-    const hourlyRate = Number(employeeData.salaryRate || 0);
-    const basicPay = hourlyRate * totalHoursWorked;
+    const totalDaysWorked = attendanceRecords.reduce((sum, record) => {
+      if (record.status === "half-day") {
+        return sum + 0.5;
+      }
+
+      return sum + 1;
+    }, 0);
+
+    const dailyRate = Number(employeeData.basicRate ?? employeeData.salaryRate ?? 0);
+    const basicPay = dailyRate * totalDaysWorked;
     const finalOvertime = Number(overtimePay || 0);
     const finalDeductions = Number(deductions || 0);
     const netPay = basicPay + finalOvertime - finalDeductions;
@@ -514,8 +682,10 @@ export const createPayroll = async (req, res) => {
       branch: employeeData.branch || (await getEmployeeBranchId(employee)),
       payPeriodStart: startDate,
       payPeriodEnd: endDate,
-      hourlyRate,
+      hourlyRate: dailyRate,
+      dailyRate,
       totalHoursWorked: Number(totalHoursWorked.toFixed(2)),
+      totalDaysWorked: Number(totalDaysWorked.toFixed(2)),
       basicPay: Number(basicPay.toFixed(2)),
       overtimePay: finalOvertime,
       deductions: finalDeductions,
@@ -525,7 +695,7 @@ export const createPayroll = async (req, res) => {
 
     const populatedPayroll = await Payroll.findById(payroll._id).populate(
       "employee",
-      "employeeId firstName lastName salaryRate"
+      "employeeId firstName lastName salaryRate basicRate"
     );
 
     res.status(201).json({
@@ -546,16 +716,11 @@ export const createPayroll = async (req, res) => {
 
 export const getPayrolls = async (req, res) => {
   try {
-    const branchName = getBranchName(req);
-    let filter = {};
-
-    if (branchName) {
-      const employeeIds = await getEmployeeIdsForBranch(branchName);
-      filter = { employee: { $in: employeeIds } };
-    }
+    const branchScope = await getBranchScopeFromRequest(req);
+    const filter = await buildHrRecordBranchFilter(branchScope);
 
     const payrolls = await Payroll.find(filter)
-      .populate("employee", "employeeId firstName lastName salaryRate")
+      .populate("employee", "employeeId firstName lastName salaryRate basicRate")
       .sort({ createdAt: -1 });
 
     res.status(200).json({
@@ -661,13 +826,8 @@ export const createLeave = async (req, res) => {
 
 export const getLeaves = async (req, res) => {
   try {
-    const branchName = getBranchName(req);
-    let filter = {};
-
-    if (branchName) {
-      const employeeIds = await getEmployeeIdsForBranch(branchName);
-      filter = { employee: { $in: employeeIds } };
-    }
+    const branchScope = await getBranchScopeFromRequest(req);
+    const filter = await buildHrRecordBranchFilter(branchScope);
 
     const leaves = await Leave.find(filter)
       .populate("employee", "employeeId firstName lastName")
@@ -711,7 +871,7 @@ export const updateLeave = async (req, res) => {
     const leave = await Leave.findByIdAndUpdate(
       req.params.id,
       req.body,
-      { new: true }
+      { new: true, runValidators: true }
     ).populate("employee", "employeeId firstName lastName");
 
     if (!leave) {
@@ -797,12 +957,19 @@ export const updateLeaveStatus = async (req, res) => {
 
 export const createContribution = async (req, res) => {
   try {
-    const { sss = 0, pagibig = 0, philhealth = 0 } = req.body;
+    const { month, sss = 0, pagibig = 0, philhealth = 0 } = req.body;
 
     if (!req.body.employee) {
       return res.status(400).json({
         success: false,
         message: "Employee is required",
+      });
+    }
+
+    if (!month || !/^\d{4}-\d{2}$/.test(month)) {
+      return res.status(400).json({
+        success: false,
+        message: "Contribution month must include month and year",
       });
     }
 
@@ -830,18 +997,13 @@ export const createContribution = async (req, res) => {
 
 export const getContributions = async (req, res) => {
   try {
-    const branchName = getBranchName(req);
-    let filter = {};
-
-    if (branchName) {
-      const employeeIds = await getEmployeeIdsForBranch(branchName);
-      filter = { employee: { $in: employeeIds } };
-    }
+    const branchScope = await getBranchScopeFromRequest(req);
+    const filter = await buildHrRecordBranchFilter(branchScope);
 
     const contributions = await Contribution.find(filter)
       .populate(
         "employee",
-        "employeeId firstName lastName sssId gsisId pagibigId philhealthId assignedBranch"
+        "employeeId firstName lastName sss sssId pagibig pagibigId philhealth philhealthId tin assignedBranch"
       )
       .sort({ createdAt: -1 });
 
@@ -892,13 +1054,8 @@ export const createIncidentReport = async (req, res) => {
 
 export const getIncidentReports = async (req, res) => {
   try {
-    const branchName = getBranchName(req);
-    let filter = {};
-
-    if (branchName) {
-      const employeeIds = await getEmployeeIdsForBranch(branchName);
-      filter = { employee: { $in: employeeIds } };
-    }
+    const branchScope = await getBranchScopeFromRequest(req);
+    const filter = await buildHrRecordBranchFilter(branchScope);
 
     const reports = await IncidentReport.find(filter)
       .populate("employee", "employeeId firstName lastName")
@@ -979,6 +1136,13 @@ export const updateIncidentReportStatus = async (req, res) => {
 
 export const createNTE = async (req, res) => {
   try {
+    if (!isSuperAdmin(req.user)) {
+      return res.status(403).json({
+        success: false,
+        message: "Forbidden: only Super Admin can create NTE records",
+      });
+    }
+
     if (!req.body.employee) {
       return res.status(400).json({
         success: false,
@@ -987,9 +1151,17 @@ export const createNTE = async (req, res) => {
     }
 
     await assertEmployeeAccess(req, req.body.employee);
+    const {
+      branch: _branch,
+      branchId: _branchId,
+      assignedBranch: _assignedBranch,
+      status: _status,
+      ...safeBody
+    } = req.body;
     const nte = await NoticeToExplain.create({
-      ...req.body,
+      ...safeBody,
       branch: await getEmployeeBranchId(req.body.employee),
+      status: "pending",
     });
 
     res.status(201).json({
@@ -1008,16 +1180,15 @@ export const createNTE = async (req, res) => {
 
 export const getNTEs = async (req, res) => {
   try {
-    const branchName = getBranchName(req);
-    let filter = {};
-
-    if (branchName) {
-      const employeeIds = await getEmployeeIdsForBranch(branchName);
-      filter = { employee: { $in: employeeIds } };
-    }
+    const branchScope = await getBranchScopeFromRequest(req);
+    const filter = await buildHrRecordBranchFilter(branchScope);
 
     const ntes = await NoticeToExplain.find(filter)
-      .populate("employee", "employeeId firstName lastName")
+      .populate({
+        path: "employee",
+        select: "employeeId firstName lastName assignedBranch branch",
+        populate: { path: "branch", select: "branchName" },
+      })
       .sort({ createdAt: -1 });
 
     res.status(200).json({
@@ -1035,6 +1206,13 @@ export const getNTEs = async (req, res) => {
 
 export const updateNTEStatus = async (req, res) => {
   try {
+    if (!isSuperAdmin(req.user)) {
+      return res.status(403).json({
+        success: false,
+        message: "Forbidden: only Super Admin can update NTE records",
+      });
+    }
+
     const { status } = req.body;
 
     if (!["pending", "submitted", "closed"].includes(status)) {
@@ -1069,7 +1247,11 @@ export const updateNTEStatus = async (req, res) => {
       req.params.id,
       { status },
       { new: true }
-    ).populate("employee", "employeeId firstName lastName");
+    ).populate({
+      path: "employee",
+      select: "employeeId firstName lastName assignedBranch branch",
+      populate: { path: "branch", select: "branchName" },
+    });
 
     if (!nte) {
       return res.status(404).json({

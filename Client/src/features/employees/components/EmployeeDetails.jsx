@@ -1,3 +1,38 @@
+const formatDate = (value) => {
+  if (!value) return "-";
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return "-";
+  return date.toLocaleDateString();
+};
+
+const formatMoney = (value) =>
+  `PHP ${Number(value || 0).toFixed(2)}`;
+
+const getPayrollDaysWorked = (payroll) => {
+  if (payroll.totalDaysWorked !== undefined && payroll.totalDaysWorked !== null) {
+    return Number(payroll.totalDaysWorked || 0);
+  }
+
+  return Number(payroll.totalHoursWorked || 0) / 8;
+};
+
+function InfoSection({ title, items }) {
+  return (
+    <section className="table-card">
+      <div className="table-toolbar">
+        <h3 className="table-title">{title}</h3>
+      </div>
+      <div className="employee-details-meta">
+        {items.map((item) => (
+          <p key={item.label}>
+            <strong>{item.label}:</strong> {item.value || "-"}
+          </p>
+        ))}
+      </div>
+    </section>
+  );
+}
+
 function EmployeeDetails({ details, onClose }) {
   if (!details) return null;
 
@@ -25,26 +60,97 @@ function EmployeeDetails({ details, onClose }) {
           <div>
             <p className="employee-details-eyebrow">Employee Profile</p>
             <h2>
-              {employee.firstName} {employee.lastName}
+              {employee.firstName} {employee.middleName} {employee.lastName}
             </h2>
           </div>
           <button onClick={onClose}>Close</button>
         </div>
 
-        <div className="employee-details-meta">
-          <p><strong>Employee ID:</strong> {employee.employeeId}</p>
-          <p><strong>Position:</strong> {employee.position}</p>
-          <p>
-            <strong>Assigned Branch:</strong>{" "}
-            {employee.branch?.branchName || employee.assignedBranch || "-"}
-          </p>
-          <p><strong>SSS ID:</strong> {employee.sssId || "-"}</p>
-          <p><strong>GSIS ID:</strong> {employee.gsisId || "-"}</p>
-          <p><strong>Pag-IBIG ID:</strong> {employee.pagibigId || "-"}</p>
-          <p><strong>PhilHealth ID:</strong> {employee.philhealthId || "-"}</p>
-        </div>
-
         <div className="employee-details-scroll">
+          <InfoSection
+            title="Basic Information"
+            items={[
+              { label: "Employee ID", value: employee.employeeId },
+              { label: "Position", value: employee.position },
+              {
+                label: "Assigned Branch",
+                value: employee.branch?.branchName || employee.assignedBranch,
+              },
+              { label: "Employment Status", value: employee.employmentStatus },
+              { label: "Date Hired", value: formatDate(employee.dateHired) },
+              { label: "Gender", value: employee.gender },
+              { label: "Birthdate", value: formatDate(employee.birthdate) },
+              { label: "Age", value: employee.age },
+              { label: "Marital Status", value: employee.maritalStatus },
+              { label: "Religion", value: employee.religion },
+              { label: "Permanent Address", value: employee.permanentAddress },
+            ]}
+          />
+
+          <InfoSection
+            title="Compliance / Documents"
+            items={[
+              { label: "NBI / Police Clearance", value: employee.nbiPoliceClearance },
+              { label: "Health Card", value: employee.healthCard },
+            ]}
+          />
+
+          <InfoSection
+            title="Education"
+            items={[
+              { label: "Educational Attainment", value: employee.educationalAttainment },
+              { label: "Course Specification", value: employee.courseSpecification },
+              { label: "School Name", value: employee.schoolName },
+              { label: "School Period", value: employee.schoolPeriod },
+            ]}
+          />
+
+          <InfoSection
+            title="Contacts"
+            items={[
+              { label: "Phone Number", value: employee.phoneNumber || employee.phone },
+              { label: "Email", value: employee.email },
+            ]}
+          />
+
+          <InfoSection
+            title="Emergency Contact"
+            items={[
+              { label: "Full Name", value: employee.emergencyContact?.fullName },
+              { label: "Relationship", value: employee.emergencyContact?.relationship },
+              { label: "Contact Number", value: employee.emergencyContact?.contactNumber },
+            ]}
+          />
+
+          <InfoSection
+            title="Previous Work Experience"
+            items={[
+              { label: "Position", value: employee.previousWorkExperience?.position },
+              { label: "Company Name", value: employee.previousWorkExperience?.companyName },
+              { label: "Tenure", value: employee.previousWorkExperience?.tenure },
+            ]}
+          />
+
+          <InfoSection
+            title="Mandatory Government Benefits"
+            items={[
+              { label: "SSS", value: employee.sss || employee.sssId },
+              { label: "PhilHealth", value: employee.philhealth || employee.philhealthId },
+              { label: "Pag-IBIG", value: employee.pagibig || employee.pagibigId },
+              { label: "TIN", value: employee.tin },
+            ]}
+          />
+
+          <InfoSection
+            title="Compensation"
+            items={[
+              { label: "Basic Rate / Daily Rate", value: formatMoney(employee.basicRate ?? employee.salaryRate) },
+              { label: "Allowance", value: formatMoney(employee.allowance) },
+              { label: "Mode of Salary", value: employee.modeOfSalary },
+              { label: "Employment", value: employee.employmentContract },
+            ]}
+          />
+
           <section className="table-card">
             <div className="table-toolbar">
               <h3 className="table-title">Attendance</h3>
@@ -67,7 +173,7 @@ function EmployeeDetails({ details, onClose }) {
                   <tbody>
                     {attendance.map((item) => (
                       <tr key={item._id}>
-                        <td>{new Date(item.date).toLocaleDateString()}</td>
+                        <td>{formatDate(item.date)}</td>
                         <td>{item.timeIn || "-"}</td>
                         <td>{item.timeOut || "-"}</td>
                         <td>{Number(item.totalHours || 0).toFixed(2)} hrs</td>
@@ -98,6 +204,8 @@ function EmployeeDetails({ details, onClose }) {
                     <tr>
                       <th>Period Start</th>
                       <th>Period End</th>
+                      <th>Daily Rate</th>
+                      <th>Days Worked</th>
                       <th>Basic Pay</th>
                       <th>Overtime</th>
                       <th>Deductions</th>
@@ -108,12 +216,14 @@ function EmployeeDetails({ details, onClose }) {
                   <tbody>
                     {payrolls.map((item) => (
                       <tr key={item._id}>
-                        <td>{new Date(item.payPeriodStart).toLocaleDateString()}</td>
-                        <td>{new Date(item.payPeriodEnd).toLocaleDateString()}</td>
-                        <td>₱{item.basicPay}</td>
-                        <td>₱{item.overtimePay}</td>
-                        <td>₱{item.deductions}</td>
-                        <td>₱{item.netPay}</td>
+                        <td>{formatDate(item.payPeriodStart)}</td>
+                        <td>{formatDate(item.payPeriodEnd)}</td>
+                        <td>{formatMoney(item.dailyRate ?? item.hourlyRate)}</td>
+                        <td>{getPayrollDaysWorked(item).toFixed(2)}</td>
+                        <td>{formatMoney(item.basicPay)}</td>
+                        <td>{formatMoney(item.overtimePay)}</td>
+                        <td>{formatMoney(item.deductions)}</td>
+                        <td>{formatMoney(item.netPay)}</td>
                         <td>{item.status}</td>
                       </tr>
                     ))}
@@ -145,9 +255,9 @@ function EmployeeDetails({ details, onClose }) {
                     {leaves.map((item) => (
                       <tr key={item._id}>
                         <td>{item.leaveType}</td>
-                        <td>{new Date(item.startDate).toLocaleDateString()}</td>
-                        <td>{new Date(item.endDate).toLocaleDateString()}</td>
-                        <td>{item.reason}</td>
+                        <td>{formatDate(item.startDate)}</td>
+                        <td>{formatDate(item.endDate)}</td>
+                        <td>{item.reason || "-"}</td>
                         <td>{item.status}</td>
                       </tr>
                     ))}
@@ -179,10 +289,10 @@ function EmployeeDetails({ details, onClose }) {
                     {contributions.map((item) => (
                       <tr key={item._id}>
                         <td>{item.month}</td>
-                        <td>₱{item.sss}</td>
-                        <td>₱{item.pagibig}</td>
-                        <td>₱{item.philhealth}</td>
-                        <td>₱{item.totalContribution}</td>
+                        <td>{formatMoney(item.sss)}</td>
+                        <td>{formatMoney(item.pagibig)}</td>
+                        <td>{formatMoney(item.philhealth)}</td>
+                        <td>{formatMoney(item.totalContribution)}</td>
                       </tr>
                     ))}
                   </tbody>
@@ -212,7 +322,7 @@ function EmployeeDetails({ details, onClose }) {
                   <tbody>
                     {incidentReports.map((item) => (
                       <tr key={item._id}>
-                        <td>{new Date(item.incidentDate).toLocaleDateString()}</td>
+                        <td>{formatDate(item.incidentDate)}</td>
                         <td>{item.title}</td>
                         <td>{item.description}</td>
                         <td>{item.actionTaken}</td>
@@ -246,10 +356,10 @@ function EmployeeDetails({ details, onClose }) {
                   <tbody>
                     {ntes.map((item) => (
                       <tr key={item._id}>
-                        <td>{new Date(item.issueDate).toLocaleDateString()}</td>
+                        <td>{formatDate(item.issueDate)}</td>
                         <td>{item.subject}</td>
-                        <td>{item.explanation}</td>
-                        <td>{new Date(item.deadline).toLocaleDateString()}</td>
+                        <td>{item.explanation || "-"}</td>
+                        <td>{formatDate(item.deadline)}</td>
                         <td>{item.status}</td>
                       </tr>
                     ))}

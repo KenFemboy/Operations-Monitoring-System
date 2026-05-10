@@ -30,6 +30,7 @@ function ProductTable({ products }) {
             <th style={styles.th}>Product ID</th>
             <th style={styles.th}>Name</th>
             <th style={styles.th}>Category</th>
+            <th style={styles.th}>Branch</th>
             <th style={styles.th}>Unit</th>
             <th style={styles.th}>Current Stock</th>
             <th style={styles.th}>Minimum Stock</th>
@@ -43,6 +44,7 @@ function ProductTable({ products }) {
               <td style={styles.td}>{product.productId}</td>
               <td style={styles.td}>{product.name}</td>
               <td style={styles.td}>{product.category}</td>
+              <td style={styles.td}>{product.branch?.branchName || "-"}</td>
               <td style={styles.td}>{product.unit}</td>
               <td style={styles.td}>{product.currentStock}</td>
               <td style={styles.td}>{product.minimumStock}</td>

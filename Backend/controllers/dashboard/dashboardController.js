@@ -51,6 +51,22 @@ const getDateRanges = () => {
   };
 };
 
+const getAggregateBranchFilter = (req) => {
+  const branchFilter = getBranchFilter(req);
+
+  if (
+    branchFilter.branch &&
+    mongoose.Types.ObjectId.isValid(branchFilter.branch)
+  ) {
+    return {
+      ...branchFilter,
+      branch: new mongoose.Types.ObjectId(branchFilter.branch),
+    };
+  }
+
+  return branchFilter;
+};
+
 /* =========================
    OVERALL SUMMARY
 ========================= */
@@ -59,6 +75,7 @@ export const getOverallSummary = async (req, res) => {
     const { monthPrefix } = getDateRanges();
 
     const branchFilter = getBranchFilter(req);
+    const aggregateBranchFilter = getAggregateBranchFilter(req);
 
     const [
       totalEmployees,
@@ -78,7 +95,7 @@ export const getOverallSummary = async (req, res) => {
       Feedback.countDocuments(branchFilter),
 
       Sale.aggregate([
-        { $match: { ...branchFilter, saleDate: { $regex: `^${monthPrefix}` } } },
+        { $match: { ...aggregateBranchFilter, saleDate: { $regex: `^${monthPrefix}` } } },
         {
           $group: {
             _id: null,
@@ -89,7 +106,7 @@ export const getOverallSummary = async (req, res) => {
       ]),
 
       Feedback.aggregate([
-        { $match: branchFilter },
+        { $match: aggregateBranchFilter },
         {
           $group: {
             _id: null,
@@ -129,9 +146,10 @@ export const getSalesAnalytics = async (req, res) => {
     const { monthPrefix, todayDateString, startOfMonth } = getDateRanges();
 
     const branchFilter = getBranchFilter(req);
+    const aggregateBranchFilter = getAggregateBranchFilter(req);
 
     const monthlySales = await Sale.aggregate([
-      { $match: { ...branchFilter, saleDate: { $regex: `^${monthPrefix}` } } },
+      { $match: { ...aggregateBranchFilter, saleDate: { $regex: `^${monthPrefix}` } } },
       {
         $group: {
           _id: null,
@@ -142,7 +160,7 @@ export const getSalesAnalytics = async (req, res) => {
     ]);
 
     const dailySales = await Sale.aggregate([
-      { $match: { ...branchFilter, saleDate: todayDateString } },
+      { $match: { ...aggregateBranchFilter, saleDate: todayDateString } },
       {
         $group: {
           _id: "$serviceType",
@@ -153,7 +171,7 @@ export const getSalesAnalytics = async (req, res) => {
     ]);
 
     const salesByDay = await Sale.aggregate([
-      { $match: { ...branchFilter, createdAt: { $gte: startOfMonth } } },
+      { $match: { ...aggregateBranchFilter, createdAt: { $gte: startOfMonth } } },
       {
         $group: {
           _id: {
@@ -344,16 +362,7 @@ export const getInventoryAnalytics = async (req, res) => {
 export const getFeedbackAnalytics = async (req, res) => {
   try {
     const branchFilter = getBranchFilter(req);
-    const feedbackBranchMatch = { ...branchFilter };
-
-    if (
-      feedbackBranchMatch.branch &&
-      mongoose.Types.ObjectId.isValid(feedbackBranchMatch.branch)
-    ) {
-      feedbackBranchMatch.branch = new mongoose.Types.ObjectId(
-        feedbackBranchMatch.branch
-      );
-    }
+    const feedbackBranchMatch = getAggregateBranchFilter(req);
 
     const totalFeedback = await Feedback.countDocuments(branchFilter);
 
@@ -435,7 +444,8 @@ export const getIRNTEAnalytics = async (req, res) => {
 
       totalNTE,
       pendingNTE,
-      answeredNTE,
+      submittedNTE,
+      closedNTE,
     ] = await Promise.all([
       IncidentReport.countDocuments(branchFilter),
       IncidentReport.countDocuments({ ...branchFilter, status: "open" }),
@@ -443,7 +453,8 @@ export const getIRNTEAnalytics = async (req, res) => {
 
       NoticeToExplain.countDocuments(branchFilter),
       NoticeToExplain.countDocuments({ ...branchFilter, status: "pending" }),
-      NoticeToExplain.countDocuments({ ...branchFilter, status: "answered" }),
+      NoticeToExplain.countDocuments({ ...branchFilter, status: "submitted" }),
+      NoticeToExplain.countDocuments({ ...branchFilter, status: "closed" }),
     ]);
 
     res.status(200).json({
@@ -458,7 +469,8 @@ export const getIRNTEAnalytics = async (req, res) => {
         nte: {
           total: totalNTE,
           pending: pendingNTE,
-          answered: answeredNTE,
+          submitted: submittedNTE,
+          closed: closedNTE,
         },
       },
     });

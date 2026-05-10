@@ -1,13 +1,45 @@
-import { useState } from "react";
+import { useContext, useEffect, useState } from "react";
 import { createProduct } from "../../../api/admin/adminInventoryApi";
+import { getBranches } from "../../../api/admin/adminBranchApi";
+import { AuthContext } from "../../../auth/context/AuthContext";
 
-function ProductForm({ onRefresh }) {
+function ProductForm({ onRefresh, branchId = "" }) {
+  const { user } = useContext(AuthContext);
+  const isSuperAdmin = ["super_admin", "superadmin"].includes(
+    (user?.role || "").toLowerCase()
+  );
+  const [branches, setBranches] = useState([]);
   const [form, setForm] = useState({
     name: "",
     category: "",
     unit: "",
     minimumStock: "",
+    branchId,
   });
+
+  useEffect(() => {
+    if (!isSuperAdmin) return;
+
+    const loadBranches = async () => {
+      try {
+        const response = await getBranches();
+        setBranches(response.data.data || []);
+      } catch (err) {
+        console.error(err);
+      }
+    };
+
+    loadBranches();
+  }, [isSuperAdmin]);
+
+  useEffect(() => {
+    if (!branchId) return;
+
+    setForm((current) => ({
+      ...current,
+      branchId,
+    }));
+  }, [branchId]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -15,6 +47,7 @@ function ProductForm({ onRefresh }) {
     try {
       await createProduct({
         ...form,
+        branchId: branchId || form.branchId,
         minimumStock: Number(form.minimumStock),
       });
 
@@ -23,6 +56,7 @@ function ProductForm({ onRefresh }) {
         category: "",
         unit: "",
         minimumStock: "",
+        branchId,
       });
 
       onRefresh();
@@ -74,6 +108,22 @@ function ProductForm({ onRefresh }) {
           required
           style={styles.input}
         />
+
+        {isSuperAdmin && !branchId && (
+          <select
+            value={form.branchId}
+            onChange={(e) => setForm({ ...form, branchId: e.target.value })}
+            required
+            style={styles.input}
+          >
+            <option value="">Select Branch</option>
+            {branches.map((branch) => (
+              <option key={branch._id} value={branch._id}>
+                {branch.branchName} - {branch.location}
+              </option>
+            ))}
+          </select>
+        )}
 
         <button type="submit" style={styles.primaryButton}>
           Add Product

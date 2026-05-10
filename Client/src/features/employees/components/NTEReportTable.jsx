@@ -1,4 +1,4 @@
-function NTEReportTable({ ntes, onUpdateStatus }) {
+function NTEReportTable({ ntes, onUpdateStatus, canUpdateStatus = false }) {
   return (
     <div style={{ marginTop: "24px" }}>
       <h2>NTE List</h2>
@@ -8,6 +8,7 @@ function NTEReportTable({ ntes, onUpdateStatus }) {
           <tr>
             <th>Employee ID</th>
             <th>Name</th>
+            <th>Branch</th>
             <th>Issue Date</th>
             <th>Subject</th>
             <th>Explanation</th>
@@ -19,7 +20,7 @@ function NTEReportTable({ ntes, onUpdateStatus }) {
         <tbody>
           {ntes.length === 0 ? (
             <tr>
-              <td colSpan="7" align="center">
+              <td colSpan="8" align="center">
                 No NTE records found
               </td>
             </tr>
@@ -32,6 +33,10 @@ function NTEReportTable({ ntes, onUpdateStatus }) {
                   {item.employee?.firstName} {item.employee?.lastName}
                 </td>
 
+                <td>
+                  {item.employee?.branch?.branchName || item.employee?.assignedBranch || "-"}
+                </td>
+
                 <td>{new Date(item.issueDate).toLocaleDateString()}</td>
 
                 <td>{item.subject}</td>
@@ -41,16 +46,20 @@ function NTEReportTable({ ntes, onUpdateStatus }) {
                 <td>{new Date(item.deadline).toLocaleDateString()}</td>
 
                 <td>
-                  <select
-                    value={item.status}
-                    onChange={(e) =>
-                      onUpdateStatus(item._id, e.target.value)
-                    }
-                  >
-                    <option value="pending">Pending</option>
-                    <option value="submitted">Submitted</option>
-                    <option value="closed">Closed</option>
-                  </select>
+                  {canUpdateStatus ? (
+                    <select
+                      value={item.status || "pending"}
+                      onChange={(e) =>
+                        onUpdateStatus(item._id, e.target.value)
+                      }
+                    >
+                      <option value="pending">Pending</option>
+                      <option value="submitted">Submitted</option>
+                      <option value="closed">Closed</option>
+                    </select>
+                  ) : (
+                    item.status || "pending"
+                  )}
                 </td>
               </tr>
             ))

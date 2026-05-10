@@ -1,4 +1,5 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useContext, useEffect, useState } from "react";
+import { AuthContext } from "../../../auth/context/AuthContext";
 
 import {
   getEmployees,
@@ -51,6 +52,10 @@ const getErrorMessage = (error, fallback) =>
   error.response?.data?.message || fallback;
 
 function EmployeesPage({ initialTab = "employees" }) {
+  const { user } = useContext(AuthContext);
+  const isSuperAdmin = ["super_admin", "superadmin"].includes(
+    (user?.role || "").toLowerCase()
+  );
   const [activeTab, setActiveTab] = useState(initialTab);
   const [loading, setLoading] = useState(false);
 
@@ -511,9 +516,15 @@ function EmployeesPage({ initialTab = "employees" }) {
 
       {activeTab === "nte" && (
         <>
-          <NTEForm employees={employees} onSubmit={handleSubmitNTE} />
+          {isSuperAdmin && (
+            <NTEForm employees={employees} onSubmit={handleSubmitNTE} />
+          )}
 
-          <NTEReportTable ntes={ntes} onUpdateStatus={handleUpdateNTEStatus} />
+          <NTEReportTable
+            ntes={ntes}
+            onUpdateStatus={handleUpdateNTEStatus}
+            canUpdateStatus={isSuperAdmin}
+          />
         </>
       )}
     </div>

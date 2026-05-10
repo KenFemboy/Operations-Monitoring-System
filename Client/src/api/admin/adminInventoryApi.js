@@ -1,45 +1,45 @@
 import api from "../axiosInstance";
 
-const ADMIN_PREFIX = "/admin";
+const INVENTORY_PREFIX = "/inventory";
 
-export const getAdminProducts = () =>
-  api.get(`${ADMIN_PREFIX}/inventory/products`);
+export const getAdminProducts = (params = {}) =>
+  api.get(`${INVENTORY_PREFIX}/products`, { params });
 
 export const createAdminProduct = (data) =>
-  api.post(`${ADMIN_PREFIX}/inventory/products`, data);
+  api.post(`${INVENTORY_PREFIX}/products`, data);
 
 export const updateAdminProduct = (id, data) =>
-  api.put(`${ADMIN_PREFIX}/inventory/products/${id}`, data);
+  api.put(`${INVENTORY_PREFIX}/products/${id}`, data);
 
 export const deleteAdminProduct = (id) =>
-  api.delete(`${ADMIN_PREFIX}/inventory/products/${id}`);
+  api.delete(`${INVENTORY_PREFIX}/products/${id}`);
 
-export const getAdminPurchases = () =>
-  api.get(`${ADMIN_PREFIX}/inventory/purchases`);
+export const getAdminPurchases = (params = {}) =>
+  api.get(`${INVENTORY_PREFIX}/purchases`, { params });
 
 export const createAdminPurchase = (data) =>
-  api.post(`${ADMIN_PREFIX}/inventory/purchases`, data);
+  api.post(`${INVENTORY_PREFIX}/purchases`, data);
 
 export const receiveAdminPurchase = (id) =>
-  api.patch(`${ADMIN_PREFIX}/inventory/purchases/${id}/receive`);
+  api.patch(`${INVENTORY_PREFIX}/purchases/${id}/receive`);
 
 export const cancelAdminPurchase = (id) =>
-  api.patch(`${ADMIN_PREFIX}/inventory/purchases/${id}/cancel`);
+  api.patch(`${INVENTORY_PREFIX}/purchases/${id}/cancel`);
 
-export const getAdminStockIns = () =>
-  api.get(`${ADMIN_PREFIX}/inventory/stock-in`);
+export const getAdminStockIns = (params = {}) =>
+  api.get(`${INVENTORY_PREFIX}/stock-in`, { params });
 
 export const createAdminStockIn = (data) =>
-  api.post(`${ADMIN_PREFIX}/inventory/stock-in`, data);
+  api.post(`${INVENTORY_PREFIX}/stock-in`, data);
 
-export const getAdminStockOuts = () =>
-  api.get(`${ADMIN_PREFIX}/inventory/stock-out`);
+export const getAdminStockOuts = (params = {}) =>
+  api.get(`${INVENTORY_PREFIX}/stock-out`, { params });
 
 export const createAdminStockOut = (data) =>
-  api.post(`${ADMIN_PREFIX}/inventory/stock-out`, data);
+  api.post(`${INVENTORY_PREFIX}/stock-out`, data);
 
 export const getAdminInventoryRecords = (params = {}) =>
-  api.get(`${ADMIN_PREFIX}/inventory/records`, { params });
+  api.get(`${INVENTORY_PREFIX}/records`, { params });
 
 export const getProducts = getAdminProducts;
 export const createProduct = createAdminProduct;
@@ -53,5 +53,5 @@ export const getStockIns = getAdminStockIns;
 export const createStockIn = createAdminStockIn;
 export const getStockOuts = getAdminStockOuts;
 export const createStockOut = createAdminStockOut;
-export const getInventoryRecords = (startDate, endDate, type = "all") =>
-  getAdminInventoryRecords({ startDate, endDate, type });
+export const getInventoryRecords = (startDate, endDate, type = "all", branchId = "") =>
+  getAdminInventoryRecords({ startDate, endDate, type, ...(branchId ? { branchId } : {}) });

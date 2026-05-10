@@ -11,6 +11,7 @@ function LeaveForm({ employees, onSubmit, editingLeave, onCancelEdit }) {
   });
 
   useEffect(() => {
+    const timeoutId = window.setTimeout(() => {
     if (editingLeave) {
       setForm({
         employee: editingLeave.employee?._id || editingLeave.employee || "",
@@ -25,6 +26,9 @@ function LeaveForm({ employees, onSubmit, editingLeave, onCancelEdit }) {
         status: editingLeave.status || "pending",
       });
     }
+    }, 0);
+
+    return () => window.clearTimeout(timeoutId);
   }, [editingLeave]);
 
   const handleChange = (e) => {
@@ -79,6 +83,7 @@ function LeaveForm({ employees, onSubmit, editingLeave, onCancelEdit }) {
                 <option value="SIL">SIL</option>
                 <option value="Vacation Leave">Vacation Leave</option>
                 <option value="Sick Leave">Sick Leave</option>
+                <option value="Others">Others</option>
               </select>
             </label>
           </div>
@@ -124,6 +129,7 @@ function LeaveForm({ employees, onSubmit, editingLeave, onCancelEdit }) {
           <h4>Reason</h4>
           <div className="employee-form-grid">
             <label className="employee-field employee-field-full">
+              <span>{form.leaveType === "Others" ? "Reason / Description" : "Reason"}</span>
               <textarea
                 name="reason"
                 value={form.reason}

@@ -6,7 +6,6 @@ function NTEForm({ employees, onSubmit }) {
     subject: "",
     explanation: "",
     deadline: "",
-    status: "pending",
   });
 
   const handleChange = (e) => {
@@ -16,6 +15,12 @@ function NTEForm({ employees, onSubmit }) {
   const handleSubmit = (e) => {
     e.preventDefault();
     onSubmit(form);
+    setForm({
+      employee: "",
+      subject: "",
+      explanation: "",
+      deadline: "",
+    });
   };
 
   return (
@@ -24,7 +29,7 @@ function NTEForm({ employees, onSubmit }) {
 
       <div className="employee-form-sections">
         <section className="employee-form-section">
-          <h4>Employee & Status</h4>
+          <h4>Employee</h4>
           <div className="employee-form-grid">
             <label className="employee-field">
               <span>Employee</span>
@@ -32,18 +37,9 @@ function NTEForm({ employees, onSubmit }) {
                 <option value="">Select Employee</option>
                 {employees.map((emp) => (
                   <option key={emp._id} value={emp._id}>
-                    {emp.firstName} {emp.lastName}
+                    {emp.employeeId} - {emp.firstName} {emp.lastName}
                   </option>
                 ))}
-              </select>
-            </label>
-
-            <label className="employee-field">
-              <span>Status</span>
-              <select name="status" value={form.status} onChange={handleChange}>
-                <option value="pending">Pending</option>
-                <option value="submitted">Submitted</option>
-                <option value="closed">Closed</option>
               </select>
             </label>
           </div>

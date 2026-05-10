@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { getInventoryRecords } from "../../../api/admin/adminInventoryApi";
 
-function InventoryRecordsFilter({ onRecordsLoaded }) {
+function InventoryRecordsFilter({ onRecordsLoaded, branchId = "" }) {
   const [filter, setFilter] = useState({
     startDate: "",
     endDate: "",
@@ -20,7 +20,7 @@ function InventoryRecordsFilter({ onRecordsLoaded }) {
       const startDate = `${filter.startDate}T00:00:00`;
       const endDate = `${filter.endDate}T23:59:59`;
 
-      const res = await getInventoryRecords(startDate, endDate, filter.type);
+      const res = await getInventoryRecords(startDate, endDate, filter.type, branchId);
 
       onRecordsLoaded(res.data.records || []);
     } catch (err) {

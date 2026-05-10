@@ -9,6 +9,8 @@ function ContributionForm({ employees, onSubmit }) {
     philhealth: "",
   });
 
+  const selectedEmployee = employees.find((emp) => emp._id === form.employee);
+
   const handleChange = (e) => {
     setForm({ ...form, [e.target.name]: e.target.value });
   };
@@ -43,7 +45,7 @@ function ContributionForm({ employees, onSubmit }) {
                 <option value="">Select Employee</option>
                 {employees.map((emp) => (
                   <option key={emp._id} value={emp._id}>
-                    {emp.firstName} {emp.lastName}
+                    {emp.employeeId} - {emp.firstName} {emp.lastName}
                   </option>
                 ))}
               </select>
@@ -51,8 +53,14 @@ function ContributionForm({ employees, onSubmit }) {
 
             <label className="employee-field">
               <span>Month</span>
-              <input name="month" value={form.month} onChange={handleChange} required />
+              <input type="month" name="month" value={form.month} onChange={handleChange} required />
             </label>
+
+            {selectedEmployee && (
+              <p className="employee-field employee-field-full">
+                TIN ID: {selectedEmployee.tin || "-"}
+              </p>
+            )}
           </div>
         </section>
 
@@ -72,7 +80,7 @@ function ContributionForm({ employees, onSubmit }) {
               <input type="number" name="philhealth" value={form.philhealth} onChange={handleChange} />
             </label>
             <p className="employee-field employee-field-full">
-              Total Contribution: ₱{total}
+              Total Contribution: PHP {total.toFixed(2)}
             </p>
           </div>
         </section>

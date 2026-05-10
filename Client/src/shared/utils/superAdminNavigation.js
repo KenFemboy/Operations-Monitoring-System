@@ -20,7 +20,6 @@ export const superAdminNavigation = [
       { label: "Contributions", hint: "Government remittances", to: "/superadmin/contributions" },
       { label: "Incident Reports", hint: "Incident documentation", to: "/superadmin/incident-reports" },
       { label: "Notice to Explain", hint: "Disciplinary notices", to: "/superadmin/nte" },
-      { label: "Plantilla", hint: "Role slots and salary basis", to: "/superadmin/plantilla" },
     ],
   },
   {

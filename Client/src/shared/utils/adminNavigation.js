@@ -13,7 +13,6 @@ export const adminNavigation = [
       { label: "Contributions", hint: "Government remittances", to: "/admin/contributions" },
       { label: "Incident Reports", hint: "Incident documentation", to: "/admin/incident-reports" },
       { label: "Notice to Explain", hint: "Disciplinary notices", to: "/admin/nte" },
-      { label: "Plantilla", hint: "Role slots and salary basis", to: "/admin/plantilla" },
     ],
   },
   {
