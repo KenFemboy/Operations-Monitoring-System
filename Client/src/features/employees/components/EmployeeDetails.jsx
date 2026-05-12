@@ -16,6 +16,13 @@ const getPayrollDaysWorked = (payroll) => {
   return Number(payroll.totalHoursWorked || 0) / 8;
 };
 
+const getImageUrl = (publicPath = "") => {
+  if (!publicPath) return "";
+
+  const apiUrl = import.meta.env.VITE_API_URL || "http://localhost:8000";
+  return `${apiUrl}${publicPath}`;
+};
+
 function InfoSection({ title, items }) {
   return (
     <section className="table-card">
@@ -45,6 +52,7 @@ function EmployeeDetails({ details, onClose }) {
     incidentReports,
     ntes,
   } = details;
+  const employeePhotoUrl = getImageUrl(employee.photo);
 
   return (
     <div
@@ -57,6 +65,15 @@ function EmployeeDetails({ details, onClose }) {
     >
       <div className="employee-details-card">
         <div className="employee-details-header">
+          {employeePhotoUrl ? (
+            <img
+              src={employeePhotoUrl}
+              alt={`${employee.firstName} ${employee.lastName}`}
+              style={styles.employeePhoto}
+            />
+          ) : (
+            <div style={styles.employeePhotoPlaceholder}>No Photo</div>
+          )}
           <div>
             <p className="employee-details-eyebrow">Employee Profile</p>
             <h2>
@@ -373,5 +390,26 @@ function EmployeeDetails({ details, onClose }) {
     </div>
   );
 }
+
+const styles = {
+  employeePhoto: {
+    width: "160px",
+    height: "160px",
+    objectFit: "cover",
+    borderRadius: "12px",
+    flex: "0 0 auto",
+  },
+  employeePhotoPlaceholder: {
+    width: "160px",
+    height: "160px",
+    borderRadius: "12px",
+    backgroundColor: "#f3f4f6",
+    color: "#6b7280",
+    display: "grid",
+    placeItems: "center",
+    fontWeight: "600",
+    flex: "0 0 auto",
+  },
+};
 
 export default EmployeeDetails;

@@ -20,6 +20,12 @@ const feedbackSchema = new mongoose.Schema(
       enum: ["Lunch", "Dinner"],
     },
 
+    serviceType: {
+      type: String,
+      enum: ["Lunch", "Dinner", ""],
+      default: "",
+    },
+
     rating: {
       type: Number,
       required: true,
@@ -29,9 +35,21 @@ const feedbackSchema = new mongoose.Schema(
 
     review: {
       type: String,
-      required: true,
       trim: true,
       maxlength: 120,
+      default: "",
+    },
+
+    comment: {
+      type: String,
+      trim: true,
+      maxlength: 120,
+      default: "",
+    },
+
+    concernPhoto: {
+      type: String,
+      default: "",
     },
   },
   { timestamps: true }

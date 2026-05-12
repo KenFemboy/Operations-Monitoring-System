@@ -4,6 +4,7 @@ function EmployeeTable({
   onViewDetails,
   onUpdateStatus,
   onEdit,
+  canDelete = false,
 }) {
   return (
     <div style={styles.card}>
@@ -82,13 +83,15 @@ function EmployeeTable({
                       Edit
                     </button>
 
-                    <button
-                      type="button"
-                      onClick={() => onDelete(employee._id)}
-                      style={styles.deleteButton}
-                    >
-                      Delete
-                    </button>
+                    {canDelete && (
+                      <button
+                        type="button"
+                        onClick={() => onDelete(employee._id)}
+                        style={styles.deleteButton}
+                      >
+                        Delete
+                      </button>
+                    )}
                   </div>
                 </td>
               </tr>

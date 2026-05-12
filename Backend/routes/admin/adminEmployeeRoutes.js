@@ -2,6 +2,7 @@ import express from "express";
 import { protect } from "../../middleware/authMiddleware.js";
 import { allowRoles } from "../../middleware/roleMiddleware.js";
 import { branchScopeMiddleware } from "../../middleware/branchScopeMiddleware.js";
+import { uploadEmployeePhoto } from "../../middleware/imageUploadMiddleware.js";
 import {
   createEmployee,
   getEmployees,
@@ -33,11 +34,11 @@ const router = express.Router();
 
 router.use(protect, allowRoles("admin", "console_user"), branchScopeMiddleware);
 
-router.post("/", createEmployee);
+router.post("/", uploadEmployeePhoto, createEmployee);
 router.get("/", getEmployees);
 router.get("/:id", getEmployeeById);
 router.get("/:id/details", getEmployeeFullDetails);
-router.put("/:id", updateEmployee);
+router.put("/:id", uploadEmployeePhoto, updateEmployee);
 router.delete("/:id", deleteEmployee);
 
 router.post("/attendance/create", createAttendance);

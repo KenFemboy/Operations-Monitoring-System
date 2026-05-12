@@ -3,6 +3,8 @@ import mongoose from "mongoose";
 import bodyParser from "body-parser";
 import dotenv from "dotenv";
 import cors from "cors";
+import fs from "fs";
+import path from "path";
 import { connectDatabase } from "./config/database.js";
 import adminRoutes from "./routes/admin/index.js";
 import authRoutes from "./routes/public/authRoutes.js";
@@ -28,6 +30,15 @@ app.use(
 );
 
 app.use(bodyParser.json());
+
+const uploadRoot = process.env.UPLOAD_ROOT || "uploads";
+const uploadRootPath = path.isAbsolute(uploadRoot)
+  ? uploadRoot
+  : path.resolve(process.cwd(), uploadRoot);
+
+fs.mkdirSync(uploadRootPath, { recursive: true });
+app.use("/uploads", express.static(uploadRootPath));
+app.use("/api/uploads", express.static(uploadRootPath));
 
 app.get("/api/health", (_req, res) => {
   const states = {

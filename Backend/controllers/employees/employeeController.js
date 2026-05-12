@@ -8,6 +8,9 @@ import Contribution from "../../models/Contribution.js";
 import IncidentReport from "../../models/IncidentReport.js";
 import NoticeToExplain from "../../models/NoticeToExplain.js";
 import { isSuperAdmin } from "../../middleware/accessControl.js";
+import { processUploadedEmployeePhoto } from "../../middleware/imageUploadMiddleware.js";
+import User from "../../models/User.js";
+import bcrypt from "bcryptjs";
 
 const getBranchName = (req) => {
   if (isSuperAdmin(req.user)) {
@@ -107,7 +110,7 @@ const getEmployeeBranchId = async (employeeId) => {
 
 const assertEmployeeAccess = async (req, employeeId) => {
   const employee = await Employee.findById(employeeId)
-    .select("assignedBranch branch")
+    .select("employeeId assignedBranch branch")
     .lean();
 
   if (!employee) {
@@ -315,12 +318,14 @@ export const createEmployee = async (req, res) => {
     }
 
     const branch = await resolveBranchForEmployeeCreate(req);
+    const photo = await processUploadedEmployeePhoto(req, newEmployeeId);
 
     const employee = await Employee.create({
       ...normalizeEmployeePayload(req.body),
       assignedBranch: branch.branchName,
       branch: branch.branchId,
       employeeId: newEmployeeId,
+      photo,
     });
 
     res.status(201).json({
@@ -418,6 +423,15 @@ export const updateEmployee = async (req, res) => {
       branch: branch.branchId || existingEmployee.branch,
     };
 
+    const photo = await processUploadedEmployeePhoto(
+      req,
+      existingEmployee.employeeId
+    );
+
+    if (photo) {
+      updatePayload.photo = photo;
+    }
+
     const employee = await Employee.findByIdAndUpdate(
       req.params.id,
       updatePayload,
@@ -447,6 +461,44 @@ export const updateEmployee = async (req, res) => {
 
 export const deleteEmployee = async (req, res) => {
   try {
+    if (!isSuperAdmin(req.user)) {
+      return res.status(403).json({
+        success: false,
+        message: "Forbidden: only Super Admin can delete employees",
+      });
+    }
+
+    const authorizationPassword =
+      req.body.authorizationPassword || req.body.superadminPassword || req.body.password;
+
+    if (!authorizationPassword) {
+      return res.status(400).json({
+        success: false,
+        message: "Super admin password is required",
+      });
+    }
+
+    const currentUser = await User.findById(req.user.id).select("password");
+
+    if (!currentUser) {
+      return res.status(401).json({
+        success: false,
+        message: "Current user not found",
+      });
+    }
+
+    const isAuthorizationPasswordValid = await bcrypt.compare(
+      authorizationPassword,
+      currentUser.password
+    );
+
+    if (!isAuthorizationPasswordValid) {
+      return res.status(401).json({
+        success: false,
+        message: "Invalid super admin password",
+      });
+    }
+
     await assertEmployeeAccess(req, req.params.id);
     const employee = await Employee.findByIdAndDelete(req.params.id);
 

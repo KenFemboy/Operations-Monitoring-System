@@ -8,10 +8,12 @@ function CustomerFeedbackForm({ branchSlug = "" }) {
   const [branch, setBranch] = useState(null);
   const [form, setForm] = useState({
     customerName: "",
-    mealSession: "",
+    serviceType: "",
     rating: 0,
-    review: "",
+    comment: "",
   });
+  const [concernPhoto, setConcernPhoto] = useState(null);
+  const [fileInputKey, setFileInputKey] = useState(0);
 
   const [hoverRating, setHoverRating] = useState(0);
   const [message, setMessage] = useState("");
@@ -43,7 +45,7 @@ function CustomerFeedbackForm({ branchSlug = "" }) {
       return;
     }
 
-    if (!form.mealSession) {
+    if (!form.serviceType) {
       alert("Please select lunch or dinner");
       return;
     }
@@ -53,30 +55,36 @@ function CustomerFeedbackForm({ branchSlug = "" }) {
       return;
     }
 
-    if (form.review.length > 120) {
-      alert("Review must be 120 characters or less");
+    if (form.comment.length > 120) {
+      alert("Comment must be 120 characters or less");
       return;
     }
 
     try {
-      await createFeedback(
-        {
-          customerName: form.customerName || "Anonymous",
-          mealSession: form.mealSession,
-          rating: form.rating,
-          review: form.review,
-        },
-        branchSlug
-      );
+      const formData = new FormData();
+
+      formData.append("branch", branch._id);
+      formData.append("serviceType", form.serviceType);
+      formData.append("rating", form.rating);
+      formData.append("comment", form.comment);
+      formData.append("customerName", form.customerName || "Anonymous");
+
+      if (concernPhoto) {
+        formData.append("concernPhoto", concernPhoto);
+      }
+
+      await createFeedback(formData, branchSlug);
 
       setMessage("Thank you for your feedback!");
 
       setForm({
         customerName: "",
-        mealSession: "",
+        serviceType: "",
         rating: 0,
-        review: "",
+        comment: "",
       });
+      setConcernPhoto(null);
+      setFileInputKey((current) => current + 1);
     } catch (err) {
       console.error(err);
       alert(err.response?.data?.message || "Failed to submit feedback");
@@ -113,12 +121,13 @@ function CustomerFeedbackForm({ branchSlug = "" }) {
         />
 
         <select
-          value={form.mealSession}
+          value={form.serviceType}
           onChange={(e) =>
-            setForm({ ...form, mealSession: e.target.value })
+            setForm({ ...form, serviceType: e.target.value })
           }
           required
           style={styles.input}
+          name="serviceType"
         >
           <option value="">Select Lunch / Dinner</option>
           <option value="Lunch">Lunch</option>
@@ -152,15 +161,24 @@ function CustomerFeedbackForm({ branchSlug = "" }) {
         </div>
 
         <textarea
-          placeholder="Short review only..."
-          value={form.review}
-          onChange={(e) => setForm({ ...form, review: e.target.value })}
+          placeholder="Short comment (optional)..."
+          value={form.comment}
+          onChange={(e) => setForm({ ...form, comment: e.target.value })}
           maxLength="120"
-          required
           style={styles.textarea}
+          name="comment"
         />
 
-        <p style={styles.counter}>{form.review.length}/120 characters</p>
+        <p style={styles.counter}>{form.comment.length}/120 characters</p>
+
+        <input
+          key={fileInputKey}
+          type="file"
+          name="concernPhoto"
+          accept="image/jpeg,image/png,image/webp"
+          onChange={(e) => setConcernPhoto(e.target.files?.[0] || null)}
+          style={styles.input}
+        />
 
         <button type="submit" style={styles.primaryButton}>
           Submit Feedback

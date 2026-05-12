@@ -42,6 +42,11 @@ const employeeSchema = new mongoose.Schema(
       trim: true,
     },
 
+    photo: {
+      type: String,
+      default: "",
+    },
+
     position: {
       type: String,
       required: true,

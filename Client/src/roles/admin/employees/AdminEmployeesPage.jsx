@@ -234,14 +234,25 @@ function EmployeesPage({ initialTab = "employees" }) {
   };
 
   const handleDeleteEmployee = async (id) => {
+    if (!isSuperAdmin) {
+      alert("Only Super Admin can delete employees.");
+      return;
+    }
+
     const confirmDelete = window.confirm(
       "Warning: Are you sure you want to delete this employee? This action cannot be undone."
     );
 
     if (!confirmDelete) return;
 
+    const authorizationPassword = window.prompt(
+      "Enter your Super Admin password to delete this employee:"
+    );
+
+    if (!authorizationPassword) return;
+
     try {
-      await deleteEmployee(id);
+      await deleteEmployee(id, { authorizationPassword });
       alert("Employee deleted successfully");
       fetchEmployees();
     } catch (error) {
@@ -420,6 +431,7 @@ function EmployeesPage({ initialTab = "employees" }) {
                 onViewDetails={handleViewDetails}
                 onUpdateStatus={handleUpdateEmployeeStatus}
                 onEdit={handleEditEmployee}
+                canDelete={isSuperAdmin}
               />
 
               <EmployeeDetails

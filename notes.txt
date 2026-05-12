@@ -1,0 +1,38 @@
+Render upload setup notes
+
+1. Create a Render Disk for the backend service.
+   - Mount path: /var/data
+   - The app will save uploaded images under /var/data/uploads.
+
+2. Add this environment variable in the Render backend service:
+   UPLOAD_ROOT=/var/data/uploads
+
+3. Make sure the backend service uses the Backend folder commands:
+   - Build command: npm install
+   - Start command: npm start
+
+4. Uploaded image URLs stored in MongoDB must stay public paths only:
+   - /uploads/employees/emp-0001-2026-05-12-...webp
+   - /uploads/feedback/feedback-...webp
+   Do not store /var/data/uploads or any full server filesystem path.
+
+5. The backend serves uploaded files from:
+   - /uploads
+   - /api/uploads
+   The /api/uploads alias helps if VITE_API_URL includes /api.
+
+6. Frontend VITE_API_URL should match how the API is called in production.
+   Example:
+   VITE_API_URL=https://your-backend-service.onrender.com/api
+
+7. Only these uploads are enabled:
+   - Employee photos using the photo field.
+   - Customer feedback concern photos using the concernPhoto field.
+   Other modules should continue using JSON-only requests.
+
+8. Employee photo filenames include the employee ID and upload date.
+   Example:
+   emp-0001-2026-05-12-1715512345678-a1b2c3d4.webp
+
+9. Render disks are persistent, but files are tied to that service and disk.
+   Keep the disk attached to the backend service before deploying image upload changes.

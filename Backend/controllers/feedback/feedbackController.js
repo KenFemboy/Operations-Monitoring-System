@@ -77,41 +77,46 @@ export const createFeedback = async (req, res) => {
       branchName,
       branchSlug,
       mealSession,
+      serviceType,
       rating,
       review,
+      comment,
     } = req.body;
     const selectedBranchSlug = req.params?.branchSlug || branchSlug;
+    const selectedServiceType = mealSession || serviceType;
+    const selectedComment = (review || comment || "").trim();
 
     if (
-      !mealSession ||
+      !selectedServiceType ||
       !rating ||
-      !review ||
       (!req.user && !branch && !branchId && !branchName && !selectedBranchSlug)
     ) {
       return res.status(400).json({
         success: false,
-        message: "Branch, meal session, rating, and review are required",
+        message: "Branch, service type, and rating are required",
       });
     }
 
-    if (!["Lunch", "Dinner"].includes(mealSession)) {
+    if (!["Lunch", "Dinner"].includes(selectedServiceType)) {
       return res.status(400).json({
         success: false,
-        message: "Meal session must be Lunch or Dinner",
+        message: "Service type must be Lunch or Dinner",
       });
     }
 
-    if (rating < 1 || rating > 5) {
+    const numericRating = Number(rating);
+
+    if (numericRating < 1 || numericRating > 5) {
       return res.status(400).json({
         success: false,
         message: "Rating must be between 1 and 5",
       });
     }
 
-    if (review.length > 120) {
+    if (selectedComment.length > 120) {
       return res.status(400).json({
         success: false,
-        message: "Review must be 120 characters or less",
+        message: "Comment must be 120 characters or less",
       });
     }
 
@@ -140,9 +145,12 @@ export const createFeedback = async (req, res) => {
     const feedback = await Feedback.create({
       customerName: customerName || "Anonymous",
       branch: resolvedBranch._id,
-      mealSession,
-      rating,
-      review,
+      mealSession: selectedServiceType,
+      serviceType: selectedServiceType,
+      rating: numericRating,
+      review: selectedComment,
+      comment: selectedComment,
+      concernPhoto: req.uploadedImage?.publicPath || "",
     });
 
     await feedback.populate("branch", "branchName location address status");

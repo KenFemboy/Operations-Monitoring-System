@@ -1,4 +1,5 @@
 import express from "express";
+import { uploadFeedbackPhoto } from "../../middleware/imageUploadMiddleware.js";
 import {
   createFeedback,
   getPublicFeedbackBranchConfig,
@@ -10,7 +11,7 @@ const router = express.Router();
 
 router.get("/config", getPublicFeedbackFormConfig);
 router.get("/config/:branchSlug", getPublicFeedbackBranchConfig);
-router.post("/", createFeedback);
-router.post("/:branchSlug", createFeedback);
+router.post("/", uploadFeedbackPhoto, createFeedback);
+router.post("/:branchSlug", uploadFeedbackPhoto, createFeedback);
 
 export default router;
