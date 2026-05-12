@@ -1,3 +1,5 @@
+import { useState } from "react";
+
 function EmployeeTable({
   employees,
   onDelete,
@@ -6,9 +8,49 @@ function EmployeeTable({
   onEdit,
   canDelete = false,
 }) {
+  const [employeeIdSearch, setEmployeeIdSearch] = useState("");
+  const [branchSearch, setBranchSearch] = useState("");
+  const normalizedEmployeeIdSearch = employeeIdSearch.trim().toLowerCase();
+  const normalizedBranchSearch = branchSearch.trim().toLowerCase();
+  const filteredEmployees = employees.filter((employee) => {
+    const employeeId = (employee.employeeId || "").toLowerCase();
+    const branchName = (
+      employee.branch?.branchName ||
+      employee.assignedBranch ||
+      ""
+    ).toLowerCase();
+
+    return (
+      (!normalizedEmployeeIdSearch ||
+        employeeId.includes(normalizedEmployeeIdSearch)) &&
+      (!normalizedBranchSearch || branchName.includes(normalizedBranchSearch))
+    );
+  });
+
   return (
     <div style={styles.card}>
       <h2>Employee List</h2>
+
+      <div style={styles.searchRow}>
+        <label style={styles.searchField}>
+          <span>Employee ID</span>
+          <input
+            value={employeeIdSearch}
+            onChange={(event) => setEmployeeIdSearch(event.target.value)}
+            placeholder="Search employee ID"
+            style={styles.searchInput}
+          />
+        </label>
+        <label style={styles.searchField}>
+          <span>Branch</span>
+          <input
+            value={branchSearch}
+            onChange={(event) => setBranchSearch(event.target.value)}
+            placeholder="Search branch"
+            style={styles.searchInput}
+          />
+        </label>
+      </div>
 
       <table style={styles.table}>
         <thead>
@@ -18,21 +60,20 @@ function EmployeeTable({
             <th style={styles.th}>Position</th>
             <th style={styles.th}>Assigned Branch</th>
             <th style={styles.th}>Daily Rate</th>
-            <th style={styles.th}>TIN</th>
             <th style={styles.th}>Status</th>
             <th style={styles.th}>Action</th>
           </tr>
         </thead>
 
         <tbody>
-          {employees.length === 0 ? (
+          {filteredEmployees.length === 0 ? (
             <tr>
-              <td style={styles.td} colSpan="8" align="center">
+              <td style={styles.td} colSpan="7" align="center">
                 No employees found
               </td>
             </tr>
           ) : (
-            employees.map((employee) => (
+            filteredEmployees.map((employee) => (
               <tr key={employee._id}>
                 <td style={styles.td}>{employee.employeeId}</td>
 
@@ -49,8 +90,6 @@ function EmployeeTable({
                 <td style={styles.td}>
                   PHP {Number(employee.basicRate ?? employee.salaryRate ?? 0).toFixed(2)}
                 </td>
-
-                <td style={styles.td}>{employee.tin || "-"}</td>
 
                 <td style={styles.td}>
                   <select
@@ -110,6 +149,28 @@ const styles = {
     borderRadius: "10px",
     padding: "20px",
     overflowX: "auto",
+  },
+
+  searchRow: {
+    display: "flex",
+    flexWrap: "wrap",
+    gap: "12px",
+    marginBottom: "16px",
+  },
+
+  searchField: {
+    display: "grid",
+    gap: "6px",
+    minWidth: "220px",
+    fontSize: "14px",
+    fontWeight: "600",
+  },
+
+  searchInput: {
+    padding: "9px 11px",
+    border: "1px solid #ccc",
+    borderRadius: "6px",
+    fontSize: "14px",
   },
 
   table: {
