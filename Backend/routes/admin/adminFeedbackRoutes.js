@@ -19,6 +19,7 @@ router.post("/", createFeedback);
 router.get("/", getFeedbacks);
 router.get("/summary/by-branch", getAverageRatingByBranch);
 router.get("/summary/by-month", getAverageRatingByMonth);
+router.patch("/:id/archive", deleteFeedback);
 router.delete("/:id", deleteFeedback);
 
 export default router;

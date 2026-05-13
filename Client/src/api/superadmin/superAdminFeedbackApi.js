@@ -17,5 +17,8 @@ export const getSuperAdminAverageRatingByMonth = (params = {}) =>
 export const createSuperAdminFeedback = (data) =>
   api.post(`${SUPER_ADMIN_PREFIX}/feedback`, data);
 
+export const archiveSuperAdminFeedback = (id, reason = "") =>
+  api.patch(`${SUPER_ADMIN_PREFIX}/feedback/${id}/archive`, { reason });
+
 export const deleteSuperAdminFeedback = (id) =>
-  api.delete(`${SUPER_ADMIN_PREFIX}/feedback/${id}`);
+  archiveSuperAdminFeedback(id);

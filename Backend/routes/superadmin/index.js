@@ -8,6 +8,7 @@ import superAdminPlantillaRoutes from "./superAdminPlantillaRoutes.js";
 import superAdminReportRoutes from "./superAdminReportRoutes.js";
 import superAdminSalesRoutes from "./superAdminSalesRoutes.js";
 import superAdminUserRoutes from "./superAdminUserRoutes.js";
+import superAdminArchiveRoutes from "./superAdminArchiveRoutes.js";
 
 // Superadmin API group. Every child route can access all branches.
 const router = express.Router();
@@ -21,5 +22,6 @@ router.use("/reports", superAdminReportRoutes);
 router.use("/dashboard", superAdminDashboardRoutes);
 router.use("/feedback", superAdminFeedbackRoutes);
 router.use("/plantilla", superAdminPlantillaRoutes);
+router.use("/archive", superAdminArchiveRoutes);
 
 export default router;

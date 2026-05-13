@@ -13,8 +13,11 @@ export const createAdminEmployee = (data) =>
 export const updateAdminEmployee = (id, data) =>
   api.put(`${EMPLOYEE_PREFIX}/${id}`, data, getConfig(data));
 
+export const archiveAdminEmployee = (id, reason = "") =>
+  api.patch(`${EMPLOYEE_PREFIX}/${id}/archive`, { reason });
+
 export const deleteAdminEmployee = (id, data = {}) =>
-  api.delete(`${EMPLOYEE_PREFIX}/${id}`, { data });
+  archiveAdminEmployee(id, data.reason || data.archiveReason || "");
 
 export const getAdminEmployeeFullDetails = (id) =>
   api.get(`${EMPLOYEE_PREFIX}/${id}/details`);
@@ -22,5 +25,6 @@ export const getAdminEmployeeFullDetails = (id) =>
 export const getEmployees = getAdminEmployees;
 export const createEmployee = createAdminEmployee;
 export const updateEmployee = updateAdminEmployee;
+export const archiveEmployee = archiveAdminEmployee;
 export const deleteEmployee = deleteAdminEmployee;
 export const getEmployeeFullDetails = getAdminEmployeeFullDetails;

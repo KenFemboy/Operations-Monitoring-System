@@ -76,6 +76,8 @@ export const getOverallSummary = async (req, res) => {
 
     const branchFilter = getBranchFilter(req);
     const aggregateBranchFilter = getAggregateBranchFilter(req);
+    const activeFilter = { ...branchFilter, isArchived: { $ne: true } };
+    const activeAggregateFilter = { ...aggregateBranchFilter, isArchived: { $ne: true } };
 
     const [
       totalEmployees,
@@ -86,16 +88,16 @@ export const getOverallSummary = async (req, res) => {
       monthlySales,
       feedbackAverage,
     ] = await Promise.all([
-      Employee.countDocuments(branchFilter),
-      Employee.countDocuments({ ...branchFilter, employmentStatus: "active" }),
+      Employee.countDocuments(activeFilter),
+      Employee.countDocuments({ ...activeFilter, employmentStatus: "active" }),
 
-      Product.countDocuments(branchFilter),
-      Product.countDocuments({ ...branchFilter, status: "Low Stock" }),
+      Product.countDocuments(activeFilter),
+      Product.countDocuments({ ...activeFilter, status: "Low Stock" }),
 
-      Feedback.countDocuments(branchFilter),
+      Feedback.countDocuments(activeFilter),
 
       Sale.aggregate([
-        { $match: { ...aggregateBranchFilter, saleDate: { $regex: `^${monthPrefix}` } } },
+        { $match: { ...activeAggregateFilter, saleDate: { $regex: `^${monthPrefix}` } } },
         {
           $group: {
             _id: null,
@@ -106,7 +108,7 @@ export const getOverallSummary = async (req, res) => {
       ]),
 
       Feedback.aggregate([
-        { $match: aggregateBranchFilter },
+        { $match: activeAggregateFilter },
         {
           $group: {
             _id: null,
@@ -145,11 +147,11 @@ export const getSalesAnalytics = async (req, res) => {
   try {
     const { monthPrefix, todayDateString, startOfMonth } = getDateRanges();
 
-    const branchFilter = getBranchFilter(req);
     const aggregateBranchFilter = getAggregateBranchFilter(req);
+    const activeAggregateFilter = { ...aggregateBranchFilter, isArchived: { $ne: true } };
 
     const monthlySales = await Sale.aggregate([
-      { $match: { ...aggregateBranchFilter, saleDate: { $regex: `^${monthPrefix}` } } },
+      { $match: { ...activeAggregateFilter, saleDate: { $regex: `^${monthPrefix}` } } },
       {
         $group: {
           _id: null,
@@ -160,7 +162,7 @@ export const getSalesAnalytics = async (req, res) => {
     ]);
 
     const dailySales = await Sale.aggregate([
-      { $match: { ...aggregateBranchFilter, saleDate: todayDateString } },
+      { $match: { ...activeAggregateFilter, saleDate: todayDateString } },
       {
         $group: {
           _id: "$serviceType",
@@ -171,7 +173,7 @@ export const getSalesAnalytics = async (req, res) => {
     ]);
 
     const salesByDay = await Sale.aggregate([
-      { $match: { ...aggregateBranchFilter, createdAt: { $gte: startOfMonth } } },
+      { $match: { ...activeAggregateFilter, createdAt: { $gte: startOfMonth } } },
       {
         $group: {
           _id: {
@@ -215,6 +217,7 @@ export const getSalesAnalytics = async (req, res) => {
 export const getEmployeeAnalytics = async (req, res) => {
   try {
     const branchFilter = getBranchFilter(req);
+    const activeFilter = { ...branchFilter, isArchived: { $ne: true } };
 
     const [
       total,
@@ -223,11 +226,11 @@ export const getEmployeeAnalytics = async (req, res) => {
       resigned,
       terminated,
     ] = await Promise.all([
-      Employee.countDocuments(branchFilter),
-      Employee.countDocuments({ ...branchFilter, employmentStatus: "active" }),
-      Employee.countDocuments({ ...branchFilter, employmentStatus: "inactive" }),
-      Employee.countDocuments({ ...branchFilter, employmentStatus: "resigned" }),
-      Employee.countDocuments({ ...branchFilter, employmentStatus: "terminated" }),
+      Employee.countDocuments(activeFilter),
+      Employee.countDocuments({ ...activeFilter, employmentStatus: "active" }),
+      Employee.countDocuments({ ...activeFilter, employmentStatus: "inactive" }),
+      Employee.countDocuments({ ...activeFilter, employmentStatus: "resigned" }),
+      Employee.countDocuments({ ...activeFilter, employmentStatus: "terminated" }),
     ]);
 
     res.status(200).json({
@@ -312,6 +315,7 @@ export const getAttendancePayrollAnalytics = async (req, res) => {
 export const getInventoryAnalytics = async (req, res) => {
   try {
     const branchFilter = getBranchFilter(req);
+    const activeFilter = { ...branchFilter, isArchived: { $ne: true } };
 
     const [
       products,
@@ -324,15 +328,15 @@ export const getInventoryAnalytics = async (req, res) => {
       stockIn,
       stockOut,
     ] = await Promise.all([
-      Product.countDocuments(branchFilter),
-      Product.countDocuments({ ...branchFilter, status: "Low Stock" }),
-      Product.countDocuments({ ...branchFilter, status: "Out of Stock" }),
+      Product.countDocuments(activeFilter),
+      Product.countDocuments({ ...activeFilter, status: "Low Stock" }),
+      Product.countDocuments({ ...activeFilter, status: "Out of Stock" }),
 
-      Purchase.countDocuments(branchFilter),
-      Purchase.countDocuments({ ...branchFilter, status: "Pending" }),
+      Purchase.countDocuments(activeFilter),
+      Purchase.countDocuments({ ...activeFilter, status: "Pending" }),
 
-      StockIn.countDocuments(branchFilter),
-      StockOut.countDocuments(branchFilter),
+      StockIn.countDocuments(activeFilter),
+      StockOut.countDocuments(activeFilter),
     ]);
 
     res.status(200).json({
@@ -363,11 +367,13 @@ export const getFeedbackAnalytics = async (req, res) => {
   try {
     const branchFilter = getBranchFilter(req);
     const feedbackBranchMatch = getAggregateBranchFilter(req);
+    const activeFilter = { ...branchFilter, isArchived: { $ne: true } };
+    const activeFeedbackMatch = { ...feedbackBranchMatch, isArchived: { $ne: true } };
 
-    const totalFeedback = await Feedback.countDocuments(branchFilter);
+    const totalFeedback = await Feedback.countDocuments(activeFilter);
 
     const feedbackAverage = await Feedback.aggregate([
-      { $match: feedbackBranchMatch },
+      { $match: activeFeedbackMatch },
       {
         $group: {
           _id: null,
@@ -377,7 +383,7 @@ export const getFeedbackAnalytics = async (req, res) => {
     ]);
 
     const feedbackByBranch = await Feedback.aggregate([
-      { $match: feedbackBranchMatch },
+      { $match: activeFeedbackMatch },
       {
         $group: {
           _id: "$branch",

@@ -39,6 +39,7 @@ router.get("/", getEmployees);
 router.get("/:id", getEmployeeById);
 router.get("/:id/details", getEmployeeFullDetails);
 router.put("/:id", uploadEmployeePhoto, updateEmployee);
+router.patch("/:id/archive", deleteEmployee);
 router.delete("/:id", deleteEmployee);
 
 router.post("/attendance/create", createAttendance);

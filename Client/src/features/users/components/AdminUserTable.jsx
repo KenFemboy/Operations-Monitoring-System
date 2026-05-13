@@ -1,4 +1,4 @@
-function AdminUserTable({ users, onEdit, onDelete }) {
+function AdminUserTable({ users, onEdit }) {
   return (
     <div style={styles.card}>
       <div style={styles.header}>
@@ -64,13 +64,6 @@ function AdminUserTable({ users, onEdit, onDelete }) {
                         Edit
                       </button>
 
-                      <button
-                        type="button"
-                        onClick={() => onDelete(user)}
-                        style={styles.deleteButton}
-                      >
-                        Delete
-                      </button>
                     </td>
                   </tr>
                 );
@@ -143,14 +136,6 @@ const styles = {
     borderRadius: "6px",
     cursor: "pointer",
     marginRight: "6px",
-  },
-  deleteButton: {
-    padding: "6px 10px",
-    backgroundColor: "#dc2626",
-    color: "#fff",
-    border: "none",
-    borderRadius: "6px",
-    cursor: "pointer",
   },
 };
 

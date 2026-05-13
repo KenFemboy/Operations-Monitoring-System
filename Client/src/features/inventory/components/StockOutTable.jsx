@@ -1,4 +1,22 @@
-function StockOutTable({ stockOuts }) {
+import { useState } from "react";
+import { archiveStockOut } from "../../../api/admin/adminInventoryApi";
+import ArchiveConfirmModal from "../../archive/components/ArchiveConfirmModal";
+
+function StockOutTable({ stockOuts, onRefresh }) {
+  const [archiveTarget, setArchiveTarget] = useState(null);
+
+  const handleArchive = async (reason) => {
+    try {
+      await archiveStockOut(archiveTarget._id, reason);
+      alert("Stock out record archived");
+      setArchiveTarget(null);
+      onRefresh?.();
+    } catch (error) {
+      console.error(error);
+      alert(error.response?.data?.message || "Failed to archive stock out record");
+    }
+  };
+
   return (
     <div style={styles.card}>
       <h2>Stock Out History</h2>
@@ -12,6 +30,7 @@ function StockOutTable({ stockOuts }) {
             <th style={styles.th}>Reason</th>
             <th style={styles.th}>Released By</th>
             <th style={styles.th}>Date</th>
+            <th style={styles.th}>Action</th>
           </tr>
         </thead>
 
@@ -26,12 +45,27 @@ function StockOutTable({ stockOuts }) {
               <td style={styles.td}>
                 {new Date(stock.createdAt).toLocaleString()}
               </td>
+              <td style={styles.td}>
+                <button
+                  type="button"
+                  onClick={() => setArchiveTarget(stock)}
+                  style={styles.archiveButton}
+                >
+                  Archive
+                </button>
+              </td>
             </tr>
           ))}
         </tbody>
       </table>
 
       {stockOuts.length === 0 && <p>No stock out records found.</p>}
+      <ArchiveConfirmModal
+        isOpen={Boolean(archiveTarget)}
+        title="Archive stock out record"
+        onClose={() => setArchiveTarget(null)}
+        onConfirm={handleArchive}
+      />
     </div>
   );
 }
@@ -60,6 +94,14 @@ const styles = {
   td: {
     borderBottom: "1px solid #eee",
     padding: "12px",
+  },
+  archiveButton: {
+    padding: "6px 10px",
+    backgroundColor: "#dc2626",
+    color: "#fff",
+    border: "none",
+    borderRadius: "5px",
+    cursor: "pointer",
   },
 };
 

@@ -9,8 +9,6 @@ import IncidentReport from "../../models/IncidentReport.js";
 import NoticeToExplain from "../../models/NoticeToExplain.js";
 import { isSuperAdmin } from "../../middleware/accessControl.js";
 import { processUploadedEmployeePhoto } from "../../middleware/imageUploadMiddleware.js";
-import User from "../../models/User.js";
-import bcrypt from "bcryptjs";
 
 const getBranchName = (req) => {
   if (isSuperAdmin(req.user)) {
@@ -109,7 +107,7 @@ const getEmployeeBranchId = async (employeeId) => {
 };
 
 const assertEmployeeAccess = async (req, employeeId) => {
-  const employee = await Employee.findById(employeeId)
+  const employee = await Employee.findOne({ _id: employeeId, isArchived: { $ne: true } })
     .select("employeeId assignedBranch branch")
     .lean();
 
@@ -173,7 +171,7 @@ const getEmployeeIdsForBranchScope = async ({ branchId, branchName }) => {
     branchConditions.push({ assignedBranch: branchName });
   }
 
-  const employees = await Employee.find({ $or: branchConditions })
+  const employees = await Employee.find({ $or: branchConditions, isArchived: { $ne: true } })
     .select("_id")
     .lean();
 
@@ -345,7 +343,7 @@ export const createEmployee = async (req, res) => {
 export const getEmployees = async (req, res) => {
   try {
     const branchScope = await getBranchScopeFromRequest(req);
-    const filter = buildEmployeeBranchFilter(branchScope);
+    const filter = { ...buildEmployeeBranchFilter(branchScope), isArchived: { $ne: true } };
     const employees = await Employee.find(filter)
       .populate("branch", "branchName location address status")
       .sort({ createdAt: -1 });
@@ -365,7 +363,10 @@ export const getEmployees = async (req, res) => {
 
 export const getEmployeeById = async (req, res) => {
   try {
-    const employee = await Employee.findById(req.params.id).populate(
+    const employee = await Employee.findOne({
+      _id: req.params.id,
+      isArchived: { $ne: true },
+    }).populate(
       "branch",
       "branchName location address status"
     );
@@ -461,46 +462,10 @@ export const updateEmployee = async (req, res) => {
 
 export const deleteEmployee = async (req, res) => {
   try {
-    if (!isSuperAdmin(req.user)) {
-      return res.status(403).json({
-        success: false,
-        message: "Forbidden: only Super Admin can delete employees",
-      });
-    }
-
-    const authorizationPassword =
-      req.body.authorizationPassword || req.body.superadminPassword || req.body.password;
-
-    if (!authorizationPassword) {
-      return res.status(400).json({
-        success: false,
-        message: "Super admin password is required",
-      });
-    }
-
-    const currentUser = await User.findById(req.user.id).select("password");
-
-    if (!currentUser) {
-      return res.status(401).json({
-        success: false,
-        message: "Current user not found",
-      });
-    }
-
-    const isAuthorizationPasswordValid = await bcrypt.compare(
-      authorizationPassword,
-      currentUser.password
-    );
-
-    if (!isAuthorizationPasswordValid) {
-      return res.status(401).json({
-        success: false,
-        message: "Invalid super admin password",
-      });
-    }
-
-    await assertEmployeeAccess(req, req.params.id);
-    const employee = await Employee.findByIdAndDelete(req.params.id);
+    const employee = await Employee.findOne({
+      _id: req.params.id,
+      isArchived: { $ne: true },
+    });
 
     if (!employee) {
       return res.status(404).json({
@@ -509,14 +474,23 @@ export const deleteEmployee = async (req, res) => {
       });
     }
 
+    await assertEmployeeAccess(req, req.params.id);
+
+    employee.isArchived = true;
+    employee.archivedAt = new Date();
+    employee.archivedBy = req.user?._id || req.user?.id || null;
+    employee.archiveReason = req.body?.reason || "No reason provided";
+    await employee.save();
+
     res.status(200).json({
       success: true,
-      message: "Employee deleted successfully",
+      message: "Employee archived successfully",
+      data: employee,
     });
   } catch (error) {
     res.status(error.statusCode || 500).json({
       success: false,
-      message: "Failed to delete employee",
+      message: "Failed to archive employee",
       error: error.message,
     });
   }
@@ -1330,7 +1304,7 @@ export const getEmployeeFullDetails = async (req, res) => {
   try {
     const { id } = req.params;
 
-    const employee = await Employee.findById(id).populate(
+    const employee = await Employee.findOne({ _id: id, isArchived: { $ne: true } }).populate(
       "branch",
       "branchName location address status"
     );

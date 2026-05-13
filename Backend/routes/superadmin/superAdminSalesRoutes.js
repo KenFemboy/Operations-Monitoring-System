@@ -19,6 +19,7 @@ router.post("/", createSale);
 router.get("/", getSales);
 router.get("/daily", getDailySales);
 router.get("/monthly", getMonthlySales);
+router.patch("/:id/archive", deleteSale);
 router.delete("/:id", deleteSale);
 
 export default router;

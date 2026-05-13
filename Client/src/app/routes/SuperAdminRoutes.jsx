@@ -10,6 +10,8 @@ import SuperAdminSalesPage from "../../roles/superadmin/sales/SuperAdminSalesPag
 import SuperAdminFeedbackPage from "../../roles/superadmin/feedback/SuperAdminFeedbackPage";
 import SuperAdminReportsPage from "../../roles/superadmin/reports/SuperAdminReportsPage";
 import SuperAdminPlantillaPage from "../../roles/superadmin/plantilla/SuperAdminPlantillaPage";
+import RoleRoute from "../../auth/components/RoleRoute";
+import ArchivePage from "../../features/archive/pages/ArchivePage";
 
 export default function SuperAdminRoutes() {
   return (
@@ -30,6 +32,14 @@ export default function SuperAdminRoutes() {
         <Route path="sales" element={<SuperAdminSalesPage />} />
         <Route path="feedback" element={<SuperAdminFeedbackPage />} />
         <Route path="plantilla" element={<SuperAdminPlantillaPage />} />
+        <Route
+          path="archive"
+          element={
+            <RoleRoute allowedRoles={["superadmin", "super_admin"]}>
+              <ArchivePage />
+            </RoleRoute>
+          }
+        />
         <Route path="reports" element={<SuperAdminReportsPage />} />
       </Route>
     </Routes>

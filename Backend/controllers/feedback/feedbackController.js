@@ -218,7 +218,7 @@ export const getFeedbacks = async (req, res) => {
   try {
     const { startDate, endDate, branch, mealSession } = req.query;
 
-    const filter = {};
+    const filter = { isArchived: { $ne: true } };
 
     if (startDate && endDate) {
       filter.createdAt = {
@@ -260,7 +260,7 @@ export const getAverageRatingByBranch = async (req, res) => {
   try {
     const { startDate, endDate, branch, mealSession } = req.query;
 
-    const match = {};
+    const match = { isArchived: { $ne: true } };
 
     if (startDate && endDate) {
       match.createdAt = {
@@ -332,7 +332,7 @@ export const getAverageRatingByMonth = async (req, res) => {
   try {
     const { branch, mealSession } = req.query;
 
-    const match = {};
+    const match = { isArchived: { $ne: true } };
 
     const branchFilter = getBranchFilter(req);
     if (Object.keys(branchFilter).length) {
@@ -385,9 +385,9 @@ export const getAverageRatingByMonth = async (req, res) => {
 export const deleteFeedback = async (req, res) => {
   try {
     const { id } = req.params;
-    const filter = { _id: id, ...getBranchFilter(req) };
+    const filter = { _id: id, isArchived: { $ne: true }, ...getBranchFilter(req) };
 
-    const feedback = await Feedback.findOneAndDelete(filter);
+    const feedback = await Feedback.findOne(filter);
 
     if (!feedback) {
       return res.status(404).json({
@@ -396,14 +396,21 @@ export const deleteFeedback = async (req, res) => {
       });
     }
 
+    feedback.isArchived = true;
+    feedback.archivedAt = new Date();
+    feedback.archivedBy = req.user?._id || req.user?.id || null;
+    feedback.archiveReason = req.body?.reason || "No reason provided";
+    await feedback.save();
+
     res.status(200).json({
       success: true,
-      message: "Feedback deleted successfully",
+      message: "Feedback archived successfully",
+      data: feedback,
     });
   } catch (error) {
     res.status(500).json({
       success: false,
-      message: "Failed to delete feedback",
+      message: "Failed to archive feedback",
       error: error.message,
     });
   }

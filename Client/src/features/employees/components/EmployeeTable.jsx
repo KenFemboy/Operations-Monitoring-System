@@ -128,7 +128,7 @@ function EmployeeTable({
                         onClick={() => onDelete(employee._id)}
                         style={styles.deleteButton}
                       >
-                        Delete
+                        Archive
                       </button>
                     )}
                   </div>

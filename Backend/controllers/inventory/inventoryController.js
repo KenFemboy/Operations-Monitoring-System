@@ -67,7 +67,7 @@ export const createProduct = async (req, res) => {
 
 export const getProducts = async (req, res) => {
   try {
-    const filter = getInventoryBranchFilter(req);
+    const filter = { ...getInventoryBranchFilter(req), isArchived: { $ne: true } };
     const products = await Product.find(filter)
       .populate("branch", "branchName location")
       .sort({ createdAt: -1 });
@@ -87,17 +87,20 @@ export const getProducts = async (req, res) => {
 
 export const getProductById = async (req, res) => {
   try {
-    const product = await Product.findById(req.params.id);
+    const product = await Product.findOne({
+      _id: req.params.id,
+      isArchived: { $ne: true },
+    });
 
-    const stockIns = await StockIn.find({ product: req.params.id })
+    const stockIns = await StockIn.find({ product: req.params.id, isArchived: { $ne: true } })
       .populate("product")
       .sort({ createdAt: -1 });
 
-    const stockOuts = await StockOut.find({ product: req.params.id })
+    const stockOuts = await StockOut.find({ product: req.params.id, isArchived: { $ne: true } })
       .populate("product")
       .sort({ createdAt: -1 });
 
-    const purchases = await Purchase.find({ product: req.params.id })
+    const purchases = await Purchase.find({ product: req.params.id, isArchived: { $ne: true } })
       .populate("product")
       .sort({ createdAt: -1 });
 
@@ -132,7 +135,10 @@ export const updateProduct = async (req, res) => {
   try {
     const { name, category, unit, minimumStock } = req.body;
 
-    const product = await Product.findById(req.params.id);
+    const product = await Product.findOne({
+      _id: req.params.id,
+      isArchived: { $ne: true },
+    });
 
     if (!product) {
       return res.status(404).json({
@@ -172,7 +178,10 @@ export const updateProduct = async (req, res) => {
 
 export const deleteProduct = async (req, res) => {
   try {
-    const product = await Product.findById(req.params.id);
+    const product = await Product.findOne({
+      _id: req.params.id,
+      isArchived: { $ne: true },
+    });
 
     if (!product) {
       return res.status(404).json({
@@ -188,16 +197,21 @@ export const deleteProduct = async (req, res) => {
       });
     }
 
-    await product.deleteOne();
+    product.isArchived = true;
+    product.archivedAt = new Date();
+    product.archivedBy = req.user?._id || req.user?.id || null;
+    product.archiveReason = req.body?.reason || "No reason provided";
+    await product.save();
 
     res.status(200).json({
       success: true,
-      message: "Product deleted successfully",
+      message: "Product archived successfully",
+      data: product,
     });
   } catch (error) {
     res.status(500).json({
       success: false,
-      message: "Failed to delete product",
+      message: "Failed to archive product",
       error: error.message,
     });
   }
@@ -218,7 +232,10 @@ export const createPurchase = async (req, res) => {
       remarks,
     } = req.body;
 
-    const existingProduct = await Product.findById(product);
+    const existingProduct = await Product.findOne({
+      _id: product,
+      isArchived: { $ne: true },
+    });
 
     if (!existingProduct) {
       return res.status(404).json({
@@ -268,7 +285,7 @@ export const createPurchase = async (req, res) => {
 
 export const getPurchases = async (req, res) => {
   try {
-    const filter = getInventoryBranchFilter(req);
+    const filter = { ...getInventoryBranchFilter(req), isArchived: { $ne: true } };
     const purchases = await Purchase.find(filter)
       .populate("product")
       .populate("branch", "branchName location")
@@ -289,7 +306,10 @@ export const getPurchases = async (req, res) => {
 
 export const markPurchaseAsReceived = async (req, res) => {
   try {
-    const purchase = await Purchase.findById(req.params.id);
+    const purchase = await Purchase.findOne({
+      _id: req.params.id,
+      isArchived: { $ne: true },
+    });
 
     if (!purchase) {
       return res.status(404).json({
@@ -312,7 +332,10 @@ export const markPurchaseAsReceived = async (req, res) => {
       });
     }
 
-    const product = await Product.findById(purchase.product);
+    const product = await Product.findOne({
+      _id: purchase.product,
+      isArchived: { $ne: true },
+    });
 
     if (!product) {
       return res.status(404).json({
@@ -361,7 +384,10 @@ export const markPurchaseAsReceived = async (req, res) => {
 
 export const cancelPurchase = async (req, res) => {
   try {
-    const purchase = await Purchase.findById(req.params.id);
+    const purchase = await Purchase.findOne({
+      _id: req.params.id,
+      isArchived: { $ne: true },
+    });
 
     if (!purchase) {
       return res.status(404).json({
@@ -409,7 +435,10 @@ export const createStockIn = async (req, res) => {
   try {
     const { product, quantity, reason, addedBy, remarks } = req.body;
 
-    const existingProduct = await Product.findById(product);
+    const existingProduct = await Product.findOne({
+      _id: product,
+      isArchived: { $ne: true },
+    });
 
     if (!existingProduct) {
       return res.status(404).json({
@@ -460,7 +489,7 @@ export const createStockIn = async (req, res) => {
 
 export const getStockIns = async (req, res) => {
   try {
-    const filter = getInventoryBranchFilter(req);
+    const filter = { ...getInventoryBranchFilter(req), isArchived: { $ne: true } };
     const stockIns = await StockIn.find(filter)
       .populate("product")
       .populate("branch", "branchName location")
@@ -487,7 +516,10 @@ export const createStockOut = async (req, res) => {
   try {
     const { product, quantity, reason, releasedBy, remarks } = req.body;
 
-    const existingProduct = await Product.findById(product);
+    const existingProduct = await Product.findOne({
+      _id: product,
+      isArchived: { $ne: true },
+    });
 
     if (!existingProduct) {
       return res.status(404).json({
@@ -545,7 +577,7 @@ export const createStockOut = async (req, res) => {
 
 export const getStockOuts = async (req, res) => {
   try {
-    const filter = getInventoryBranchFilter(req);
+    const filter = { ...getInventoryBranchFilter(req), isArchived: { $ne: true } };
     const stockOuts = await StockOut.find(filter)
       .populate("product")
       .populate("branch", "branchName location")
@@ -580,7 +612,7 @@ export const getInventoryRecords = async (req, res) => {
     let stockOuts = [];
 
     const branchFilter = getInventoryBranchFilter(req);
-    const combinedFilter = { ...dateFilter, ...branchFilter };
+    const combinedFilter = { ...dateFilter, ...branchFilter, isArchived: { $ne: true } };
 
     if (!type || type === "all" || type === "stock-in") {
       stockIns = await StockIn.find(combinedFilter)

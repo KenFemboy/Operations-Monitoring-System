@@ -32,6 +32,9 @@ export const superAdminNavigation = [
   },
   {
     title: "Reports",
-    items: [{ label: "Archive", hint: "Deleted records", to: "/superadmin/reports" }],
+    items: [
+      { label: "Reports", hint: "Operational exports", to: "/superadmin/reports" },
+      { label: "Archive", hint: "Archived records", to: "/superadmin/archive" },
+    ],
   },
 ];

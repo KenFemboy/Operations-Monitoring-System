@@ -14,5 +14,8 @@ export const getSuperAdminDailySales = (params = {}) =>
 export const getSuperAdminMonthlySales = (params = {}) =>
   api.get(`${SUPER_ADMIN_PREFIX}/sales/monthly`, { params });
 
+export const archiveSuperAdminSale = (id, reason = "") =>
+  api.patch(`${SUPER_ADMIN_PREFIX}/sales/${id}/archive`, { reason });
+
 export const deleteSuperAdminSale = (id) =>
-  api.delete(`${SUPER_ADMIN_PREFIX}/sales/${id}`);
+  archiveSuperAdminSale(id);

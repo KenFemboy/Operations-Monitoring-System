@@ -1,6 +1,14 @@
-import { receivePurchase, cancelPurchase } from "../../../api/admin/adminInventoryApi";
+import { useState } from "react";
+import {
+  archivePurchase,
+  receivePurchase,
+  cancelPurchase,
+} from "../../../api/admin/adminInventoryApi";
+import ArchiveConfirmModal from "../../archive/components/ArchiveConfirmModal";
 
 function PurchaseTable({ purchases, onRefresh }) {
+  const [archiveTarget, setArchiveTarget] = useState(null);
+
   const handleReceive = async (id) => {
     try {
       await receivePurchase(id);
@@ -18,6 +26,18 @@ function PurchaseTable({ purchases, onRefresh }) {
     } catch (err) {
       console.error(err);
       alert(err.response?.data?.message || "Failed to cancel purchase");
+    }
+  };
+
+  const handleArchive = async (reason) => {
+    try {
+      await archivePurchase(archiveTarget._id, reason);
+      alert("Purchase archived");
+      setArchiveTarget(null);
+      onRefresh();
+    } catch (err) {
+      console.error(err);
+      alert(err.response?.data?.message || "Failed to archive purchase");
     }
   };
 
@@ -67,6 +87,13 @@ function PurchaseTable({ purchases, onRefresh }) {
                     </button>
                   </>
                 )}
+                <button
+                  type="button"
+                  onClick={() => setArchiveTarget(purchase)}
+                  style={styles.dangerButton}
+                >
+                  Archive
+                </button>
               </td>
             </tr>
           ))}
@@ -74,6 +101,12 @@ function PurchaseTable({ purchases, onRefresh }) {
       </table>
 
       {purchases.length === 0 && <p>No purchase records found.</p>}
+      <ArchiveConfirmModal
+        isOpen={Boolean(archiveTarget)}
+        title="Archive purchase"
+        onClose={() => setArchiveTarget(null)}
+        onConfirm={handleArchive}
+      />
     </div>
   );
 }

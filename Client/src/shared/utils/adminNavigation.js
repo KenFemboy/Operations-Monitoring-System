@@ -25,9 +25,6 @@ export const adminNavigation = [
   },
   {
     title: "System",
-    items: [
-      { label: "Settings", hint: "System preferences", to: "/admin/settings" },
-      { label: "Archive", hint: "Deleted records", to: "/admin/archive" },
-    ],
+    items: [{ label: "Settings", hint: "System preferences", to: "/admin/settings" }],
   },
 ];

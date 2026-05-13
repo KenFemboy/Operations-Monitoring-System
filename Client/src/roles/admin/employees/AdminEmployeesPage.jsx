@@ -5,7 +5,7 @@ import {
   getEmployees,
   getEmployeeFullDetails,
   createEmployee,
-  deleteEmployee,
+  archiveEmployee,
   updateEmployee,
 } from "../../../api/admin/adminEmployeeApi";
 import { getAttendance, createAttendance } from "../../../api/admin/adminAttendanceApi";
@@ -35,6 +35,7 @@ import IncidentReportForm from "../../../features/employees/components/IncidentR
 import IncidentReportTable from "../../../features/employees/components/IncidentReportTable";
 import NTEForm from "../../../features/employees/components/NTEForm";
 import NTEReportTable from "../../../features/employees/components/NTEReportTable";
+import ArchiveConfirmModal from "../../../features/archive/components/ArchiveConfirmModal";
 
 const TABS = [
   { key: "employees", label: "Employees" },
@@ -63,6 +64,7 @@ function EmployeesPage({ initialTab = "employees" }) {
   const [branches, setBranches] = useState([]);
   const [selectedEmployee, setSelectedEmployee] = useState(null);
   const [selectedDetails, setSelectedDetails] = useState(null);
+  const [archiveTarget, setArchiveTarget] = useState(null);
 
   const [attendance, setAttendance] = useState([]);
   const [selectedDate, setSelectedDate] = useState(getToday);
@@ -233,31 +235,15 @@ function EmployeesPage({ initialTab = "employees" }) {
     });
   };
 
-  const handleDeleteEmployee = async (id) => {
-    if (!isSuperAdmin) {
-      alert("Only Super Admin can delete employees.");
-      return;
-    }
-
-    const confirmDelete = window.confirm(
-      "Warning: Are you sure you want to delete this employee? This action cannot be undone."
-    );
-
-    if (!confirmDelete) return;
-
-    const authorizationPassword = window.prompt(
-      "Enter your Super Admin password to delete this employee:"
-    );
-
-    if (!authorizationPassword) return;
-
+  const handleArchiveEmployee = async (reason) => {
     try {
-      await deleteEmployee(id, { authorizationPassword });
-      alert("Employee deleted successfully");
+      await archiveEmployee(archiveTarget._id, reason);
+      alert("Employee archived successfully");
+      setArchiveTarget(null);
       fetchEmployees();
     } catch (error) {
       console.error(error);
-      alert(getErrorMessage(error, "Failed to delete employee"));
+      alert(getErrorMessage(error, "Failed to archive employee"));
     }
   };
 
@@ -427,11 +413,13 @@ function EmployeesPage({ initialTab = "employees" }) {
             <>
               <EmployeeTable
                 employees={employees}
-                onDelete={handleDeleteEmployee}
+                onDelete={(id) =>
+                  setArchiveTarget(employees.find((employee) => employee._id === id))
+                }
                 onViewDetails={handleViewDetails}
                 onUpdateStatus={handleUpdateEmployeeStatus}
                 onEdit={handleEditEmployee}
-                canDelete={isSuperAdmin}
+                canDelete
               />
 
               <EmployeeDetails
@@ -539,6 +527,13 @@ function EmployeesPage({ initialTab = "employees" }) {
           />
         </>
       )}
+
+      <ArchiveConfirmModal
+        isOpen={Boolean(archiveTarget)}
+        title="Archive employee"
+        onClose={() => setArchiveTarget(null)}
+        onConfirm={handleArchiveEmployee}
+      />
     </div>
   );
 }

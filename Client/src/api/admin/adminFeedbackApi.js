@@ -17,11 +17,15 @@ export const getAdminAverageRatingByMonth = (params = {}) =>
 export const createAdminFeedback = (data) =>
   api.post(FEEDBACK_PREFIX, data);
 
+export const archiveAdminFeedback = (id, reason = "") =>
+  api.patch(`${FEEDBACK_PREFIX}/${id}/archive`, { reason });
+
 export const deleteAdminFeedback = (id) =>
-  api.delete(`${FEEDBACK_PREFIX}/${id}`);
+  archiveAdminFeedback(id);
 
 export const createFeedback = createAdminFeedback;
 export const getFeedbacks = getAdminFeedback;
 export const getAverageRatingByBranch = getAdminAverageRatingByBranch;
 export const getAverageRatingByMonth = getAdminAverageRatingByMonth;
+export const archiveFeedback = archiveAdminFeedback;
 export const deleteFeedback = deleteAdminFeedback;

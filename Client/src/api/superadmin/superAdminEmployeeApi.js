@@ -13,8 +13,11 @@ export const createSuperAdminEmployee = (data) =>
 export const updateSuperAdminEmployee = (id, data) =>
   api.put(`${SUPER_ADMIN_PREFIX}/employees/${id}`, data, getConfig(data));
 
+export const archiveSuperAdminEmployee = (id, reason = "") =>
+  api.patch(`${SUPER_ADMIN_PREFIX}/employees/${id}/archive`, { reason });
+
 export const deleteSuperAdminEmployee = (id, data = {}) =>
-  api.delete(`${SUPER_ADMIN_PREFIX}/employees/${id}`, { data });
+  archiveSuperAdminEmployee(id, data.reason || data.archiveReason || "");
 
 export const getSuperAdminEmployeeFullDetails = (id) =>
   api.get(`${SUPER_ADMIN_PREFIX}/employees/${id}/details`);

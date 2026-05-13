@@ -4,7 +4,6 @@ import {
   getBranchAdmins,
   createBranchAdmin,
   updateBranchAdmin,
-  deleteBranchAdmin,
 } from "../../../api/superadmin/superAdminUserApi";
 import { getBranches } from "../../../api/superadmin/superAdminBranchApi";
 
@@ -14,7 +13,7 @@ import AdminUserTable from "../../../features/users/components/AdminUserTable";
 function AdminUsersPage() {
   const [users, setUsers] = useState([]);
   const [branches, setBranches] = useState([]);
-  const [selectedUser, setSelectedUser] = useState(null);
+  const [editingUser, setEditingUser] = useState(null);
 
   const [loading, setLoading] = useState(false);
   const [submitting, setSubmitting] = useState(false);
@@ -39,22 +38,18 @@ function AdminUsersPage() {
   };
 
   useEffect(() => {
-    fetchData();
+    const timer = window.setTimeout(fetchData, 0);
+
+    return () => window.clearTimeout(timer);
   }, []);
 
-  const handleSubmit = async (form) => {
+  const handleCreate = async (form) => {
     try {
       setSubmitting(true);
 
-      if (selectedUser) {
-        await updateBranchAdmin(selectedUser._id, form);
-        alert("Admin user updated successfully");
-      } else {
-        await createBranchAdmin(form);
-        alert("Admin user created successfully");
-      }
+      await createBranchAdmin(form);
+      alert("Admin user created successfully");
 
-      setSelectedUser(null);
       await fetchData();
     } catch (error) {
       console.error(error);
@@ -64,29 +59,22 @@ function AdminUsersPage() {
     }
   };
 
-  const handleDelete = async (user) => {
-    const authorizationPassword = window.prompt(
-      `Enter your super admin password to delete ${user.name}:`
-    );
-
-    if (!authorizationPassword) return;
-
-    const confirmed = window.confirm(
-      `Are you sure you want to delete ${user.name}? This will archive the user first.`
-    );
-
-    if (!confirmed) return;
+  const handleUpdate = async (form) => {
+    if (!editingUser) return;
 
     try {
-      await deleteBranchAdmin(user._id, {
-        authorizationPassword,
-      });
+      setSubmitting(true);
 
-      alert("Admin user deleted successfully");
+      await updateBranchAdmin(editingUser._id, form);
+      alert("Admin user updated successfully");
+
+      setEditingUser(null);
       await fetchData();
     } catch (error) {
       console.error(error);
-      alert(error.response?.data?.message || "Failed to delete admin user");
+      alert(error.response?.data?.message || "Failed to update admin user");
+    } finally {
+      setSubmitting(false);
     }
   };
 
@@ -96,7 +84,7 @@ function AdminUsersPage() {
         <div>
           <h1 style={styles.pageTitle}>Admin User Management</h1>
           <p style={styles.pageSubtitle}>
-            Create, edit, delete, and assign branch admins.
+            Create, edit, and assign branch admins.
           </p>
         </div>
       </div>
@@ -105,20 +93,30 @@ function AdminUsersPage() {
 
       <AdminUserForm
         branches={branches}
-        selectedUser={selectedUser}
-        onSubmit={handleSubmit}
-        onCancel={() => setSelectedUser(null)}
+        selectedUser={null}
+        onSubmit={handleCreate}
+        onCancel={() => {}}
         submitting={submitting}
       />
 
       <AdminUserTable
         users={users}
-        onEdit={(user) => {
-          setSelectedUser(user);
-          window.scrollTo({ top: 0, behavior: "smooth" });
-        }}
-        onDelete={handleDelete}
+        onEdit={setEditingUser}
       />
+
+      {editingUser && (
+        <div style={styles.modalBackdrop} role="dialog" aria-modal="true">
+          <section style={styles.modalPanel}>
+            <AdminUserForm
+              branches={branches}
+              selectedUser={editingUser}
+              onSubmit={handleUpdate}
+              onCancel={() => setEditingUser(null)}
+              submitting={submitting}
+            />
+          </section>
+        </div>
+      )}
     </div>
   );
 }
@@ -150,6 +148,20 @@ const styles = {
     padding: "10px 12px",
     borderRadius: "8px",
     marginBottom: "16px",
+  },
+  modalBackdrop: {
+    position: "fixed",
+    inset: 0,
+    zIndex: 1000,
+    display: "grid",
+    placeItems: "center",
+    padding: "20px",
+    backgroundColor: "rgba(15, 23, 42, 0.55)",
+  },
+  modalPanel: {
+    width: "min(920px, 100%)",
+    maxHeight: "90vh",
+    overflowY: "auto",
   },
 };
 

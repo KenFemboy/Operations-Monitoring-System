@@ -1,4 +1,22 @@
-function ProductTable({ products }) {
+import { useState } from "react";
+import { archiveProduct } from "../../../api/admin/adminInventoryApi";
+import ArchiveConfirmModal from "../../archive/components/ArchiveConfirmModal";
+
+function ProductTable({ products, onRefresh }) {
+  const [archiveTarget, setArchiveTarget] = useState(null);
+
+  const handleArchive = async (reason) => {
+    try {
+      await archiveProduct(archiveTarget._id, reason);
+      alert("Product archived");
+      setArchiveTarget(null);
+      onRefresh?.();
+    } catch (error) {
+      console.error(error);
+      alert(error.response?.data?.message || "Failed to archive product");
+    }
+  };
+
   const getStatusStyle = (status) => {
     if (status === "Available") {
       return {
@@ -35,6 +53,7 @@ function ProductTable({ products }) {
             <th style={styles.th}>Current Stock</th>
             <th style={styles.th}>Minimum Stock</th>
             <th style={styles.th}>Status</th>
+            <th style={styles.th}>Action</th>
           </tr>
         </thead>
 
@@ -58,12 +77,27 @@ function ProductTable({ products }) {
                   {product.status}
                 </span>
               </td>
+              <td style={styles.td}>
+                <button
+                  type="button"
+                  onClick={() => setArchiveTarget(product)}
+                  style={styles.archiveButton}
+                >
+                  Archive
+                </button>
+              </td>
             </tr>
           ))}
         </tbody>
       </table>
 
       {products.length === 0 && <p>No products found.</p>}
+      <ArchiveConfirmModal
+        isOpen={Boolean(archiveTarget)}
+        title="Archive product"
+        onClose={() => setArchiveTarget(null)}
+        onConfirm={handleArchive}
+      />
     </div>
   );
 }
@@ -98,6 +132,14 @@ const styles = {
     borderRadius: "999px",
     fontSize: "12px",
     fontWeight: "bold",
+  },
+  archiveButton: {
+    padding: "6px 10px",
+    backgroundColor: "#dc2626",
+    color: "#fff",
+    border: "none",
+    borderRadius: "5px",
+    cursor: "pointer",
   },
 };
 

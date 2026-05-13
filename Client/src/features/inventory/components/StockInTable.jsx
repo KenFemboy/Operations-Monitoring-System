@@ -1,4 +1,22 @@
-function StockInTable({ stockIns }) {
+import { useState } from "react";
+import { archiveStockIn } from "../../../api/admin/adminInventoryApi";
+import ArchiveConfirmModal from "../../archive/components/ArchiveConfirmModal";
+
+function StockInTable({ stockIns, onRefresh }) {
+  const [archiveTarget, setArchiveTarget] = useState(null);
+
+  const handleArchive = async (reason) => {
+    try {
+      await archiveStockIn(archiveTarget._id, reason);
+      alert("Stock in record archived");
+      setArchiveTarget(null);
+      onRefresh?.();
+    } catch (error) {
+      console.error(error);
+      alert(error.response?.data?.message || "Failed to archive stock in record");
+    }
+  };
+
   return (
     <div style={styles.card}>
       <h2>Stock In History</h2>
@@ -12,6 +30,7 @@ function StockInTable({ stockIns }) {
             <th style={styles.th}>Reason</th>
             <th style={styles.th}>Added By</th>
             <th style={styles.th}>Date</th>
+            <th style={styles.th}>Action</th>
           </tr>
         </thead>
 
@@ -26,12 +45,27 @@ function StockInTable({ stockIns }) {
               <td style={styles.td}>
                 {new Date(stock.createdAt).toLocaleString()}
               </td>
+              <td style={styles.td}>
+                <button
+                  type="button"
+                  onClick={() => setArchiveTarget(stock)}
+                  style={styles.archiveButton}
+                >
+                  Archive
+                </button>
+              </td>
             </tr>
           ))}
         </tbody>
       </table>
 
       {stockIns.length === 0 && <p>No stock in records found.</p>}
+      <ArchiveConfirmModal
+        isOpen={Boolean(archiveTarget)}
+        title="Archive stock in record"
+        onClose={() => setArchiveTarget(null)}
+        onConfirm={handleArchive}
+      />
     </div>
   );
 }
@@ -60,6 +94,14 @@ const styles = {
   td: {
     borderBottom: "1px solid #eee",
     padding: "12px",
+  },
+  archiveButton: {
+    padding: "6px 10px",
+    backgroundColor: "#dc2626",
+    color: "#fff",
+    border: "none",
+    borderRadius: "5px",
+    cursor: "pointer",
   },
 };
 

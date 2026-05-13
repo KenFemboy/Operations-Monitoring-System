@@ -1,5 +1,6 @@
 import { useState } from "react";
-import { deleteFeedback } from "../../../api/admin/adminFeedbackApi";
+import { archiveFeedback } from "../../../api/admin/adminFeedbackApi";
+import ArchiveConfirmModal from "../../archive/components/ArchiveConfirmModal";
 
 const getImageUrl = (publicPath = "") => {
   if (!publicPath) return "";
@@ -10,24 +11,20 @@ const getImageUrl = (publicPath = "") => {
 
 function FeedbackTable({ feedbacks, onRefresh }) {
   const [previewImage, setPreviewImage] = useState(null);
+  const [archiveTarget, setArchiveTarget] = useState(null);
 
   const renderStars = (rating) => {
     return "\u2605".repeat(rating) + "\u2606".repeat(5 - rating);
   };
 
-  const handleDelete = async (id) => {
-    const confirmed = window.confirm(
-      "Are you sure you want to delete this feedback?"
-    );
-
-    if (!confirmed) return;
-
+  const handleArchive = async (reason) => {
     try {
-      await deleteFeedback(id);
+      await archiveFeedback(archiveTarget._id, reason);
+      setArchiveTarget(null);
       onRefresh();
     } catch (err) {
       console.error(err);
-      alert(err.response?.data?.message || "Failed to delete feedback");
+      alert(err.response?.data?.message || "Failed to archive feedback");
     }
   };
 
@@ -108,10 +105,10 @@ function FeedbackTable({ feedbacks, onRefresh }) {
                   <td style={styles.td}>
                     <button
                       type="button"
-                      onClick={() => handleDelete(feedback._id)}
+                      onClick={() => setArchiveTarget(feedback)}
                       style={styles.deleteButton}
                     >
-                      Delete
+                      Archive
                     </button>
                   </td>
                 </tr>
@@ -142,6 +139,13 @@ function FeedbackTable({ feedbacks, onRefresh }) {
           </div>
         </div>
       )}
+
+      <ArchiveConfirmModal
+        isOpen={Boolean(archiveTarget)}
+        title="Archive feedback"
+        onClose={() => setArchiveTarget(null)}
+        onConfirm={handleArchive}
+      />
     </>
   );
 }

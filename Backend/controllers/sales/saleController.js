@@ -135,7 +135,7 @@ export const getSales = async (req, res) => {
   try {
     const { startDate, endDate, serviceType } = req.query;
 
-    const filter = getSalesBranchFilter(req);
+    const filter = { ...getSalesBranchFilter(req), isArchived: { $ne: true } };
 
     if (startDate && endDate) {
       filter.saleDate = {
@@ -177,7 +177,11 @@ export const getDailySales = async (req, res) => {
       });
     }
 
-    const match = { ...getSalesAggregateBranchFilter(req), saleDate: date };
+    const match = {
+      ...getSalesAggregateBranchFilter(req),
+      isArchived: { $ne: true },
+      saleDate: date,
+    };
 
     const summary = await Sale.aggregate([
       { $match: match },
@@ -242,6 +246,7 @@ export const getMonthlySales = async (req, res) => {
 
     const match = {
       ...getSalesAggregateBranchFilter(req),
+      isArchived: { $ne: true },
       saleDate: { $gte: startDate, $lte: endDate },
     };
 
@@ -308,16 +313,21 @@ export const deleteSale = async (req, res) => {
       });
     }
 
-    await sale.deleteOne();
+    sale.isArchived = true;
+    sale.archivedAt = new Date();
+    sale.archivedBy = req.user?._id || req.user?.id || null;
+    sale.archiveReason = req.body?.reason || "No reason provided";
+    await sale.save();
 
     res.status(200).json({
       success: true,
-      message: "Sale deleted successfully",
+      message: "Sale archived successfully",
+      data: sale,
     });
   } catch (error) {
     res.status(500).json({
       success: false,
-      message: "Failed to delete sale",
+      message: "Failed to archive sale",
       error: error.message,
     });
   }

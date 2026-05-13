@@ -203,7 +203,10 @@ function InventoryPage() {
                 onRefresh={isSuperAdmin ? refreshSelectedInventory : fetchAllData}
                 branchId={selectedBranch?._id || ""}
               />
-              <ProductTable products={products} />
+              <ProductTable
+                products={products}
+                onRefresh={isSuperAdmin ? refreshSelectedInventory : fetchAllData}
+              />
             </>
           )}
 
@@ -226,7 +229,10 @@ function InventoryPage() {
                 products={products}
                 onRefresh={isSuperAdmin ? refreshSelectedInventory : fetchAllData}
               />
-              <StockInTable stockIns={stockIns} />
+              <StockInTable
+                stockIns={stockIns}
+                onRefresh={isSuperAdmin ? refreshSelectedInventory : fetchAllData}
+              />
             </>
           )}
 
@@ -236,7 +242,10 @@ function InventoryPage() {
                 products={products}
                 onRefresh={isSuperAdmin ? refreshSelectedInventory : fetchAllData}
               />
-              <StockOutTable stockOuts={stockOuts} />
+              <StockOutTable
+                stockOuts={stockOuts}
+                onRefresh={isSuperAdmin ? refreshSelectedInventory : fetchAllData}
+              />
             </>
           )}
 

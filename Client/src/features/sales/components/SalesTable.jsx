@@ -1,18 +1,19 @@
-import { deleteSale } from "../../../api/admin/adminSalesApi";
+import { useState } from "react";
+import { archiveSale } from "../../../api/admin/adminSalesApi";
+import ArchiveConfirmModal from "../../archive/components/ArchiveConfirmModal";
 
 function SalesTable({ sales, onRefresh }) {
-  const handleDelete = async (id) => {
-    const confirmDelete = window.confirm("Delete this sale record?");
+  const [archiveTarget, setArchiveTarget] = useState(null);
 
-    if (!confirmDelete) return;
-
+  const handleArchive = async (reason) => {
     try {
-      await deleteSale(id);
-      alert("Sale deleted");
+      await archiveSale(archiveTarget._id, reason);
+      alert("Sale archived");
+      setArchiveTarget(null);
       onRefresh();
     } catch (error) {
       console.error(error);
-      alert(error.response?.data?.message || "Failed to delete sale");
+      alert(error.response?.data?.message || "Failed to archive sale");
     }
   };
 
@@ -61,10 +62,10 @@ function SalesTable({ sales, onRefresh }) {
               </td>
               <td style={styles.td}>
                 <button
-                  onClick={() => handleDelete(sale._id)}
+                  onClick={() => setArchiveTarget(sale)}
                   style={styles.dangerButton}
                 >
-                  Delete
+                  Archive
                 </button>
               </td>
             </tr>
@@ -73,6 +74,12 @@ function SalesTable({ sales, onRefresh }) {
       </table>
 
       {sales.length === 0 && <p>No sales records found.</p>}
+      <ArchiveConfirmModal
+        isOpen={Boolean(archiveTarget)}
+        title="Archive sale record"
+        onClose={() => setArchiveTarget(null)}
+        onConfirm={handleArchive}
+      />
     </div>
   );
 }

@@ -14,8 +14,11 @@ export const getAdminDailySales = (params = {}) =>
 export const getAdminMonthlySales = (params = {}) =>
   api.get(`${SALES_PREFIX}/monthly`, { params });
 
+export const archiveAdminSale = (id, reason = "") =>
+  api.patch(`${SALES_PREFIX}/${id}/archive`, { reason });
+
 export const deleteAdminSale = (id) =>
-  api.delete(`${SALES_PREFIX}/${id}`);
+  archiveAdminSale(id);
 
 export const createSale = createAdminSale;
 export const getSales = (startDate, endDate, serviceType = "all", branchId = "") =>
@@ -24,4 +27,5 @@ export const getDailySales = (date, branchId = "") =>
   getAdminDailySales({ date, ...(branchId ? { branchId } : {}) });
 export const getMonthlySales = (year, month, branchId = "") =>
   getAdminMonthlySales({ year, month, ...(branchId ? { branchId } : {}) });
+export const archiveSale = archiveAdminSale;
 export const deleteSale = deleteAdminSale;
