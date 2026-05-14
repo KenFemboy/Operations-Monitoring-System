@@ -17,6 +17,11 @@ function ProductForm({ onRefresh, branchId = "" }) {
     branchId,
   });
 
+  const handleMinimumStockChange = (value) => {
+    const nextValue = Number(value) < 0 ? "0" : value;
+    setForm({ ...form, minimumStock: nextValue });
+  };
+
   useEffect(() => {
     if (!isSuperAdmin) return;
 
@@ -44,11 +49,13 @@ function ProductForm({ onRefresh, branchId = "" }) {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
+    const minimumStock = Number(form.minimumStock);
+
     try {
       await createProduct({
         ...form,
         branchId: branchId || form.branchId,
-        minimumStock: Number(form.minimumStock),
+        minimumStock,
       });
 
       setForm({
@@ -102,9 +109,8 @@ function ProductForm({ onRefresh, branchId = "" }) {
           type="number"
           placeholder="Minimum Stock"
           value={form.minimumStock}
-          onChange={(e) =>
-            setForm({ ...form, minimumStock: e.target.value })
-          }
+          min="0"
+          onChange={(e) => handleMinimumStockChange(e.target.value)}
           required
           style={styles.input}
         />

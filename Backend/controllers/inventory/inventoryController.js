@@ -23,6 +23,35 @@ const updateProductStatus = (product) => {
   }
 };
 
+const parseMinimumStock = (value) => {
+  if (value === undefined || value === null || value === "") {
+    return { isProvided: false, value: 0 };
+  }
+
+  const numericValue = Number(value);
+
+  if (!Number.isFinite(numericValue) || numericValue < 0) {
+    return {
+      isProvided: true,
+      error: "Minimum stock must be zero or greater",
+    };
+  }
+
+  return { isProvided: true, value: numericValue };
+};
+
+const parseMovementQuantity = (value) => {
+  const numericValue = Number(value);
+
+  if (!Number.isFinite(numericValue) || numericValue <= 0) {
+    return {
+      error: "Quantity must be greater than zero",
+    };
+  }
+
+  return { value: numericValue };
+};
+
 // =======================
 // PRODUCT CONTROLLERS
 // =======================
@@ -30,6 +59,14 @@ const updateProductStatus = (product) => {
 export const createProduct = async (req, res) => {
   try {
     const { name, category, unit, minimumStock } = req.body;
+    const parsedMinimumStock = parseMinimumStock(minimumStock);
+
+    if (parsedMinimumStock.error) {
+      return res.status(400).json({
+        success: false,
+        message: parsedMinimumStock.error,
+      });
+    }
 
     const branch = isSuperAdmin(req.user)
       ? req.body.branch || req.body.branchId
@@ -46,7 +83,7 @@ export const createProduct = async (req, res) => {
       name,
       category,
       unit,
-      minimumStock,
+      minimumStock: parsedMinimumStock.value,
       currentStock: 0,
       branch,
     });
@@ -134,6 +171,14 @@ export const getProductById = async (req, res) => {
 export const updateProduct = async (req, res) => {
   try {
     const { name, category, unit, minimumStock } = req.body;
+    const parsedMinimumStock = parseMinimumStock(minimumStock);
+
+    if (parsedMinimumStock.error) {
+      return res.status(400).json({
+        success: false,
+        message: parsedMinimumStock.error,
+      });
+    }
 
     const product = await Product.findOne({
       _id: req.params.id,
@@ -157,7 +202,9 @@ export const updateProduct = async (req, res) => {
     product.name = name || product.name;
     product.category = category || product.category;
     product.unit = unit || product.unit;
-    product.minimumStock = minimumStock ?? product.minimumStock;
+    product.minimumStock = parsedMinimumStock.isProvided
+      ? parsedMinimumStock.value
+      : product.minimumStock;
 
     updateProductStatus(product);
     await product.save();
@@ -433,7 +480,15 @@ export const cancelPurchase = async (req, res) => {
 
 export const createStockIn = async (req, res) => {
   try {
-    const { product, quantity, reason, addedBy, remarks } = req.body;
+    const { product, quantity, reason, remarks } = req.body;
+    const parsedQuantity = parseMovementQuantity(quantity);
+
+    if (parsedQuantity.error) {
+      return res.status(400).json({
+        success: false,
+        message: parsedQuantity.error,
+      });
+    }
 
     const existingProduct = await Product.findOne({
       _id: product,
@@ -455,15 +510,14 @@ export const createStockIn = async (req, res) => {
       return res.status(403).json({ success: false, message: "Forbidden: product belongs to different branch" });
     }
 
-    existingProduct.currentStock += Number(quantity);
+    existingProduct.currentStock += parsedQuantity.value;
     updateProductStatus(existingProduct);
     await existingProduct.save();
 
     const stockIn = await StockIn.create({
       product,
-      quantity,
+      quantity: parsedQuantity.value,
       reason,
-      addedBy,
       remarks,
       branch,
     });
@@ -514,7 +568,15 @@ export const getStockIns = async (req, res) => {
 
 export const createStockOut = async (req, res) => {
   try {
-    const { product, quantity, reason, releasedBy, remarks } = req.body;
+    const { product, quantity, reason, remarks } = req.body;
+    const parsedQuantity = parseMovementQuantity(quantity);
+
+    if (parsedQuantity.error) {
+      return res.status(400).json({
+        success: false,
+        message: parsedQuantity.error,
+      });
+    }
 
     const existingProduct = await Product.findOne({
       _id: product,
@@ -528,7 +590,7 @@ export const createStockOut = async (req, res) => {
       });
     }
 
-    if (Number(quantity) > existingProduct.currentStock) {
+    if (parsedQuantity.value > existingProduct.currentStock) {
       return res.status(400).json({
         success: false,
         message: "Cannot stock out. Not enough stock available.",
@@ -543,15 +605,14 @@ export const createStockOut = async (req, res) => {
       return res.status(403).json({ success: false, message: "Forbidden: product belongs to different branch" });
     }
 
-    existingProduct.currentStock -= Number(quantity);
+    existingProduct.currentStock -= parsedQuantity.value;
     updateProductStatus(existingProduct);
     await existingProduct.save();
 
     const stockOut = await StockOut.create({
       product,
-      quantity,
+      quantity: parsedQuantity.value,
       reason,
-      releasedBy,
       remarks,
       branch,
     });
@@ -635,7 +696,6 @@ export const getInventoryRecords = async (req, res) => {
         quantity: record.quantity,
         displayQuantity: `+${record.quantity}`,
         reason: record.reason,
-        user: record.addedBy,
         remarks: record.remarks,
         createdAt: record.createdAt,
       })),
@@ -648,7 +708,6 @@ export const getInventoryRecords = async (req, res) => {
         quantity: record.quantity,
         displayQuantity: `-${record.quantity}`,
         reason: record.reason,
-        user: record.releasedBy,
         remarks: record.remarks,
         createdAt: record.createdAt,
       })),

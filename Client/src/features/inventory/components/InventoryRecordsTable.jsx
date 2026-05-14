@@ -12,7 +12,6 @@ function InventoryRecordsTable({ records }) {
             <th style={styles.th}>Product</th>
             <th style={styles.th}>Quantity</th>
             <th style={styles.th}>Reason</th>
-            <th style={styles.th}>User</th>
             <th style={styles.th}>Remarks</th>
           </tr>
         </thead>
@@ -43,7 +42,6 @@ function InventoryRecordsTable({ records }) {
               <td style={styles.td}>{record.product?.name}</td>
               <td style={styles.td}>{record.displayQuantity}</td>
               <td style={styles.td}>{record.reason}</td>
-              <td style={styles.td}>{record.user}</td>
               <td style={styles.td}>{record.remarks || "—"}</td>
             </tr>
           ))}
@@ -68,7 +66,7 @@ const styles = {
   table: {
     width: "100%",
     borderCollapse: "collapse",
-    minWidth: "900px",
+    minWidth: "800px",
   },
   th: {
     borderBottom: "1px solid #ddd",

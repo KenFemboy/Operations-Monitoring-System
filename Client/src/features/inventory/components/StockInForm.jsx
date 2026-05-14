@@ -6,24 +6,33 @@ function StockInForm({ products, onRefresh }) {
     product: "",
     quantity: "",
     reason: "Purchase",
-    addedBy: "Admin",
     remarks: "",
   });
 
+  const handleQuantityChange = (value) => {
+    const nextValue = Number(value) < 0 ? "0" : value;
+    setForm({ ...form, quantity: nextValue });
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
+    const quantity = Number(form.quantity);
+
+    if (quantity <= 0) {
+      alert("Quantity must be greater than zero");
+      return;
+    }
 
     try {
       await createStockIn({
         ...form,
-        quantity: Number(form.quantity),
+        quantity,
       });
 
       setForm({
         product: "",
         quantity: "",
         reason: "Purchase",
-        addedBy: "Admin",
         remarks: "",
       });
 
@@ -57,7 +66,8 @@ function StockInForm({ products, onRefresh }) {
           type="number"
           placeholder="Quantity"
           value={form.quantity}
-          onChange={(e) => setForm({ ...form, quantity: e.target.value })}
+          min="0"
+          onChange={(e) => handleQuantityChange(e.target.value)}
           required
           style={styles.input}
         />
@@ -72,14 +82,6 @@ function StockInForm({ products, onRefresh }) {
           <option value="Adjustment">Adjustment</option>
           <option value="Opening Stock">Opening Stock</option>
         </select>
-
-        <input
-          type="text"
-          placeholder="Added By"
-          value={form.addedBy}
-          onChange={(e) => setForm({ ...form, addedBy: e.target.value })}
-          style={styles.input}
-        />
 
         <input
           type="text"

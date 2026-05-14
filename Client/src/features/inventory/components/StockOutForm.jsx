@@ -6,24 +6,33 @@ function StockOutForm({ products, onRefresh }) {
     product: "",
     quantity: "",
     reason: "Used",
-    releasedBy: "Admin",
     remarks: "",
   });
 
+  const handleQuantityChange = (value) => {
+    const nextValue = Number(value) < 0 ? "0" : value;
+    setForm({ ...form, quantity: nextValue });
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
+    const quantity = Number(form.quantity);
+
+    if (quantity <= 0) {
+      alert("Quantity must be greater than zero");
+      return;
+    }
 
     try {
       await createStockOut({
         ...form,
-        quantity: Number(form.quantity),
+        quantity,
       });
 
       setForm({
         product: "",
         quantity: "",
         reason: "Used",
-        releasedBy: "Admin",
         remarks: "",
       });
 
@@ -57,7 +66,8 @@ function StockOutForm({ products, onRefresh }) {
           type="number"
           placeholder="Quantity"
           value={form.quantity}
-          onChange={(e) => setForm({ ...form, quantity: e.target.value })}
+          min="0"
+          onChange={(e) => handleQuantityChange(e.target.value)}
           required
           style={styles.input}
         />
@@ -73,14 +83,6 @@ function StockOutForm({ products, onRefresh }) {
           <option value="Wasted">Wasted</option>
           <option value="Adjustment">Adjustment</option>
         </select>
-
-        <input
-          type="text"
-          placeholder="Released By"
-          value={form.releasedBy}
-          onChange={(e) => setForm({ ...form, releasedBy: e.target.value })}
-          style={styles.input}
-        />
 
         <input
           type="text"

@@ -28,7 +28,6 @@ function StockInTable({ stockIns, onRefresh }) {
             <th style={styles.th}>Product</th>
             <th style={styles.th}>Quantity</th>
             <th style={styles.th}>Reason</th>
-            <th style={styles.th}>Added By</th>
             <th style={styles.th}>Date</th>
             <th style={styles.th}>Action</th>
           </tr>
@@ -41,7 +40,6 @@ function StockInTable({ stockIns, onRefresh }) {
               <td style={styles.td}>{stock.product?.name}</td>
               <td style={styles.td}>+{stock.quantity}</td>
               <td style={styles.td}>{stock.reason}</td>
-              <td style={styles.td}>{stock.addedBy}</td>
               <td style={styles.td}>
                 {new Date(stock.createdAt).toLocaleString()}
               </td>

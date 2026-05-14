@@ -28,7 +28,6 @@ function StockOutTable({ stockOuts, onRefresh }) {
             <th style={styles.th}>Product</th>
             <th style={styles.th}>Quantity</th>
             <th style={styles.th}>Reason</th>
-            <th style={styles.th}>Released By</th>
             <th style={styles.th}>Date</th>
             <th style={styles.th}>Action</th>
           </tr>
@@ -41,7 +40,6 @@ function StockOutTable({ stockOuts, onRefresh }) {
               <td style={styles.td}>{stock.product?.name}</td>
               <td style={styles.td}>-{stock.quantity}</td>
               <td style={styles.td}>{stock.reason}</td>
-              <td style={styles.td}>{stock.releasedBy}</td>
               <td style={styles.td}>
                 {new Date(stock.createdAt).toLocaleString()}
               </td>
