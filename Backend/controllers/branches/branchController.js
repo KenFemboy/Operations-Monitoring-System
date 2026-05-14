@@ -3,39 +3,40 @@ import User from "../../models/User.js";
 import bcrypt from "bcryptjs";
 import { getUserBranchId, isSuperAdmin } from "../../middleware/accessControl.js";
 
+const assertSuperAdminPassword = async (req) => {
+  const authorizationPassword =
+    req.body?.authorizationPassword || req.body?.superadminPassword;
+
+  if (!authorizationPassword) {
+    const error = new Error("Superadmin password is required");
+    error.statusCode = 400;
+    throw error;
+  }
+
+  const currentUser = await User.findById(req.user.id);
+
+  if (!currentUser) {
+    const error = new Error("Current user not found");
+    error.statusCode = 401;
+    throw error;
+  }
+
+  const isAuthorizationPasswordValid = await bcrypt.compare(
+    authorizationPassword,
+    currentUser.password
+  );
+
+  if (!isAuthorizationPasswordValid) {
+    const error = new Error("Invalid superadmin password");
+    error.statusCode = 401;
+    throw error;
+  }
+};
+
 export const createBranch = async (req, res) => {
   try {
     const { branchName, location, address } = req.body;
-    const authorizationPassword =
-      req.body.authorizationPassword || req.body.superadminPassword;
-
-    if (!authorizationPassword) {
-      return res.status(400).json({
-        success: false,
-        message: "Superadmin password is required",
-      });
-    }
-
-    const currentUser = await User.findById(req.user.id);
-
-    if (!currentUser) {
-      return res.status(401).json({
-        success: false,
-        message: "Current user not found",
-      });
-    }
-
-    const isAuthorizationPasswordValid = await bcrypt.compare(
-      authorizationPassword,
-      currentUser.password
-    );
-
-    if (!isAuthorizationPasswordValid) {
-      return res.status(401).json({
-        success: false,
-        message: "Invalid superadmin password",
-      });
-    }
+    await assertSuperAdminPassword(req);
 
     const branch = await Branch.create({
       branchName,
@@ -49,7 +50,7 @@ export const createBranch = async (req, res) => {
       data: branch,
     });
   } catch (error) {
-    res.status(500).json({
+    res.status(error.statusCode || 500).json({
       success: false,
       message: "Failed to create branch",
       error: error.message,
@@ -129,6 +130,7 @@ export const updateBranch = async (req, res) => {
 export const deleteBranch = async (req, res) => {
   try {
     const { id } = req.params;
+    await assertSuperAdminPassword(req);
 
     const branch = await Branch.findByIdAndDelete(id);
 
@@ -144,7 +146,7 @@ export const deleteBranch = async (req, res) => {
       message: "Branch deleted successfully",
     });
   } catch (error) {
-    res.status(500).json({
+    res.status(error.statusCode || 500).json({
       success: false,
       message: "Failed to delete branch",
       error: error.message,

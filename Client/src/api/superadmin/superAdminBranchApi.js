@@ -11,5 +11,5 @@ export const createBranch = (data) =>
 export const updateBranch = (id, data) =>
   api.put(`${SUPER_ADMIN_PREFIX}/branches/${id}`, data);
 
-export const deleteBranch = (id) =>
-  api.delete(`${SUPER_ADMIN_PREFIX}/branches/${id}`);
+export const deleteBranch = (id, data = {}) =>
+  api.delete(`${SUPER_ADMIN_PREFIX}/branches/${id}`, { data });

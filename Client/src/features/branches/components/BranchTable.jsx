@@ -1,4 +1,4 @@
-function BranchTable({ branches, onEdit, onView }) {
+function BranchTable({ branches, onEdit, onDelete, onView }) {
   return (
     <div style={styles.card}>
       <h2>Branch List</h2>
@@ -41,6 +41,23 @@ function BranchTable({ branches, onEdit, onView }) {
                     style={styles.editButton}
                   >
                     Edit
+                  </button>
+
+                  <button
+                    onClick={() => {
+                      const authorizationPassword = window.prompt(
+                        "Enter superadmin password to delete this branch:"
+                      );
+
+                      if (!authorizationPassword) {
+                        return;
+                      }
+
+                      onDelete(branch._id, authorizationPassword);
+                    }}
+                    style={styles.deleteButton}
+                  >
+                    Delete
                   </button>
                 </td>
               </tr>
@@ -95,6 +112,14 @@ const styles = {
     border: "none",
     borderRadius: "5px",
     marginRight: "6px",
+    cursor: "pointer",
+  },
+  deleteButton: {
+    padding: "6px 10px",
+    backgroundColor: "#dc2626",
+    color: "#fff",
+    border: "none",
+    borderRadius: "5px",
     cursor: "pointer",
   },
 };

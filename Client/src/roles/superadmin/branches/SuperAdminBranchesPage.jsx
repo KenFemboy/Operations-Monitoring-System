@@ -149,9 +149,9 @@ function BranchPage() {
     }
   };
 
-  const handleDelete = async (id) => {
+  const handleDelete = async (id, authorizationPassword) => {
     try {
-      await deleteBranch(id);
+      await deleteBranch(id, { authorizationPassword });
       alert("Branch deleted successfully");
 
       if (viewBranch?._id === id) {
