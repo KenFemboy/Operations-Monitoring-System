@@ -240,6 +240,10 @@ function SuperAdminFeedbackPage() {
             </button>
           </div>
 
+          <div style={styles.summaryGrid}>
+            <AverageRatingByMonthTable data={monthSummary} />
+          </div>
+
           <FeedbackDateFilter
             onFilter={handleFilter}
             onClear={handleClearFilter}
@@ -249,7 +253,6 @@ function SuperAdminFeedbackPage() {
 
           <div style={styles.summaryGrid}>
             <AverageRatingByBranchTable data={branchSummary} />
-            <AverageRatingByMonthTable data={monthSummary} />
           </div>
 
           <FeedbackTable

@@ -110,16 +110,16 @@ function AdminFeedbackPage() {
       <h1>Branch Feedback Management</h1>
       <p>View customer ratings, short reviews, and rating summaries for your assigned branch.</p>
 
+      <div style={styles.summaryGrid}>
+        <AverageRatingByMonthTable data={monthSummary} />
+      </div>
+
       <FeedbackDateFilter
         onFilter={handleFilter}
         onClear={handleClearFilter}
         showBranchFilter={false}
         assignedBranchName={user?.branchName || user?.branch}
       />
-
-      <div style={styles.summaryGrid}>
-        <AverageRatingByMonthTable data={monthSummary} />
-      </div>
 
       {loading && <p>Loading reviews...</p>}
       {error && <p style={styles.error}>{error}</p>}

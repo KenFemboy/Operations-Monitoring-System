@@ -29,7 +29,10 @@ export default function SuperAdminRoutes() {
         <Route path="incident-reports" element={<SuperAdminEmployeesPage initialTab="ir" />} />
         <Route path="nte" element={<SuperAdminEmployeesPage initialTab="nte" />} />
         <Route path="inventory" element={<SuperAdminInventoryPage />} />
-        <Route path="sales" element={<SuperAdminSalesPage />} />
+        <Route path="sales" element={<Navigate to="/superadmin/sales/summary" replace />} />
+        <Route path="sales/summary" element={<SuperAdminSalesPage pageView="summary" />} />
+        <Route path="sales/input" element={<SuperAdminSalesPage pageView="input" />} />
+        <Route path="sales/records" element={<SuperAdminSalesPage pageView="records" />} />
         <Route path="feedback" element={<SuperAdminFeedbackPage />} />
         <Route path="plantilla" element={<SuperAdminPlantillaPage />} />
         <Route

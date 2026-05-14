@@ -26,7 +26,9 @@ export const superAdminNavigation = [
     title: "Operations",
     items: [
       { label: "Inventory", hint: "Stocks and items", to: "/superadmin/inventory" },
-      { label: "Sales", hint: "Revenue and transactions", to: "/superadmin/sales" },
+      { label: "Sales Summary", hint: "Daily and monthly totals", to: "/superadmin/sales/summary" },
+      { label: "Sales Input", hint: "Record branch sales", to: "/superadmin/sales/input" },
+      { label: "Recorded Sales", hint: "Sales table and filters", to: "/superadmin/sales/records" },
       { label: "Feedback", hint: "Customer ratings", to: "/superadmin/feedback" },
     ],
   },

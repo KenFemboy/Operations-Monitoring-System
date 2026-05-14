@@ -22,7 +22,10 @@ export default function AdminRoutes() {
         <Route path="incident-reports" element={<AdminEmployeesPage initialTab="ir" />} />
         <Route path="nte" element={<AdminEmployeesPage initialTab="nte" />} />
         <Route path="inventory" element={<AdminInventoryPage />} />
-        <Route path="sales" element={<AdminSalesPage />} />
+        <Route path="sales" element={<Navigate to="/admin/sales/summary" replace />} />
+        <Route path="sales/summary" element={<AdminSalesPage pageView="summary" />} />
+        <Route path="sales/input" element={<AdminSalesPage pageView="input" />} />
+        <Route path="sales/records" element={<AdminSalesPage pageView="records" />} />
         <Route path="feedback" element={<AdminFeedbackPage />} />
         <Route path="plantilla" element={<AdminPlantillaPage />} />
       </Route>

@@ -19,7 +19,9 @@ export const adminNavigation = [
     title: "Operations",
     items: [
       { label: "Inventory", hint: "Stocks and items", to: "/admin/inventory" },
-      { label: "Sales", hint: "Revenue and transactions", to: "/admin/sales" },
+      { label: "Sales Summary", hint: "Daily and monthly totals", to: "/admin/sales/summary" },
+      { label: "Sales Input", hint: "Record buffet sales", to: "/admin/sales/input" },
+      { label: "Recorded Sales", hint: "Sales table and filters", to: "/admin/sales/records" },
       { label: "Feedback", hint: "Customer ratings", to: "/admin/feedback" },
     ],
   },
