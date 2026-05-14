@@ -399,7 +399,7 @@ function EmployeesPage({ initialTab = "employees" }) {
       </div>
 
       {activeTab === "employees" && (
-        <>
+        <div className="employee-tab-stack">
           <EmployeeForm
             branches={branches}
             onSubmit={handleSaveEmployee}
@@ -407,28 +407,30 @@ function EmployeesPage({ initialTab = "employees" }) {
             onCancelEdit={() => setSelectedEmployee(null)}
           />
 
-          {loading ? (
-            <p>Loading employees...</p>
-          ) : (
-            <>
-              <EmployeeTable
-                employees={employees}
-                onDelete={(id) =>
-                  setArchiveTarget(employees.find((employee) => employee._id === id))
-                }
-                onViewDetails={handleViewDetails}
-                onUpdateStatus={handleUpdateEmployeeStatus}
-                onEdit={handleEditEmployee}
-                canDelete
-              />
+          <div className="employee-list-panel">
+            {loading ? (
+              <p className="table-empty">Loading employees...</p>
+            ) : (
+              <>
+                <EmployeeTable
+                  employees={employees}
+                  onDelete={(id) =>
+                    setArchiveTarget(employees.find((employee) => employee._id === id))
+                  }
+                  onViewDetails={handleViewDetails}
+                  onUpdateStatus={handleUpdateEmployeeStatus}
+                  onEdit={handleEditEmployee}
+                  canDelete
+                />
 
-              <EmployeeDetails
-                details={selectedDetails}
-                onClose={() => setSelectedDetails(null)}
-              />
-            </>
-          )}
-        </>
+                <EmployeeDetails
+                  details={selectedDetails}
+                  onClose={() => setSelectedDetails(null)}
+                />
+              </>
+            )}
+          </div>
+        </div>
       )}
 
       {activeTab === "attendance" && (

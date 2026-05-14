@@ -498,7 +498,7 @@ function EmployeeForm({ branches = [], onSubmit, selectedEmployee, onCancelEdit 
       <h2>{isEditing ? "Edit Employee" : "Add Employee"}</h2>
 
       <div className="employee-form-sections">
-        <section className="employee-form-section">
+        <section className="employee-form-section employee-section-basic">
           <h4>Basic Information</h4>
           <div className="employee-form-grid">
             <label className="employee-field">
@@ -611,7 +611,7 @@ function EmployeeForm({ branches = [], onSubmit, selectedEmployee, onCancelEdit 
           </div>
         </section>
 
-        <section className="employee-form-section">
+        <section className="employee-form-section employee-section-compliance">
           <h4>Compliance / Documents</h4>
           <div className="employee-form-grid">
             <label className="employee-field">
@@ -631,7 +631,7 @@ function EmployeeForm({ branches = [], onSubmit, selectedEmployee, onCancelEdit 
           </div>
         </section>
 
-        <section className="employee-form-section">
+        <section className="employee-form-section employee-section-education">
           <h4>Education</h4>
           <div className="employee-form-grid">
             <label className="employee-field">
@@ -855,12 +855,12 @@ function EmployeeForm({ branches = [], onSubmit, selectedEmployee, onCancelEdit 
       )}
 
       <div className="form-actions">
-        <button type="submit">
+        <button type="submit" className="btn employee-save-btn">
           {isEditing ? "Update Employee" : "Save Employee"}
         </button>
 
         {isEditing && (
-          <button type="button" onClick={onCancelEdit}>
+          <button type="button" onClick={onCancelEdit} className="btn btn-secondary">
             Cancel
           </button>
         )}
