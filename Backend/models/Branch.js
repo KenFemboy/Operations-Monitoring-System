@@ -20,12 +20,6 @@ const branchSchema = new mongoose.Schema(
       trim: true,
     },
 
-    dedicatedAdmin: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "User",
-      default: null,
-    },
-
     status: {
       type: String,
       enum: ["active", "inactive"],

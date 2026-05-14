@@ -5,7 +5,7 @@ function BranchForm({ selectedBranch, onSubmit, onCancel }) {
     branchName: "",
     location: "",
     address: "",
-    dedicatedAdmin: "",
+    authorizationPassword: "",
     status: "active",
   });
 
@@ -15,7 +15,7 @@ function BranchForm({ selectedBranch, onSubmit, onCancel }) {
         branchName: selectedBranch.branchName || "",
         location: selectedBranch.location || "",
         address: selectedBranch.address || "",
-        dedicatedAdmin: selectedBranch.dedicatedAdmin?._id || "",
+        authorizationPassword: "",
         status: selectedBranch.status || "active",
       });
     }
@@ -23,14 +23,20 @@ function BranchForm({ selectedBranch, onSubmit, onCancel }) {
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    onSubmit(form);
+    const { authorizationPassword, ...branchFields } = form;
+
+    onSubmit({
+      ...branchFields,
+      ...(!selectedBranch ? { authorizationPassword } : {}),
+      status: selectedBranch ? form.status : "active",
+    });
 
     if (!selectedBranch) {
       setForm({
         branchName: "",
         location: "",
         address: "",
-        dedicatedAdmin: "",
+        authorizationPassword: "",
         status: "active",
       });
     }
@@ -68,24 +74,29 @@ function BranchForm({ selectedBranch, onSubmit, onCancel }) {
           style={styles.input}
         />
 
-        <input
-          type="text"
-          placeholder="Dedicated Admin ID"
-          value={form.dedicatedAdmin}
-          onChange={(e) =>
-            setForm({ ...form, dedicatedAdmin: e.target.value })
-          }
-          style={styles.input}
-        />
+        {!selectedBranch && (
+          <input
+            type="password"
+            placeholder="Superadmin Password"
+            value={form.authorizationPassword}
+            onChange={(e) =>
+              setForm({ ...form, authorizationPassword: e.target.value })
+            }
+            required
+            style={styles.input}
+          />
+        )}
 
-        <select
-          value={form.status}
-          onChange={(e) => setForm({ ...form, status: e.target.value })}
-          style={styles.input}
-        >
-          <option value="active">Active</option>
-          <option value="inactive">Inactive</option>
-        </select>
+        {selectedBranch && (
+          <select
+            value={form.status}
+            onChange={(e) => setForm({ ...form, status: e.target.value })}
+            style={styles.input}
+          >
+            <option value="active">Active</option>
+            <option value="inactive">Inactive</option>
+          </select>
+        )}
 
         <button type="submit" style={styles.primaryButton}>
           {selectedBranch ? "Update Branch" : "Create Branch"}

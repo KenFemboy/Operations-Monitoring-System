@@ -1,25 +1,47 @@
 import Branch from "../../models/Branch.js";
 import User from "../../models/User.js";
+import bcrypt from "bcryptjs";
 import { getUserBranchId, isSuperAdmin } from "../../middleware/accessControl.js";
 
 export const createBranch = async (req, res) => {
   try {
-    const { branchName, location, address, dedicatedAdmin } = req.body;
+    const { branchName, location, address } = req.body;
+    const authorizationPassword =
+      req.body.authorizationPassword || req.body.superadminPassword;
+
+    if (!authorizationPassword) {
+      return res.status(400).json({
+        success: false,
+        message: "Superadmin password is required",
+      });
+    }
+
+    const currentUser = await User.findById(req.user.id);
+
+    if (!currentUser) {
+      return res.status(401).json({
+        success: false,
+        message: "Current user not found",
+      });
+    }
+
+    const isAuthorizationPasswordValid = await bcrypt.compare(
+      authorizationPassword,
+      currentUser.password
+    );
+
+    if (!isAuthorizationPasswordValid) {
+      return res.status(401).json({
+        success: false,
+        message: "Invalid superadmin password",
+      });
+    }
 
     const branch = await Branch.create({
       branchName,
       location,
       address,
-      dedicatedAdmin: dedicatedAdmin || null,
     });
-
-    if (dedicatedAdmin) {
-      await User.findByIdAndUpdate(dedicatedAdmin, {
-        branch: branch.branchName,
-        branchId: branch._id,
-        role: "console_user",
-      });
-    }
 
     res.status(201).json({
       success: true,
@@ -52,9 +74,7 @@ export const getBranches = async (req, res) => {
       filter._id = branchId;
     }
 
-    const branches = await Branch.find(filter)
-      .populate("dedicatedAdmin", "name email role")
-      .sort({ createdAt: -1 });
+    const branches = await Branch.find(filter).sort({ createdAt: -1 });
 
     res.status(200).json({
       success: true,
@@ -72,7 +92,7 @@ export const getBranches = async (req, res) => {
 export const updateBranch = async (req, res) => {
   try {
     const { id } = req.params;
-    const { branchName, location, address, dedicatedAdmin, status } = req.body;
+    const { branchName, location, address, status } = req.body;
 
     const branch = await Branch.findByIdAndUpdate(
       id,
@@ -80,7 +100,6 @@ export const updateBranch = async (req, res) => {
         branchName,
         location,
         address,
-        dedicatedAdmin: dedicatedAdmin || null,
         status,
       },
       { new: true }
@@ -90,14 +109,6 @@ export const updateBranch = async (req, res) => {
       return res.status(404).json({
         success: false,
         message: "Branch not found",
-      });
-    }
-
-    if (dedicatedAdmin) {
-      await User.findByIdAndUpdate(dedicatedAdmin, {
-        branch: branch.branchName,
-        branchId: branch._id,
-        role: "console_user",
       });
     }
 
@@ -127,15 +138,6 @@ export const deleteBranch = async (req, res) => {
         message: "Branch not found",
       });
     }
-
-    await User.updateMany(
-      { branch: id },
-      {
-        $set: {
-          branch: null,
-        },
-      }
-    );
 
     res.status(200).json({
       success: true,

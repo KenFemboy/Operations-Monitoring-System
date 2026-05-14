@@ -1,4 +1,4 @@
-function BranchTable({ branches, onEdit, onDelete, onView }) {
+function BranchTable({ branches, onEdit, onView }) {
   return (
     <div style={styles.card}>
       <h2>Branch List</h2>
@@ -9,7 +9,6 @@ function BranchTable({ branches, onEdit, onDelete, onView }) {
             <th style={styles.th}>Branch Name</th>
             <th style={styles.th}>Location</th>
             <th style={styles.th}>Address</th>
-            <th style={styles.th}>Dedicated Admin</th>
             <th style={styles.th}>Status</th>
             <th style={styles.th}>Actions</th>
           </tr>
@@ -18,7 +17,7 @@ function BranchTable({ branches, onEdit, onDelete, onView }) {
         <tbody>
           {branches.length === 0 ? (
             <tr>
-              <td colSpan="6" style={styles.empty}>
+              <td colSpan="5" style={styles.empty}>
                 No branches found.
               </td>
             </tr>
@@ -28,9 +27,6 @@ function BranchTable({ branches, onEdit, onDelete, onView }) {
                 <td style={styles.td}>{branch.branchName}</td>
                 <td style={styles.td}>{branch.location}</td>
                 <td style={styles.td}>{branch.address}</td>
-                <td style={styles.td}>
-                  {branch.dedicatedAdmin?.name || "No admin assigned"}
-                </td>
                 <td style={styles.td}>{branch.status}</td>
                 <td style={styles.td}>
                   <button
@@ -45,21 +41,6 @@ function BranchTable({ branches, onEdit, onDelete, onView }) {
                     style={styles.editButton}
                   >
                     Edit
-                  </button>
-
-                  <button
-                    onClick={() => {
-                      const confirmDelete = window.confirm(
-                        "Are you sure you want to delete this branch?"
-                      );
-
-                      if (confirmDelete) {
-                        onDelete(branch._id);
-                      }
-                    }}
-                    style={styles.deleteButton}
-                  >
-                    Delete
                   </button>
                 </td>
               </tr>
@@ -114,14 +95,6 @@ const styles = {
     border: "none",
     borderRadius: "5px",
     marginRight: "6px",
-    cursor: "pointer",
-  },
-  deleteButton: {
-    padding: "6px 10px",
-    backgroundColor: "#dc2626",
-    color: "#fff",
-    border: "none",
-    borderRadius: "5px",
     cursor: "pointer",
   },
 };
