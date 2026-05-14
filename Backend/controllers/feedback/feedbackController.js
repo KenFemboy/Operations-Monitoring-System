@@ -24,6 +24,15 @@ const branchSlugCandidates = (branch) => {
   return names.filter(Boolean).map(slugify);
 };
 
+const formatTimestampForFilename = (value = new Date()) =>
+  new Date(value)
+    .toISOString()
+    .replace(/\.\d{3}Z$/, "Z")
+    .replace(/[:.]/g, "-");
+
+const buildFeedbackImageFilenameBase = ({ dateUploaded, branchName }) =>
+  `${formatTimestampForFilename(dateUploaded)}_${branchName}`;
+
 const resolveBranchBySlug = async (branchSlug) => {
   if (!branchSlug) return null;
 
@@ -146,7 +155,16 @@ export const createFeedback = async (req, res) => {
       }
     }
 
-    uploadedImage = req.file ? await uploadToSupabase(req.file, "feedback") : null;
+    const dateUploaded = new Date();
+    uploadedImage = req.file
+      ? await uploadToSupabase(req.file, "feedback", {
+          filenameBase: buildFeedbackImageFilenameBase({
+            dateUploaded,
+            branchName: resolvedBranch.branchName,
+          }),
+          extension: "webp",
+        })
+      : null;
 
     const feedback = await Feedback.create({
       customerName: customerName || "Anonymous",

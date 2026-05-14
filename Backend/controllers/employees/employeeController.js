@@ -109,7 +109,7 @@ const getEmployeeBranchId = async (employeeId) => {
 
 const assertEmployeeAccess = async (req, employeeId) => {
   const employee = await Employee.findOne({ _id: employeeId, isArchived: { $ne: true } })
-    .select("employeeId assignedBranch branch photoPath")
+    .select("employeeId assignedBranch branch dateHired photoPath")
     .lean();
 
   if (!employee) {
@@ -238,6 +238,22 @@ const calculateAge = (birthdate) => {
   return age > 0 ? age : 0;
 };
 
+const formatDateForFilename = (value) => {
+  const date = value ? new Date(value) : new Date();
+
+  if (Number.isNaN(date.getTime())) {
+    return new Date().toISOString().slice(0, 10);
+  }
+
+  return date.toISOString().slice(0, 10);
+};
+
+const buildEmployeePhotoFilenameBase = ({
+  employeeId,
+  dateHired,
+  branchName,
+}) => `${employeeId}_${formatDateForFilename(dateHired)}_${branchName}`;
+
 const normalizeEmployeePayload = (body = {}) => {
   const payload = { ...body };
 
@@ -322,10 +338,20 @@ export const createEmployee = async (req, res) => {
     }
 
     const branch = await resolveBranchForEmployeeCreate(req);
-    uploadedPhoto = req.file ? await uploadToSupabase(req.file, "employees") : null;
+    const normalizedPayload = normalizeEmployeePayload(req.body);
+    uploadedPhoto = req.file
+      ? await uploadToSupabase(req.file, "employees", {
+          filenameBase: buildEmployeePhotoFilenameBase({
+            employeeId: newEmployeeId,
+            dateHired: normalizedPayload.dateHired,
+            branchName: branch.branchName,
+          }),
+          extension: "webp",
+        })
+      : null;
 
     const employee = await Employee.create({
-      ...normalizeEmployeePayload(req.body),
+      ...normalizedPayload,
       assignedBranch: branch.branchName,
       branch: branch.branchId,
       employeeId: newEmployeeId,
@@ -437,13 +463,24 @@ export const updateEmployee = async (req, res) => {
             branchId: existingEmployee.branch,
           };
 
+    const normalizedPayload = normalizeEmployeePayload(req.body);
     const updatePayload = {
-      ...normalizeEmployeePayload(req.body),
+      ...normalizedPayload,
       assignedBranch: branch.branchName || existingEmployee.assignedBranch,
       branch: branch.branchId || existingEmployee.branch,
     };
 
-    uploadedPhoto = req.file ? await uploadToSupabase(req.file, "employees") : null;
+    uploadedPhoto = req.file
+      ? await uploadToSupabase(req.file, "employees", {
+          filenameBase: buildEmployeePhotoFilenameBase({
+            employeeId: existingEmployee.employeeId,
+            dateHired: normalizedPayload.dateHired || existingEmployee.dateHired,
+            branchName: updatePayload.assignedBranch,
+          }),
+          extension: "webp",
+          upsert: true,
+        })
+      : null;
 
     if (uploadedPhoto) {
       updatePayload.photo = uploadedPhoto.url;
@@ -501,7 +538,7 @@ export const deleteEmployee = async (req, res) => {
       });
     }
 
-    if (uploadedPhoto && existingEmployee.photoPath) {
+    if (uploadedPhoto && existingEmployee.photoPath && existingEmployee.photoPath !== uploadedPhoto.path) {
       await deleteFromSupabase(existingEmployee.photoPath).catch((deleteError) => {
         console.error("Failed to delete replaced employee photo:", deleteError);
       });

@@ -11,6 +11,23 @@ const extensionByMimeType = {
 const normalizeFolder = (folder = "") =>
   folder.toString().trim().replace(/^\/+|\/+$/g, "");
 
+const sanitizeFilenamePart = (value = "") =>
+  value
+    .toString()
+    .trim()
+    .replace(/[^a-zA-Z0-9_-]+/g, "-")
+    .replace(/^-+|-+$/g, "");
+
+const sanitizeFilenameBase = (value = "") =>
+  value
+    .toString()
+    .trim()
+    .replace(/\.[^.]+$/, "")
+    .split("_")
+    .map(sanitizeFilenamePart)
+    .filter(Boolean)
+    .join("_");
+
 const createUploadError = (message, statusCode = 500) => {
   const error = new Error(message);
   error.statusCode = statusCode;
@@ -27,7 +44,7 @@ const validateSupabaseConfig = () => {
   }
 };
 
-export const uploadToSupabase = async (file, folder) => {
+export const uploadToSupabase = async (file, folder, options = {}) => {
   if (!file) {
     return null;
   }
@@ -39,8 +56,9 @@ export const uploadToSupabase = async (file, folder) => {
   validateSupabaseConfig();
 
   const safeFolder = normalizeFolder(folder);
-  const extension = extensionByMimeType[file.mimetype];
-  const filename = `${uuidv4()}.${extension}`;
+  const extension = options.extension || extensionByMimeType[file.mimetype];
+  const filenameBase = sanitizeFilenameBase(options.filenameBase);
+  const filename = `${filenameBase || uuidv4()}.${extension}`;
   const filePath = safeFolder ? `${safeFolder}/${filename}` : filename;
   const supabase = getSupabase();
 
@@ -48,7 +66,7 @@ export const uploadToSupabase = async (file, folder) => {
     .from(process.env.SUPABASE_BUCKET)
     .upload(filePath, file.buffer, {
       contentType: file.mimetype,
-      upsert: false,
+      upsert: options.upsert || false,
     });
 
   if (error) {
