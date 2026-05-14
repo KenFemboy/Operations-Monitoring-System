@@ -1,4 +1,4 @@
-function PresentEmployeesCard({ attendance = [], selectedDate }) {
+function PresentEmployeesCard({ attendance = [], selectedDate, selectedBranch = "all" }) {
   const formattedDate = new Date(selectedDate).toLocaleDateString("en-US", {
     month: "long",
     day: "numeric",
@@ -7,8 +7,13 @@ function PresentEmployeesCard({ attendance = [], selectedDate }) {
 
   const presentEmployees = attendance.filter((record) => {
     const recordDate = new Date(record.date).toISOString().split("T")[0];
+    const branchId = record.branch?._id || record.branch || "";
 
-    return recordDate === selectedDate && record.status === "present";
+    return (
+      recordDate === selectedDate &&
+      record.status === "present" &&
+      (selectedBranch === "all" || String(branchId) === selectedBranch)
+    );
   });
 
   return (
@@ -33,6 +38,7 @@ function PresentEmployeesCard({ attendance = [], selectedDate }) {
               <tr>
                 <th>Employee ID</th>
                 <th>Employee Name</th>
+                <th>Branch</th>
                 <th>Hours Worked</th>
               </tr>
             </thead>
@@ -43,6 +49,7 @@ function PresentEmployeesCard({ attendance = [], selectedDate }) {
                   <td>
                     {record.employee?.firstName} {record.employee?.lastName}
                   </td>
+                  <td>{record.branch?.branchName || record.employee?.assignedBranch || "-"}</td>
                   <td>{Number(record.totalHours || 0).toFixed(2)} hrs</td>
                 </tr>
               ))}

@@ -93,6 +93,7 @@ function EmployeesPage({ initialTab = "employees" }) {
   const [attendance, setAttendance] = useState([]);
   const [selectedDate, setSelectedDate] = useState(getToday);
   const [attendanceView, setAttendanceView] = useState("table");
+  const [selectedAttendanceBranch, setSelectedAttendanceBranch] = useState("all");
 
   const [leaves, setLeaves] = useState([]);
   const [editingLeave, setEditingLeave] = useState(null);
@@ -499,19 +500,21 @@ function EmployeesPage({ initialTab = "employees" }) {
 
       {activeTab === "attendance" && (
         <section className="attendance-page">
-          <ModuleViewToggle
-            activeView={attendanceView}
-            formLabel="Add Attendance"
-            tableLabel="Attendance Table"
-            onShowForm={() => setAttendanceView("form")}
-            onShowTable={() => setAttendanceView("table")}
-          />
+          {!isSuperAdmin && (
+            <ModuleViewToggle
+              activeView={attendanceView}
+              formLabel="Add Attendance"
+              tableLabel="Attendance Table"
+              onShowForm={() => setAttendanceView("form")}
+              onShowTable={() => setAttendanceView("table")}
+            />
+          )}
 
-          {attendanceView === "form" && (
+          {!isSuperAdmin && attendanceView === "form" && (
             <AttendanceForm employees={employees} onSubmit={handleSubmitAttendance} />
           )}
 
-          {attendanceView === "table" && (
+          {(isSuperAdmin || attendanceView === "table") && (
             <>
               <div className="attendance-filters">
                 <div className="attendance-filter-field">
@@ -523,18 +526,37 @@ function EmployeesPage({ initialTab = "employees" }) {
                     onChange={(event) => setSelectedDate(event.target.value)}
                   />
                 </div>
+                <div className="attendance-filter-field">
+                  <label htmlFor="attendance-branch">Branch</label>
+                  <select
+                    id="attendance-branch"
+                    value={selectedAttendanceBranch}
+                    onChange={(event) => setSelectedAttendanceBranch(event.target.value)}
+                  >
+                    <option value="all">All Branches</option>
+                    {branches.map((branch) => (
+                      <option key={branch._id} value={branch._id}>
+                        {branch.branchName}
+                      </option>
+                    ))}
+                  </select>
+                </div>
                 <button
                   type="button"
                   className="attendance-clear-btn"
-                  onClick={handleSetToday}
+                  onClick={() => {
+                    handleSetToday();
+                    setSelectedAttendanceBranch("all");
+                  }}
                 >
-                  Today
+                  Reset
                 </button>
               </div>
 
               <PresentEmployeesCard
                 attendance={attendance}
                 selectedDate={selectedDate}
+                selectedBranch={selectedAttendanceBranch}
               />
             </>
           )}

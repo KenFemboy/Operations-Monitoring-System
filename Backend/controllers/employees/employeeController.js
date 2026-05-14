@@ -570,6 +570,13 @@ export const deleteEmployee = async (req, res) => {
 
 export const createAttendance = async (req, res) => {
   try {
+    if (isSuperAdmin(req.user)) {
+      return res.status(403).json({
+        success: false,
+        message: "Super admin cannot add attendance",
+      });
+    }
+
     const {
       employee,
       date,
@@ -662,6 +669,7 @@ export const getAttendance = async (req, res) => {
 
     const attendance = await Attendance.find(filter)
       .populate("employee")
+      .populate("branch", "branchName location address status")
       .sort({ date: -1 });
 
     res.status(200).json({
