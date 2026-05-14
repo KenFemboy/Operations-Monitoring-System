@@ -15,9 +15,11 @@ function AverageRatingByMonthTable({ data }) {
     "December",
   ];
 
+  const rows = Array.isArray(data) ? data : [];
+
   const renderStars = (rating) => {
-    const rounded = Math.round(rating || 0);
-    return "★".repeat(rounded) + "☆".repeat(5 - rounded);
+    const rounded = Math.min(5, Math.max(0, Math.round(Number(rating) || 0)));
+    return "\u2605".repeat(rounded) + "\u2606".repeat(5 - rounded);
   };
 
   return (
@@ -35,17 +37,17 @@ function AverageRatingByMonthTable({ data }) {
         </thead>
 
         <tbody>
-          {data.length === 0 ? (
+          {rows.length === 0 ? (
             <tr>
               <td style={styles.empty} colSpan="4">
                 No monthly rating data found.
               </td>
             </tr>
           ) : (
-            data.map((item) => (
+            rows.map((item) => (
               <tr key={`${item.year}-${item.month}`}>
                 <td style={styles.td}>
-                  {monthNames[item.month]} {item.year}
+                  {monthNames[item.month] || "Unknown"} {item.year}
                 </td>
 
                 <td style={styles.td}>

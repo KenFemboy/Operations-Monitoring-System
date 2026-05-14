@@ -1,8 +1,17 @@
 import { useEffect, useState } from "react";
+import BranchEmployeePicker from "./BranchEmployeePicker";
 
-function LeaveForm({ employees, onSubmit, editingLeave, onCancelEdit }) {
+function LeaveForm({
+  employees,
+  branches = [],
+  useBranchPicker = false,
+  onSubmit,
+  editingLeave,
+  onCancelEdit,
+}) {
   const [form, setForm] = useState({
     employee: "",
+    branchId: "",
     leaveType: "SIL",
     startDate: "",
     endDate: "",
@@ -13,8 +22,12 @@ function LeaveForm({ employees, onSubmit, editingLeave, onCancelEdit }) {
   useEffect(() => {
     const timeoutId = window.setTimeout(() => {
     if (editingLeave) {
+      const employeeId = editingLeave.employee?._id || editingLeave.employee || "";
+      const employee = employees.find((item) => item._id === employeeId);
+
       setForm({
-        employee: editingLeave.employee?._id || editingLeave.employee || "",
+        employee: employeeId,
+        branchId: employee?.branch?._id || employee?.branch || "",
         leaveType: editingLeave.leaveType || "SIL",
         startDate: editingLeave.startDate
           ? editingLeave.startDate.split("T")[0]
@@ -29,7 +42,7 @@ function LeaveForm({ employees, onSubmit, editingLeave, onCancelEdit }) {
     }, 0);
 
     return () => window.clearTimeout(timeoutId);
-  }, [editingLeave]);
+  }, [editingLeave, employees]);
 
   const handleChange = (e) => {
     setForm({ ...form, [e.target.name]: e.target.value });
@@ -38,6 +51,7 @@ function LeaveForm({ employees, onSubmit, editingLeave, onCancelEdit }) {
   const resetForm = () => {
     setForm({
       employee: "",
+      branchId: "",
       leaveType: "SIL",
       startDate: "",
       endDate: "",
@@ -48,7 +62,13 @@ function LeaveForm({ employees, onSubmit, editingLeave, onCancelEdit }) {
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    onSubmit(form);
+    if (useBranchPicker && !form.employee) {
+      alert("Please select an employee");
+      return;
+    }
+
+    const { branchId: _branchId, ...payload } = form;
+    onSubmit(payload);
     resetForm();
   };
 
@@ -60,22 +80,17 @@ function LeaveForm({ employees, onSubmit, editingLeave, onCancelEdit }) {
         <section className="employee-form-section">
           <h4>Employee & Type</h4>
           <div className="employee-form-grid">
-            <label className="employee-field">
-              <span>Employee</span>
-              <select
-                name="employee"
-                value={form.employee}
-                onChange={handleChange}
-                required
-              >
-                <option value="">Select Employee</option>
-                {employees.map((emp) => (
-                  <option key={emp._id} value={emp._id}>
-                    {emp.employeeId} - {emp.firstName} {emp.lastName}
-                  </option>
-                ))}
-              </select>
-            </label>
+            <BranchEmployeePicker
+              employees={employees}
+              branches={branches}
+              value={form.employee}
+              onChange={(employee) => setForm({ ...form, employee })}
+              branchId={form.branchId}
+              onBranchChange={(branchId) =>
+                setForm({ ...form, branchId, employee: "" })
+              }
+              useBranchPicker={useBranchPicker}
+            />
 
             <label className="employee-field">
               <span>Leave Type</span>

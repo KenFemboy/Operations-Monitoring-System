@@ -20,7 +20,7 @@ const routeTitles = {
   payroll: "Payroll",
   contributions: "Contributions",
   leaves: "Leaves",
-  settings: "Settings",
+  adminArchive: "Branch and Admin archived records",
   archive: "Archive",
 };
 

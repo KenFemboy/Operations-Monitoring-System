@@ -7,7 +7,7 @@ import {
   restoreArchiveEntry,
 } from "../../controllers/hr/archiveController.js";
 
-// Superadmin reports/archive routes. Accessible by superadmin only.
+// Superadmin branch/admin archive routes. Accessible by superadmin only.
 const router = express.Router();
 
 router.use(protect, allowRoles("super_admin", "superadmin"));

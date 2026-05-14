@@ -8,7 +8,7 @@ import SuperAdminEmployeesPage from "../../roles/superadmin/employees/SuperAdmin
 import SuperAdminInventoryPage from "../../roles/superadmin/inventory/SuperAdminInventoryPage";
 import SuperAdminSalesPage from "../../roles/superadmin/sales/SuperAdminSalesPage";
 import SuperAdminFeedbackPage from "../../roles/superadmin/feedback/SuperAdminFeedbackPage";
-import SuperAdminReportsPage from "../../roles/superadmin/reports/SuperAdminReportsPage";
+import SuperAdminAdminArchivePage from "../../roles/superadmin/adminArchive/SuperAdminAdminArchivePage";
 import SuperAdminPlantillaPage from "../../roles/superadmin/plantilla/SuperAdminPlantillaPage";
 import RoleRoute from "../../auth/components/RoleRoute";
 import ArchivePage from "../../features/archive/pages/ArchivePage";
@@ -40,7 +40,7 @@ export default function SuperAdminRoutes() {
             </RoleRoute>
           }
         />
-        <Route path="reports" element={<SuperAdminReportsPage />} />
+        <Route path="adminArchive" element={<SuperAdminAdminArchivePage />} />
       </Route>
     </Routes>
   );

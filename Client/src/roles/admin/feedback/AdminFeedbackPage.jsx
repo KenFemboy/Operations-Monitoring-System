@@ -1,20 +1,50 @@
 import { useContext, useEffect, useState } from "react";
-import {
-  getAdminFeedback as getFeedbacks,
-  getAdminAverageRatingByBranch as getAverageRatingByBranch,
-  getAdminAverageRatingByMonth as getAverageRatingByMonth,
-} from "../../../api/admin/adminFeedbackApi";
+import { getAdminFeedback as getFeedbacks } from "../../../api/admin/adminFeedbackApi";
 
 import FeedbackTable from "../../../features/feedback/components/FeedbackTable";
 import FeedbackDateFilter from "../../../features/feedback/components/FeedbackDateFilter";
-import AverageRatingByBranchTable from "../../../features/feedback/components/AverageRatingByBranchTable";
 import AverageRatingByMonthTable from "../../../features/feedback/components/AverageRatingByMonthTable";
 import { AuthContext } from "../../../auth/context/AuthContext";
+
+const buildMonthSummary = (feedbacks = []) => {
+  const summaryByMonth = feedbacks.reduce((summary, feedback) => {
+    const createdAt = feedback.createdAt ? new Date(feedback.createdAt) : null;
+    const rating = Number(feedback.rating);
+
+    if (!createdAt || Number.isNaN(createdAt.getTime()) || Number.isNaN(rating)) {
+      return summary;
+    }
+
+    const year = createdAt.getFullYear();
+    const month = createdAt.getMonth() + 1;
+    const key = `${year}-${month}`;
+    const current = summary.get(key) || {
+      year,
+      month,
+      ratingTotal: 0,
+      totalReviews: 0,
+    };
+
+    current.ratingTotal += rating;
+    current.totalReviews += 1;
+    summary.set(key, current);
+
+    return summary;
+  }, new Map());
+
+  return Array.from(summaryByMonth.values())
+    .map((item) => ({
+      year: item.year,
+      month: item.month,
+      averageRating: Number((item.ratingTotal / item.totalReviews).toFixed(2)),
+      totalReviews: item.totalReviews,
+    }))
+    .sort((a, b) => b.year - a.year || b.month - a.month);
+};
 
 function AdminFeedbackPage() {
   const { user } = useContext(AuthContext);
   const [feedbacks, setFeedbacks] = useState([]);
-  const [branchSummary, setBranchSummary] = useState([]);
   const [monthSummary, setMonthSummary] = useState([]);
 
   const [loading, setLoading] = useState(false);
@@ -33,7 +63,10 @@ function AdminFeedbackPage() {
       setError("");
 
       const res = await getFeedbacks(filter);
-      setFeedbacks(res.data.feedbacks || []);
+      const nextFeedbacks = res.data.feedbacks || [];
+
+      setFeedbacks(nextFeedbacks);
+      setMonthSummary(buildMonthSummary(nextFeedbacks));
     } catch (err) {
       console.error(err);
       setError("Failed to load customer reviews");
@@ -42,38 +75,8 @@ function AdminFeedbackPage() {
     }
   };
 
-  const fetchBranchSummary = async (filter = activeFilter) => {
-    try {
-      const res = await getAverageRatingByBranch({
-        startDate: filter.startDate,
-        endDate: filter.endDate,
-        branch: filter.branch,
-        mealSession: filter.mealSession,
-      });
-
-      setBranchSummary(res.data.summary || []);
-    } catch (err) {
-      console.error(err);
-    }
-  };
-
-  const fetchMonthSummary = async (filter = activeFilter) => {
-    try {
-      const res = await getAverageRatingByMonth({
-        branch: filter.branch,
-        mealSession: filter.mealSession,
-      });
-
-      setMonthSummary(res.data.summary || []);
-    } catch (err) {
-      console.error(err);
-    }
-  };
-
   const fetchAll = async (filter = activeFilter) => {
     await fetchFeedbacks(filter);
-    await fetchBranchSummary(filter);
-    await fetchMonthSummary(filter);
   };
 
   const handleFilter = async (filter) => {
@@ -115,7 +118,6 @@ function AdminFeedbackPage() {
       />
 
       <div style={styles.summaryGrid}>
-        <AverageRatingByBranchTable data={branchSummary} />
         <AverageRatingByMonthTable data={monthSummary} />
       </div>
 

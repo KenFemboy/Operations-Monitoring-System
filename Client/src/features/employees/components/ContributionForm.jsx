@@ -1,8 +1,10 @@
 import { useState } from "react";
+import BranchEmployeePicker from "./BranchEmployeePicker";
 
-function ContributionForm({ employees, onSubmit }) {
+function ContributionForm({ employees, branches = [], useBranchPicker = false, onSubmit }) {
   const [form, setForm] = useState({
     employee: "",
+    branchId: "",
     month: "",
     sss: "",
     pagibig: "",
@@ -22,9 +24,15 @@ function ContributionForm({ employees, onSubmit }) {
 
   const handleSubmit = (e) => {
     e.preventDefault();
+    if (useBranchPicker && !form.employee) {
+      alert("Please select an employee");
+      return;
+    }
+
+    const { branchId: _branchId, ...payload } = form;
 
     onSubmit({
-      ...form,
+      ...payload,
       sss: Number(form.sss),
       pagibig: Number(form.pagibig),
       philhealth: Number(form.philhealth),
@@ -39,17 +47,17 @@ function ContributionForm({ employees, onSubmit }) {
         <section className="employee-form-section">
           <h4>Employee & Period</h4>
           <div className="employee-form-grid">
-            <label className="employee-field">
-              <span>Employee</span>
-              <select name="employee" value={form.employee} onChange={handleChange} required>
-                <option value="">Select Employee</option>
-                {employees.map((emp) => (
-                  <option key={emp._id} value={emp._id}>
-                    {emp.employeeId} - {emp.firstName} {emp.lastName}
-                  </option>
-                ))}
-              </select>
-            </label>
+            <BranchEmployeePicker
+              employees={employees}
+              branches={branches}
+              value={form.employee}
+              onChange={(employee) => setForm({ ...form, employee })}
+              branchId={form.branchId}
+              onBranchChange={(branchId) =>
+                setForm({ ...form, branchId, employee: "" })
+              }
+              useBranchPicker={useBranchPicker}
+            />
 
             <label className="employee-field">
               <span>Month</span>

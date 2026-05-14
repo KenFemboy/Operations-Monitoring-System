@@ -1,8 +1,10 @@
 import { useState } from "react";
+import BranchEmployeePicker from "./BranchEmployeePicker";
 
-function IncidentReportForm({ employees, onSubmit }) {
+function IncidentReportForm({ employees, branches = [], useBranchPicker = false, onSubmit }) {
   const [form, setForm] = useState({
     employee: "",
+    branchId: "",
     incidentDate: "",
     title: "",
     description: "",
@@ -15,11 +17,17 @@ function IncidentReportForm({ employees, onSubmit }) {
 
   const handleSubmit = (e) => {
     e.preventDefault();
+    if (useBranchPicker && !form.employee) {
+      alert("Please select an employee");
+      return;
+    }
 
-    onSubmit(form);
+    const { branchId: _branchId, ...payload } = form;
+    onSubmit(payload);
 
     setForm({
       employee: "",
+      branchId: "",
       incidentDate: "",
       title: "",
       description: "",
@@ -35,22 +43,17 @@ function IncidentReportForm({ employees, onSubmit }) {
         <section className="employee-form-section">
           <h4>Employee & Date</h4>
           <div className="employee-form-grid">
-            <label className="employee-field">
-              <span>Employee</span>
-              <select
-                name="employee"
-                value={form.employee}
-                onChange={handleChange}
-                required
-              >
-                <option value="">Select Employee</option>
-                {employees.map((emp) => (
-                  <option key={emp._id} value={emp._id}>
-                    {emp.employeeId} - {emp.firstName} {emp.lastName}
-                  </option>
-                ))}
-              </select>
-            </label>
+            <BranchEmployeePicker
+              employees={employees}
+              branches={branches}
+              value={form.employee}
+              onChange={(employee) => setForm({ ...form, employee })}
+              branchId={form.branchId}
+              onBranchChange={(branchId) =>
+                setForm({ ...form, branchId, employee: "" })
+              }
+              useBranchPicker={useBranchPicker}
+            />
 
             <label className="employee-field">
               <span>Incident Date</span>

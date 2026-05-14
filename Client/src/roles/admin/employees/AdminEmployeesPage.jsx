@@ -49,8 +49,58 @@ const TABS = [
 
 const getToday = () => new Date().toISOString().split("T")[0];
 
+const createDefaultRecordFilters = () => ({
+  branchId: "all",
+  month: "",
+});
+
 const getErrorMessage = (error, fallback) =>
   error.response?.data?.message || fallback;
+
+function RecordFilters({
+  idPrefix,
+  filters,
+  branches,
+  showBranch,
+  onChange,
+  onReset,
+}) {
+  return (
+    <div className="attendance-filters record-filters">
+      {showBranch && (
+        <div className="attendance-filter-field">
+          <label htmlFor={`${idPrefix}-branch`}>Branch</label>
+          <select
+            id={`${idPrefix}-branch`}
+            value={filters.branchId}
+            onChange={(event) => onChange({ branchId: event.target.value })}
+          >
+            <option value="all">All Branches</option>
+            {branches.map((branch) => (
+              <option key={branch._id} value={branch._id}>
+                {branch.branchName}
+              </option>
+            ))}
+          </select>
+        </div>
+      )}
+
+      <div className="attendance-filter-field">
+        <label htmlFor={`${idPrefix}-month`}>Month</label>
+        <input
+          id={`${idPrefix}-month`}
+          type="month"
+          value={filters.month}
+          onChange={(event) => onChange({ month: event.target.value })}
+        />
+      </div>
+
+      <button type="button" className="attendance-clear-btn" onClick={onReset}>
+        Reset
+      </button>
+    </div>
+  );
+}
 
 function ModuleViewToggle({ activeView, formLabel, tableLabel, onShowForm, onShowTable }) {
   return (
@@ -106,6 +156,48 @@ function EmployeesPage({ initialTab = "employees" }) {
   const [incidentReports, setIncidentReports] = useState([]);
   const [incidentReportView, setIncidentReportView] = useState("table");
   const [ntes, setNtes] = useState([]);
+  const [recordFilters, setRecordFilters] = useState({
+    leave: createDefaultRecordFilters(),
+    payroll: createDefaultRecordFilters(),
+    contribution: createDefaultRecordFilters(),
+    ir: createDefaultRecordFilters(),
+    nte: createDefaultRecordFilters(),
+  });
+
+  const buildRecordParams = useCallback(
+    (filterKey) => {
+      const filters = recordFilters[filterKey] || createDefaultRecordFilters();
+      const params = {};
+
+      if (isSuperAdmin && filters.branchId && filters.branchId !== "all") {
+        params.branchId = filters.branchId;
+      }
+
+      if (filters.month) {
+        params.month = filters.month;
+      }
+
+      return params;
+    },
+    [isSuperAdmin, recordFilters]
+  );
+
+  const handleRecordFilterChange = (filterKey, values) => {
+    setRecordFilters((current) => ({
+      ...current,
+      [filterKey]: {
+        ...current[filterKey],
+        ...values,
+      },
+    }));
+  };
+
+  const handleResetRecordFilters = (filterKey) => {
+    setRecordFilters((current) => ({
+      ...current,
+      [filterKey]: createDefaultRecordFilters(),
+    }));
+  };
 
   const fetchEmployees = useCallback(async () => {
     try {
@@ -144,53 +236,53 @@ function EmployeesPage({ initialTab = "employees" }) {
 
   const fetchLeaves = useCallback(async () => {
     try {
-      const res = await getLeaves();
+      const res = await getLeaves(buildRecordParams("leave"));
       setLeaves(res.data.data || []);
     } catch (error) {
       console.error(error);
       alert("Failed to fetch leaves");
     }
-  }, []);
+  }, [buildRecordParams]);
 
   const fetchPayrolls = useCallback(async () => {
     try {
-      const res = await getPayrolls();
+      const res = await getPayrolls(buildRecordParams("payroll"));
       setPayrolls(res.data.data || []);
     } catch (error) {
       console.error(error);
       alert("Failed to fetch payrolls");
     }
-  }, []);
+  }, [buildRecordParams]);
 
   const fetchContributions = useCallback(async () => {
     try {
-      const res = await getContributions();
+      const res = await getContributions(buildRecordParams("contribution"));
       setContributions(res.data.data || []);
     } catch (error) {
       console.error(error);
       alert("Failed to fetch contributions");
     }
-  }, []);
+  }, [buildRecordParams]);
 
   const fetchIncidentReports = useCallback(async () => {
     try {
-      const res = await getIncidentReports();
+      const res = await getIncidentReports(buildRecordParams("ir"));
       setIncidentReports(res.data.data || []);
     } catch (error) {
       console.error(error);
       alert("Failed to fetch incident reports");
     }
-  }, []);
+  }, [buildRecordParams]);
 
   const fetchNTEs = useCallback(async () => {
     try {
-      const res = await getNTEs();
+      const res = await getNTEs(buildRecordParams("nte"));
       setNtes(res.data.data || []);
     } catch (error) {
       console.error(error);
       alert("Failed to fetch NTE records");
     }
-  }, []);
+  }, [buildRecordParams]);
 
   const fetchPageData = useCallback(() => {
     fetchBranches();
@@ -582,6 +674,8 @@ function EmployeesPage({ initialTab = "employees" }) {
           {leaveView === "form" && (
             <LeaveForm
               employees={employees}
+              branches={branches}
+              useBranchPicker={isSuperAdmin}
               onSubmit={handleSubmitLeave}
               editingLeave={editingLeave}
               onCancelEdit={() => {
@@ -592,11 +686,21 @@ function EmployeesPage({ initialTab = "employees" }) {
           )}
 
           {leaveView === "table" && (
-            <LeaveTable
-              leaves={leaves}
-              onUpdateStatus={handleUpdateLeaveStatus}
-              onEdit={handleEditLeave}
-            />
+            <>
+              <RecordFilters
+                idPrefix="leave-filter"
+                filters={recordFilters.leave}
+                branches={branches}
+                showBranch={isSuperAdmin}
+                onChange={(values) => handleRecordFilterChange("leave", values)}
+                onReset={() => handleResetRecordFilters("leave")}
+              />
+              <LeaveTable
+                leaves={leaves}
+                onUpdateStatus={handleUpdateLeaveStatus}
+                onEdit={handleEditLeave}
+              />
+            </>
           )}
         </div>
       )}
@@ -612,14 +716,29 @@ function EmployeesPage({ initialTab = "employees" }) {
           />
 
           {payrollView === "form" && (
-            <PayrollForm employees={employees} onSubmit={handleSubmitPayroll} />
+            <PayrollForm
+              employees={employees}
+              branches={branches}
+              useBranchPicker={isSuperAdmin}
+              onSubmit={handleSubmitPayroll}
+            />
           )}
 
           {payrollView === "table" && (
-            <PayrollTable
-              payrolls={payrolls}
-              onUpdateStatus={handleUpdatePayrollStatus}
-            />
+            <>
+              <RecordFilters
+                idPrefix="payroll-filter"
+                filters={recordFilters.payroll}
+                branches={branches}
+                showBranch={isSuperAdmin}
+                onChange={(values) => handleRecordFilterChange("payroll", values)}
+                onReset={() => handleResetRecordFilters("payroll")}
+              />
+              <PayrollTable
+                payrolls={payrolls}
+                onUpdateStatus={handleUpdatePayrollStatus}
+              />
+            </>
           )}
         </div>
       )}
@@ -637,12 +756,24 @@ function EmployeesPage({ initialTab = "employees" }) {
           {contributionView === "form" && (
             <ContributionForm
               employees={employees}
+              branches={branches}
+              useBranchPicker={isSuperAdmin}
               onSubmit={handleSubmitContribution}
             />
           )}
 
           {contributionView === "table" && (
-            <ContributionTable contributions={contributions} />
+            <>
+              <RecordFilters
+                idPrefix="contribution-filter"
+                filters={recordFilters.contribution}
+                branches={branches}
+                showBranch={isSuperAdmin}
+                onChange={(values) => handleRecordFilterChange("contribution", values)}
+                onReset={() => handleResetRecordFilters("contribution")}
+              />
+              <ContributionTable contributions={contributions} />
+            </>
           )}
         </div>
       )}
@@ -660,15 +791,27 @@ function EmployeesPage({ initialTab = "employees" }) {
           {incidentReportView === "form" && (
             <IncidentReportForm
               employees={employees}
+              branches={branches}
+              useBranchPicker={isSuperAdmin}
               onSubmit={handleSubmitIncidentReport}
             />
           )}
 
           {incidentReportView === "table" && (
-            <IncidentReportTable
-              reports={incidentReports}
-              onUpdateStatus={handleUpdateIncidentStatus}
-            />
+            <>
+              <RecordFilters
+                idPrefix="ir-filter"
+                filters={recordFilters.ir}
+                branches={branches}
+                showBranch={isSuperAdmin}
+                onChange={(values) => handleRecordFilterChange("ir", values)}
+                onReset={() => handleResetRecordFilters("ir")}
+              />
+              <IncidentReportTable
+                reports={incidentReports}
+                onUpdateStatus={handleUpdateIncidentStatus}
+              />
+            </>
           )}
         </div>
       )}
@@ -676,8 +819,21 @@ function EmployeesPage({ initialTab = "employees" }) {
       {activeTab === "nte" && (
         <>
           {isSuperAdmin && (
-            <NTEForm employees={employees} onSubmit={handleSubmitNTE} />
+            <NTEForm
+              employees={employees}
+              branches={branches}
+              onSubmit={handleSubmitNTE}
+            />
           )}
+
+          <RecordFilters
+            idPrefix="nte-filter"
+            filters={recordFilters.nte}
+            branches={branches}
+            showBranch={isSuperAdmin}
+            onChange={(values) => handleRecordFilterChange("nte", values)}
+            onReset={() => handleResetRecordFilters("nte")}
+          />
 
           <NTEReportTable
             ntes={ntes}

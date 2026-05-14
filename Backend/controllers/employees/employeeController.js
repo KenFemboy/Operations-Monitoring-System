@@ -216,6 +216,55 @@ const buildHrRecordBranchFilter = async (branchScope) => {
   return branchConditions.length ? { $or: branchConditions } : {};
 };
 
+const getMonthRangeFromRequest = (req) => {
+  const month = req.query?.month;
+
+  if (!month) {
+    return null;
+  }
+
+  if (!/^\d{4}-\d{2}$/.test(month)) {
+    const error = new Error("Month must use YYYY-MM format");
+    error.statusCode = 400;
+    throw error;
+  }
+
+  const [year, monthNumber] = month.split("-").map(Number);
+  const start = new Date(year, monthNumber - 1, 1);
+  const end = new Date(year, monthNumber, 1);
+
+  if (Number.isNaN(start.getTime()) || Number.isNaN(end.getTime())) {
+    const error = new Error("Invalid month filter");
+    error.statusCode = 400;
+    throw error;
+  }
+
+  return { start, end };
+};
+
+const applyDateMonthFilter = (filter, fieldName, monthRange) => {
+  if (!monthRange) {
+    return filter;
+  }
+
+  return {
+    ...filter,
+    [fieldName]: { $gte: monthRange.start, $lt: monthRange.end },
+  };
+};
+
+const applyRangeMonthFilter = (filter, startFieldName, endFieldName, monthRange) => {
+  if (!monthRange) {
+    return filter;
+  }
+
+  return {
+    ...filter,
+    [startFieldName]: { $lt: monthRange.end },
+    [endFieldName]: { $gte: monthRange.start },
+  };
+};
+
 const calculateAge = (birthdate) => {
   if (!birthdate) {
     return 0;
@@ -821,7 +870,12 @@ export const createPayroll = async (req, res) => {
 export const getPayrolls = async (req, res) => {
   try {
     const branchScope = await getBranchScopeFromRequest(req);
-    const filter = await buildHrRecordBranchFilter(branchScope);
+    const filter = applyRangeMonthFilter(
+      await buildHrRecordBranchFilter(branchScope),
+      "payPeriodStart",
+      "payPeriodEnd",
+      getMonthRangeFromRequest(req)
+    );
 
     const payrolls = await Payroll.find(filter)
       .populate("employee", "employeeId firstName lastName salaryRate basicRate")
@@ -931,7 +985,12 @@ export const createLeave = async (req, res) => {
 export const getLeaves = async (req, res) => {
   try {
     const branchScope = await getBranchScopeFromRequest(req);
-    const filter = await buildHrRecordBranchFilter(branchScope);
+    const filter = applyRangeMonthFilter(
+      await buildHrRecordBranchFilter(branchScope),
+      "startDate",
+      "endDate",
+      getMonthRangeFromRequest(req)
+    );
 
     const leaves = await Leave.find(filter)
       .populate("employee", "employeeId firstName lastName")
@@ -1103,11 +1162,23 @@ export const getContributions = async (req, res) => {
   try {
     const branchScope = await getBranchScopeFromRequest(req);
     const filter = await buildHrRecordBranchFilter(branchScope);
+    const month = req.query?.month;
+
+    if (month) {
+      if (!/^\d{4}-\d{2}$/.test(month)) {
+        return res.status(400).json({
+          success: false,
+          message: "Month must use YYYY-MM format",
+        });
+      }
+
+      filter.month = month;
+    }
 
     const contributions = await Contribution.find(filter)
       .populate(
         "employee",
-        "employeeId firstName lastName sss sssId pagibig pagibigId philhealth philhealthId tin assignedBranch"
+        "employeeId firstName lastName sss sssId pagibig pagibigId philhealth philhealthId assignedBranch"
       )
       .sort({ createdAt: -1 });
 
@@ -1159,7 +1230,11 @@ export const createIncidentReport = async (req, res) => {
 export const getIncidentReports = async (req, res) => {
   try {
     const branchScope = await getBranchScopeFromRequest(req);
-    const filter = await buildHrRecordBranchFilter(branchScope);
+    const filter = applyDateMonthFilter(
+      await buildHrRecordBranchFilter(branchScope),
+      "incidentDate",
+      getMonthRangeFromRequest(req)
+    );
 
     const reports = await IncidentReport.find(filter)
       .populate("employee", "employeeId firstName lastName")
@@ -1285,7 +1360,11 @@ export const createNTE = async (req, res) => {
 export const getNTEs = async (req, res) => {
   try {
     const branchScope = await getBranchScopeFromRequest(req);
-    const filter = await buildHrRecordBranchFilter(branchScope);
+    const filter = applyDateMonthFilter(
+      await buildHrRecordBranchFilter(branchScope),
+      "issueDate",
+      getMonthRangeFromRequest(req)
+    );
 
     const ntes = await NoticeToExplain.find(filter)
       .populate({

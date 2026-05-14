@@ -7,7 +7,6 @@ import AdminInventoryPage from "../../roles/admin/inventory/AdminInventoryPage";
 import AdminSalesPage from "../../roles/admin/sales/AdminSalesPage";
 import AdminFeedbackPage from "../../roles/admin/feedback/AdminFeedbackPage";
 import AdminPlantillaPage from "../../roles/admin/plantilla/AdminPlantillaPage";
-import AdminSettingsPage from "../../roles/admin/settings/AdminSettingsPage";
 
 export default function AdminRoutes() {
   return (
@@ -26,7 +25,6 @@ export default function AdminRoutes() {
         <Route path="sales" element={<AdminSalesPage />} />
         <Route path="feedback" element={<AdminFeedbackPage />} />
         <Route path="plantilla" element={<AdminPlantillaPage />} />
-        <Route path="settings" element={<AdminSettingsPage />} />
       </Route>
     </Routes>
   );

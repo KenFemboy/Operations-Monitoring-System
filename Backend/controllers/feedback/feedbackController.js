@@ -365,9 +365,16 @@ export const getAverageRatingByBranch = async (req, res) => {
 
 export const getAverageRatingByMonth = async (req, res) => {
   try {
-    const { branch, mealSession } = req.query;
+    const { startDate, endDate, branch, mealSession } = req.query;
 
     const match = { isArchived: { $ne: true } };
+
+    if (startDate && endDate) {
+      match.createdAt = {
+        $gte: new Date(`${startDate}T00:00:00.000Z`),
+        $lte: new Date(`${endDate}T23:59:59.999Z`),
+      };
+    }
 
     const branchFilter = getBranchFilter(req);
     if (Object.keys(branchFilter).length) {

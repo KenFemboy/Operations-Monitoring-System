@@ -31,9 +31,13 @@ export const superAdminNavigation = [
     ],
   },
   {
-    title: "Reports",
+    title: "Branch and Admin archived records",
     items: [
-      { label: "Reports", hint: "Operational exports", to: "/superadmin/reports" },
+      {
+        label: "Branch and Admin archived records",
+        hint: "Deleted branches and admins",
+        to: "/superadmin/adminArchive",
+      },
       { label: "Archive", hint: "Archived records", to: "/superadmin/archive" },
     ],
   },

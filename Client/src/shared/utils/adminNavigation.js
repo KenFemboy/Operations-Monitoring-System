@@ -23,8 +23,4 @@ export const adminNavigation = [
       { label: "Feedback", hint: "Customer ratings", to: "/admin/feedback" },
     ],
   },
-  {
-    title: "System",
-    items: [{ label: "Settings", hint: "System preferences", to: "/admin/settings" }],
-  },
 ];

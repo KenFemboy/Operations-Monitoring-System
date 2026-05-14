@@ -107,6 +107,8 @@ function SuperAdminFeedbackPage() {
     try {
       const selectedFilter = withSelectedBranch(filter, branchId);
       const res = await getAverageRatingByMonth({
+        startDate: selectedFilter.startDate,
+        endDate: selectedFilter.endDate,
         branch: selectedFilter.branch,
         mealSession: selectedFilter.mealSession,
       });
@@ -159,7 +161,6 @@ function SuperAdminFeedbackPage() {
     }, 0);
 
     return () => window.clearTimeout(timer);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const handleSelectBranch = (branch) => {

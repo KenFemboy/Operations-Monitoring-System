@@ -1,1 +1,1 @@
-export { default } from "../../superadmin/reports/SuperAdminReportsPage";
+export { default } from "../../superadmin/adminArchive/SuperAdminAdminArchivePage";

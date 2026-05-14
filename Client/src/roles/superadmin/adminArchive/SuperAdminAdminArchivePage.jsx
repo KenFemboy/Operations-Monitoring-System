@@ -3,10 +3,10 @@ import Button from '../../../shared/components/Button'
 import Modal from '../../../shared/components/Modal'
 import Table from '../../../shared/components/Table'
 import {
-  clearSuperAdminReportsArchive,
-  getSuperAdminReports,
-  restoreSuperAdminReportEntry,
-} from '../../../api/superadmin/superAdminReportsApi'
+  clearSuperAdminAdminArchive,
+  getSuperAdminAdminArchive,
+  restoreSuperAdminAdminArchiveEntry,
+} from '../../../api/superadmin/superAdminAdminArchiveApi'
 
 const archiveColumns = [
   { key: 'entityType', label: 'Type' },
@@ -35,7 +35,7 @@ function formatDate(value) {
   })
 }
 
-function ArchivePage() {
+function AdminArchivePage() {
   const [entries, setEntries] = useState([])
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
@@ -52,7 +52,7 @@ function ArchivePage() {
     try {
       setLoading(true)
       setError('')
-      const response = await getSuperAdminReports()
+      const response = await getSuperAdminAdminArchive()
       setEntries(response.data?.data || [])
     } catch (err) {
       setError(err.response?.data?.message || 'Failed to load archive entries')
@@ -70,7 +70,7 @@ function ArchivePage() {
     () =>
       entries.map((entry) => ({
         id: entry._id,
-        entityType: entry.entityType === 'branch' ? 'Branch' : 'User',
+        entityType: entry.entityType === 'branch' ? 'Branch' : 'Admin',
         displayName: entry.displayName || '-',
         deletedBy: entry.deletedBy?.name || entry.deletedBy?.email || '-',
         deletedAt: formatDate(entry.deletedAt),
@@ -91,7 +91,7 @@ function ArchivePage() {
       setError('')
       setSuccessMessage('')
 
-      await restoreSuperAdminReportEntry(selectedEntryId, {
+      await restoreSuperAdminAdminArchiveEntry(selectedEntryId, {
         authorizationPassword: restorePassword,
       })
 
@@ -115,7 +115,7 @@ function ArchivePage() {
       setError('')
       setSuccessMessage('')
 
-      await clearSuperAdminReportsArchive({
+      await clearSuperAdminAdminArchive({
         authorizationPassword: clearPassword,
       })
 
@@ -133,8 +133,8 @@ function ArchivePage() {
   return (
     <section>
       <header className="page-header">
-        <h1>Archive</h1>
-        <p>Review deleted users and branches. Only super admins can restore or clear.</p>
+        <h1>Branch and Admin archived records</h1>
+        <p>Review deleted branches and admins. Only super admins can restore or clear.</p>
       </header>
 
       {error ? <p className="status-warning">{error}</p> : null}
@@ -142,7 +142,7 @@ function ArchivePage() {
 
       <section className="table-card">
         <div className="table-toolbar">
-          <h3 className="table-title">Archived Records</h3>
+          <h3 className="table-title">Branch and Admin archived records</h3>
           <div className="action-row">
             <Button
               onClick={() => {
@@ -179,7 +179,7 @@ function ArchivePage() {
             >
               {entries.map((entry) => (
                 <option key={entry._id} value={entry._id}>
-                  {entry.entityType === 'branch' ? 'Branch' : 'User'}: {entry.displayName}
+                  {entry.entityType === 'branch' ? 'Branch' : 'Admin'}: {entry.displayName}
                 </option>
               ))}
             </select>
@@ -238,4 +238,4 @@ function ArchivePage() {
   )
 }
 
-export default ArchivePage
+export default AdminArchivePage

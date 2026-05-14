@@ -27,7 +27,6 @@ function ContributionTable({ contributions }) {
             <th>SSS</th>
             <th>PhilHealth</th>
             <th>Pag-IBIG</th>
-            <th>TIN ID</th>
             <th>Month</th>
             <th>SSS Contribution</th>
             <th>Pag-IBIG Contribution</th>
@@ -39,7 +38,7 @@ function ContributionTable({ contributions }) {
         <tbody>
           {contributions.length === 0 ? (
             <tr>
-              <td colSpan="12" align="center">
+              <td colSpan="11" align="center">
                 No contribution records found
               </td>
             </tr>
@@ -57,7 +56,6 @@ function ContributionTable({ contributions }) {
                 <td>{item.employee?.sss || item.employee?.sssId || "-"}</td>
                 <td>{item.employee?.philhealth || item.employee?.philhealthId || "-"}</td>
                 <td>{item.employee?.pagibig || item.employee?.pagibigId || "-"}</td>
-                <td>{item.employee?.tin || "-"}</td>
 
                 <td>{formatMonth(item.month)}</td>
                 <td>PHP {Number(item.sss || 0).toFixed(2)}</td>

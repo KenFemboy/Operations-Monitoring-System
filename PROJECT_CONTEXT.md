@@ -102,7 +102,7 @@
 - `/employees` - All employees
 - `/inventory` - All inventory
 - `/sales` - All sales
-- `/reports` - System reports
+- `/adminArchive` - Branch and admin archived records
 - `/dashboard` - Superadmin dashboard
 - `/feedback` - All feedback
 - `/plantilla` - All plantilla
@@ -175,7 +175,6 @@
   - `/src/features/inventory/` - Inventory management
   - `/src/features/plantilla/` - Plantilla management
   - `/src/features/sales/` - Sales management
-  - `/src/features/settings/` - User settings
   - `/src/features/users/` - User management (superadmin)
 
 - `/src/layouts/` - Layout components
@@ -338,7 +337,7 @@
 
 8. **Reporting & Analytics**
    - Dashboard views for admin and superadmin
-   - System reports
+   - Branch and admin archived records
 
 ---
 
