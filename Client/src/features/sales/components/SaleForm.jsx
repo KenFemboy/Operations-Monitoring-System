@@ -9,24 +9,32 @@ function SaleForm({ onRefresh, branchId = "" }) {
     serviceType: "lunch",
     customerName: "",
     customerType: "adult",
+    customPrice: "",
     isSenior: false,
     isPWD: false,
     remarks: "",
   });
 
   const calculatePreview = () => {
-    let basePrice = 0;
+    const numericCustomPrice =
+      form.customPrice === "" ? null : Number(form.customPrice);
+    let basePrice =
+      numericCustomPrice !== null && !Number.isNaN(numericCustomPrice)
+        ? Math.max(numericCustomPrice, 0)
+        : 0;
 
-    if (form.customerType === "kid") {
-      basePrice = 0;
-    }
+    if (numericCustomPrice === null || Number.isNaN(numericCustomPrice)) {
+      if (form.customerType === "kid") {
+        basePrice = 0;
+      }
 
-    if (form.customerType === "adultUnder4ft") {
-      basePrice = 150;
-    }
+      if (form.customerType === "adultUnder4ft") {
+        basePrice = 150;
+      }
 
-    if (form.customerType === "adult") {
-      basePrice = 299;
+      if (form.customerType === "adult") {
+        basePrice = 299;
+      }
     }
 
     const discount = basePrice > 0 && (form.isSenior || form.isPWD) ? 50 : 0;
@@ -57,6 +65,7 @@ function SaleForm({ onRefresh, branchId = "" }) {
         serviceType: "lunch",
         customerName: "",
         customerType: "adult",
+        customPrice: "",
         isSenior: false,
         isPWD: false,
         remarks: "",
@@ -159,6 +168,19 @@ function SaleForm({ onRefresh, branchId = "" }) {
           />
           PWD
         </label>
+
+        <div>
+          <label>Custom Price</label>
+          <input
+            type="number"
+            min="0"
+            step="0.01"
+            placeholder="Optional"
+            value={form.customPrice}
+            onChange={(e) => setForm({ ...form, customPrice: e.target.value })}
+            style={styles.input}
+          />
+        </div>
 
         <div>
           <label>Remarks</label>

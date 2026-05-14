@@ -27,19 +27,27 @@ const getSalesAggregateBranchFilter = (req) => {
   return branchFilter;
 };
 
-const calculateBuffetPrice = ({ customerType, isSenior, isPWD }) => {
+const calculateBuffetPrice = ({ customerType, isSenior, isPWD, customPrice }) => {
   let basePrice = 0;
+  const numericCustomPrice =
+    customPrice === "" || customPrice === undefined || customPrice === null
+      ? null
+      : Number(customPrice);
 
-  if (customerType === "kid") {
-    basePrice = 0;
-  }
+  if (numericCustomPrice !== null && !Number.isNaN(numericCustomPrice)) {
+    basePrice = Math.max(numericCustomPrice, 0);
+  } else {
+    if (customerType === "kid") {
+      basePrice = 0;
+    }
 
-  if (customerType === "adultUnder4ft") {
-    basePrice = 150;
-  }
+    if (customerType === "adultUnder4ft") {
+      basePrice = 150;
+    }
 
-  if (customerType === "adult") {
-    basePrice = 299;
+    if (customerType === "adult") {
+      basePrice = 299;
+    }
   }
 
   const hasDiscount = isSenior || isPWD;
@@ -48,6 +56,9 @@ const calculateBuffetPrice = ({ customerType, isSenior, isPWD }) => {
 
   return {
     basePrice,
+    customPrice: numericCustomPrice !== null && !Number.isNaN(numericCustomPrice)
+      ? Math.max(numericCustomPrice, 0)
+      : null,
     discount,
     totalAmount,
   };
@@ -62,6 +73,7 @@ export const createSale = async (req, res) => {
       customerType,
       isSenior,
       isPWD,
+      customPrice,
       remarks,
     } = req.body;
 
@@ -90,6 +102,7 @@ export const createSale = async (req, res) => {
       customerType,
       isSenior: Boolean(isSenior),
       isPWD: Boolean(isPWD),
+      customPrice,
     });
 
     const branch = isSuperAdmin(req.user)
@@ -111,6 +124,7 @@ export const createSale = async (req, res) => {
       isSenior: Boolean(isSenior),
       isPWD: Boolean(isPWD),
       basePrice: price.basePrice,
+      customPrice: price.customPrice,
       discount: price.discount,
       totalAmount: price.totalAmount,
       remarks,

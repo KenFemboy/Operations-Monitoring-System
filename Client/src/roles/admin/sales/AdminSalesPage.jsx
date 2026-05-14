@@ -27,6 +27,7 @@ function SalesPage() {
   const [sales, setSales] = useState([]);
   const [dailySummary, setDailySummary] = useState(null);
   const [monthlySummary, setMonthlySummary] = useState(null);
+  const [salesView, setSalesView] = useState("table");
 
   const [filter, setFilter] = useState({
     startDate: today,
@@ -127,6 +128,17 @@ function SalesPage() {
     refreshAll(selectedBranch?._id || "");
   };
 
+  const handleSaleSaved = async () => {
+    setSalesView("table");
+
+    if (isSuperAdmin) {
+      await refreshSelectedSales();
+      return;
+    }
+
+    await refreshAll();
+  };
+
   return (
     <div style={styles.page}>
       <h1>Sales Management</h1>
@@ -181,21 +193,52 @@ function SalesPage() {
             monthlySummary={monthlySummary}
           />
 
-          <SaleForm
-            onRefresh={isSuperAdmin ? refreshSelectedSales : refreshAll}
-            branchId={selectedBranch?._id || ""}
-          />
+          <div style={styles.viewToggle} role="tablist" aria-label="Sales views">
+            <button
+              type="button"
+              onClick={() => setSalesView("input")}
+              style={{
+                ...styles.viewButton,
+                ...(salesView === "input" ? styles.activeViewButton : {}),
+              }}
+              aria-pressed={salesView === "input"}
+            >
+              Sales Input
+            </button>
+            <button
+              type="button"
+              onClick={() => setSalesView("table")}
+              style={{
+                ...styles.viewButton,
+                ...(salesView === "table" ? styles.activeViewButton : {}),
+              }}
+              aria-pressed={salesView === "table"}
+            >
+              Sales Table
+            </button>
+          </div>
 
-          <SalesFilter
-            filter={filter}
-            setFilter={setFilter}
-            onFilter={() => fetchSales(selectedBranch?._id || "")}
-          />
+          {salesView === "input" && (
+            <SaleForm
+              onRefresh={handleSaleSaved}
+              branchId={selectedBranch?._id || ""}
+            />
+          )}
 
-          <SalesTable
-            sales={sales}
-            onRefresh={isSuperAdmin ? refreshSelectedSales : refreshAll}
-          />
+          {salesView === "table" && (
+            <>
+              <SalesFilter
+                filter={filter}
+                setFilter={setFilter}
+                onFilter={() => fetchSales(selectedBranch?._id || "")}
+              />
+
+              <SalesTable
+                sales={sales}
+                onRefresh={isSuperAdmin ? refreshSelectedSales : refreshAll}
+              />
+            </>
+          )}
         </>
       )}
     </div>
@@ -247,6 +290,26 @@ const styles = {
     backgroundColor: "#fff",
     cursor: "pointer",
     borderRadius: "6px",
+  },
+  viewToggle: {
+    display: "flex",
+    flexWrap: "wrap",
+    gap: "10px",
+    margin: "18px 0",
+  },
+  viewButton: {
+    padding: "10px 16px",
+    border: "1px solid #d1d5db",
+    borderRadius: "8px",
+    backgroundColor: "#ffffff",
+    color: "#111827",
+    cursor: "pointer",
+    fontWeight: "700",
+  },
+  activeViewButton: {
+    backgroundColor: "#2563eb",
+    borderColor: "#2563eb",
+    color: "#ffffff",
   },
 };
 

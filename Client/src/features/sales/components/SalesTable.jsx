@@ -37,6 +37,7 @@ function SalesTable({ sales, onRefresh }) {
             <th style={styles.th}>Customer Type</th>
             <th style={styles.th}>Senior</th>
             <th style={styles.th}>PWD</th>
+            <th style={styles.th}>Custom Price</th>
             <th style={styles.th}>Base Price</th>
             <th style={styles.th}>Discount</th>
             <th style={styles.th}>Total</th>
@@ -55,6 +56,11 @@ function SalesTable({ sales, onRefresh }) {
               </td>
               <td style={styles.td}>{sale.isSenior ? "Yes" : "No"}</td>
               <td style={styles.td}>{sale.isPWD ? "Yes" : "No"}</td>
+              <td style={styles.td}>
+                {sale.customPrice !== null && sale.customPrice !== undefined
+                  ? `PHP ${sale.customPrice}`
+                  : "-"}
+              </td>
               <td style={styles.td}>₱{sale.basePrice}</td>
               <td style={styles.td}>₱{sale.discount}</td>
               <td style={styles.td}>

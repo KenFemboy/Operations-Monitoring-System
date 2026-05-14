@@ -39,6 +39,11 @@ const saleSchema = new mongoose.Schema(
       required: true,
     },
 
+    customPrice: {
+      type: Number,
+      default: null,
+    },
+
     discount: {
       type: Number,
       default: 0,

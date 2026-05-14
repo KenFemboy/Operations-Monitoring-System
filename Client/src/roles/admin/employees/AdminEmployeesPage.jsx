@@ -52,6 +52,29 @@ const getToday = () => new Date().toISOString().split("T")[0];
 const getErrorMessage = (error, fallback) =>
   error.response?.data?.message || fallback;
 
+function ModuleViewToggle({ activeView, formLabel, tableLabel, onShowForm, onShowTable }) {
+  return (
+    <div className="tab-row" role="tablist" aria-label={`${tableLabel} views`}>
+      <button
+        type="button"
+        onClick={onShowForm}
+        className={`tab-btn ${activeView === "form" ? "is-active" : ""}`}
+        aria-pressed={activeView === "form"}
+      >
+        {formLabel}
+      </button>
+      <button
+        type="button"
+        onClick={onShowTable}
+        className={`tab-btn ${activeView === "table" ? "is-active" : ""}`}
+        aria-pressed={activeView === "table"}
+      >
+        {tableLabel}
+      </button>
+    </div>
+  );
+}
+
 function EmployeesPage({ initialTab = "employees" }) {
   const { user } = useContext(AuthContext);
   const isSuperAdmin = ["super_admin", "superadmin"].includes(
@@ -65,16 +88,22 @@ function EmployeesPage({ initialTab = "employees" }) {
   const [selectedEmployee, setSelectedEmployee] = useState(null);
   const [selectedDetails, setSelectedDetails] = useState(null);
   const [archiveTarget, setArchiveTarget] = useState(null);
+  const [employeeView, setEmployeeView] = useState("table");
 
   const [attendance, setAttendance] = useState([]);
   const [selectedDate, setSelectedDate] = useState(getToday);
+  const [attendanceView, setAttendanceView] = useState("table");
 
   const [leaves, setLeaves] = useState([]);
   const [editingLeave, setEditingLeave] = useState(null);
+  const [leaveView, setLeaveView] = useState("table");
 
   const [payrolls, setPayrolls] = useState([]);
+  const [payrollView, setPayrollView] = useState("table");
   const [contributions, setContributions] = useState([]);
+  const [contributionView, setContributionView] = useState("table");
   const [incidentReports, setIncidentReports] = useState([]);
+  const [incidentReportView, setIncidentReportView] = useState("table");
   const [ntes, setNtes] = useState([]);
 
   const fetchEmployees = useCallback(async () => {
@@ -219,6 +248,7 @@ function EmployeesPage({ initialTab = "employees" }) {
       }
 
       setSelectedEmployee(null);
+      setEmployeeView("table");
       fetchEmployees();
     } catch (error) {
       console.error(error);
@@ -226,8 +256,20 @@ function EmployeesPage({ initialTab = "employees" }) {
     }
   };
 
+  const handleShowAddEmployee = () => {
+    setSelectedEmployee(null);
+    setSelectedDetails(null);
+    setEmployeeView("form");
+  };
+
+  const handleShowEmployeeTable = () => {
+    setSelectedEmployee(null);
+    setEmployeeView("table");
+  };
+
   const handleEditEmployee = (employee) => {
     setSelectedEmployee(employee);
+    setEmployeeView("form");
 
     window.scrollTo({
       top: 0,
@@ -262,6 +304,7 @@ function EmployeesPage({ initialTab = "employees" }) {
     try {
       await createAttendance(data);
       alert("Attendance saved");
+      setAttendanceView("table");
       fetchAttendance();
     } catch (error) {
       console.error(error);
@@ -280,11 +323,17 @@ function EmployeesPage({ initialTab = "employees" }) {
       }
 
       setEditingLeave(null);
+      setLeaveView("table");
       fetchLeaves();
     } catch (error) {
       console.error(error);
       alert(getErrorMessage(error, "Failed to save leave"));
     }
+  };
+
+  const handleEditLeave = (leave) => {
+    setEditingLeave(leave);
+    setLeaveView("form");
   };
 
   const handleUpdateLeaveStatus = async (id, status) => {
@@ -302,6 +351,7 @@ function EmployeesPage({ initialTab = "employees" }) {
     try {
       await createPayroll(data);
       alert("Payroll created");
+      setPayrollView("table");
       fetchPayrolls();
     } catch (error) {
       console.error(error);
@@ -324,6 +374,7 @@ function EmployeesPage({ initialTab = "employees" }) {
     try {
       await createContribution(data);
       alert("Contribution saved");
+      setContributionView("table");
       fetchContributions();
     } catch (error) {
       console.error(error);
@@ -335,6 +386,7 @@ function EmployeesPage({ initialTab = "employees" }) {
     try {
       await createIncidentReport(data);
       alert("Incident report saved");
+      setIncidentReportView("table");
       fetchIncidentReports();
     } catch (error) {
       console.error(error);
@@ -400,120 +452,203 @@ function EmployeesPage({ initialTab = "employees" }) {
 
       {activeTab === "employees" && (
         <div className="employee-tab-stack">
-          <EmployeeForm
-            branches={branches}
-            onSubmit={handleSaveEmployee}
-            selectedEmployee={selectedEmployee}
-            onCancelEdit={() => setSelectedEmployee(null)}
+          <ModuleViewToggle
+            activeView={employeeView}
+            formLabel="Add Employee"
+            tableLabel="Employee Table"
+            onShowForm={handleShowAddEmployee}
+            onShowTable={handleShowEmployeeTable}
           />
 
-          <div className="employee-list-panel">
-            {loading ? (
-              <p className="table-empty">Loading employees...</p>
-            ) : (
-              <>
-                <EmployeeTable
-                  employees={employees}
-                  onDelete={(id) =>
-                    setArchiveTarget(employees.find((employee) => employee._id === id))
-                  }
-                  onViewDetails={handleViewDetails}
-                  onUpdateStatus={handleUpdateEmployeeStatus}
-                  onEdit={handleEditEmployee}
-                  canDelete
-                />
+          {employeeView === "form" && (
+            <EmployeeForm
+              branches={branches}
+              onSubmit={handleSaveEmployee}
+              selectedEmployee={selectedEmployee}
+              onCancelEdit={handleShowEmployeeTable}
+            />
+          )}
 
-                <EmployeeDetails
-                  details={selectedDetails}
-                  onClose={() => setSelectedDetails(null)}
-                />
-              </>
-            )}
-          </div>
+          {employeeView === "table" && (
+            <div className="employee-list-panel">
+              {loading ? (
+                <p className="table-empty">Loading employees...</p>
+              ) : (
+                <>
+                  <EmployeeTable
+                    employees={employees}
+                    onDelete={(id) =>
+                      setArchiveTarget(employees.find((employee) => employee._id === id))
+                    }
+                    onViewDetails={handleViewDetails}
+                    onUpdateStatus={handleUpdateEmployeeStatus}
+                    onEdit={handleEditEmployee}
+                    canDelete
+                  />
+
+                  <EmployeeDetails
+                    details={selectedDetails}
+                    onClose={() => setSelectedDetails(null)}
+                  />
+                </>
+              )}
+            </div>
+          )}
         </div>
       )}
 
       {activeTab === "attendance" && (
         <section className="attendance-page">
-          <AttendanceForm employees={employees} onSubmit={handleSubmitAttendance} />
-
-          <div className="attendance-filters">
-            <div className="attendance-filter-field">
-              <label htmlFor="attendance-date">Calendar date</label>
-              <input
-                id="attendance-date"
-                type="date"
-                value={selectedDate}
-                onChange={(event) => setSelectedDate(event.target.value)}
-              />
-            </div>
-            <button
-              type="button"
-              className="attendance-clear-btn"
-              onClick={handleSetToday}
-            >
-              Today
-            </button>
-          </div>
-
-          <PresentEmployeesCard
-            attendance={attendance}
-            selectedDate={selectedDate}
+          <ModuleViewToggle
+            activeView={attendanceView}
+            formLabel="Add Attendance"
+            tableLabel="Attendance Table"
+            onShowForm={() => setAttendanceView("form")}
+            onShowTable={() => setAttendanceView("table")}
           />
+
+          {attendanceView === "form" && (
+            <AttendanceForm employees={employees} onSubmit={handleSubmitAttendance} />
+          )}
+
+          {attendanceView === "table" && (
+            <>
+              <div className="attendance-filters">
+                <div className="attendance-filter-field">
+                  <label htmlFor="attendance-date">Calendar date</label>
+                  <input
+                    id="attendance-date"
+                    type="date"
+                    value={selectedDate}
+                    onChange={(event) => setSelectedDate(event.target.value)}
+                  />
+                </div>
+                <button
+                  type="button"
+                  className="attendance-clear-btn"
+                  onClick={handleSetToday}
+                >
+                  Today
+                </button>
+              </div>
+
+              <PresentEmployeesCard
+                attendance={attendance}
+                selectedDate={selectedDate}
+              />
+            </>
+          )}
         </section>
       )}
 
       {activeTab === "leave" && (
-        <>
-          <LeaveForm
-            employees={employees}
-            onSubmit={handleSubmitLeave}
-            editingLeave={editingLeave}
-            onCancelEdit={() => setEditingLeave(null)}
+        <div className="employee-tab-stack">
+          <ModuleViewToggle
+            activeView={leaveView}
+            formLabel="Add Leave"
+            tableLabel="Leave Table"
+            onShowForm={() => {
+              setEditingLeave(null);
+              setLeaveView("form");
+            }}
+            onShowTable={() => {
+              setEditingLeave(null);
+              setLeaveView("table");
+            }}
           />
 
-          <LeaveTable
-            leaves={leaves}
-            onUpdateStatus={handleUpdateLeaveStatus}
-            onEdit={setEditingLeave}
-          />
-        </>
+          {leaveView === "form" && (
+            <LeaveForm
+              employees={employees}
+              onSubmit={handleSubmitLeave}
+              editingLeave={editingLeave}
+              onCancelEdit={() => {
+                setEditingLeave(null);
+                setLeaveView("table");
+              }}
+            />
+          )}
+
+          {leaveView === "table" && (
+            <LeaveTable
+              leaves={leaves}
+              onUpdateStatus={handleUpdateLeaveStatus}
+              onEdit={handleEditLeave}
+            />
+          )}
+        </div>
       )}
 
       {activeTab === "payroll" && (
-        <>
-          <PayrollForm employees={employees} onSubmit={handleSubmitPayroll} />
-
-          <PayrollTable
-            payrolls={payrolls}
-            onUpdateStatus={handleUpdatePayrollStatus}
+        <div className="employee-tab-stack">
+          <ModuleViewToggle
+            activeView={payrollView}
+            formLabel="Add Payroll"
+            tableLabel="Payroll Table"
+            onShowForm={() => setPayrollView("form")}
+            onShowTable={() => setPayrollView("table")}
           />
-        </>
+
+          {payrollView === "form" && (
+            <PayrollForm employees={employees} onSubmit={handleSubmitPayroll} />
+          )}
+
+          {payrollView === "table" && (
+            <PayrollTable
+              payrolls={payrolls}
+              onUpdateStatus={handleUpdatePayrollStatus}
+            />
+          )}
+        </div>
       )}
 
       {activeTab === "contribution" && (
-        <>
-          <ContributionForm
-            employees={employees}
-            onSubmit={handleSubmitContribution}
+        <div className="employee-tab-stack">
+          <ModuleViewToggle
+            activeView={contributionView}
+            formLabel="Add Contribution"
+            tableLabel="Contribution Table"
+            onShowForm={() => setContributionView("form")}
+            onShowTable={() => setContributionView("table")}
           />
 
-          <ContributionTable contributions={contributions} />
-        </>
+          {contributionView === "form" && (
+            <ContributionForm
+              employees={employees}
+              onSubmit={handleSubmitContribution}
+            />
+          )}
+
+          {contributionView === "table" && (
+            <ContributionTable contributions={contributions} />
+          )}
+        </div>
       )}
 
       {activeTab === "ir" && (
-        <>
-          <IncidentReportForm
-            employees={employees}
-            onSubmit={handleSubmitIncidentReport}
+        <div className="employee-tab-stack">
+          <ModuleViewToggle
+            activeView={incidentReportView}
+            formLabel="Add Incident Report"
+            tableLabel="Incident Report Table"
+            onShowForm={() => setIncidentReportView("form")}
+            onShowTable={() => setIncidentReportView("table")}
           />
 
-          <IncidentReportTable
-            reports={incidentReports}
-            onUpdateStatus={handleUpdateIncidentStatus}
-          />
-        </>
+          {incidentReportView === "form" && (
+            <IncidentReportForm
+              employees={employees}
+              onSubmit={handleSubmitIncidentReport}
+            />
+          )}
+
+          {incidentReportView === "table" && (
+            <IncidentReportTable
+              reports={incidentReports}
+              onUpdateStatus={handleUpdateIncidentStatus}
+            />
+          )}
+        </div>
       )}
 
       {activeTab === "nte" && (
