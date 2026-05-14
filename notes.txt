@@ -1,38 +1,74 @@
-Render upload setup notes
+Supabase Storage upload setup notes
 
-1. Create a Render Disk for the backend service.
-   - Mount path: /var/data
-   - The app will save uploaded images under /var/data/uploads.
+1. Render persistent disk image storage has been replaced with Supabase Storage.
+   - Do not store uploaded images locally.
+   - Do not use Render persistent disk for image uploads.
+   - Backend/uploads is ignored and should not contain committed image files.
 
-2. Add this environment variable in the Render backend service:
-   UPLOAD_ROOT=/var/data/uploads
+2. Supabase bucket setup:
+   - Bucket name: oms-images
+   - Suggested folders inside bucket:
+     - employees/
+     - feedback/
+   - Bucket can be public for now so React can display public image URLs directly.
 
-3. Make sure the backend service uses the Backend folder commands:
-   - Build command: npm install
-   - Start command: npm start
+3. Backend environment variables in Backend/.env:
+   SUPABASE_URL=https://lzenjvtozzhdgbwmkqgs.supabase.co
+   SUPABASE_SERVICE_ROLE_KEY=your_real_secret_or_service_role_key
+   SUPABASE_BUCKET=oms-images
 
-4. Uploaded image URLs stored in MongoDB must stay public paths only:
-   - /uploads/employees/emp-0001-2026-05-12-...webp
-   - /uploads/feedback/feedback-...webp
-   Do not store /var/data/uploads or any full server filesystem path.
+4. Security rule:
+   - SUPABASE_SERVICE_ROLE_KEY stays only in Backend/.env and backend deployment env vars.
+   - Never add the service role key to Client/.env, React, Vite, screenshots, or frontend code.
+   - Frontend does not use a Supabase client for uploads.
 
-5. The backend serves uploaded files from:
-   - /uploads
-   - /api/uploads
-   The /api/uploads alias helps if VITE_API_URL includes /api.
+5. Backend upload flow:
+   - React sends FormData to Express.
+   - Express validates the file with multer memoryStorage.
+   - Express uploads the file buffer to Supabase Storage.
+   - MongoDB stores only the public URL and bucket object path.
 
-6. Frontend VITE_API_URL should match how the API is called in production.
-   Example:
-   VITE_API_URL=https://your-backend-service.onrender.com/api
+6. Enabled image upload fields:
+   - Employee photos: FormData field name photo
+   - Customer feedback concern images: FormData field name image
+   - Other modules should continue using JSON-only requests.
 
-7. Only these uploads are enabled:
-   - Employee photos using the photo field.
-   - Customer feedback concern photos using the concernPhoto field.
-   Other modules should continue using JSON-only requests.
+7. Upload limits and allowed types:
+   - Employee photos: max 5MB
+   - Feedback images: max 50MB
+   - Allowed types: image/jpeg, image/png, image/webp
 
-8. Employee photo filenames include the employee ID and upload date.
-   Example:
-   emp-0001-2026-05-12-1715512345678-a1b2c3d4.webp
+8. MongoDB image fields:
+   - Employee:
+     - photoUrl
+     - photoPath
+     - legacy compatibility field: photo
+   - Feedback:
+     - imageUrl
+     - imagePath
+     - legacy compatibility field: concernPhoto
 
-9. Render disks are persistent, but files are tied to that service and disk.
-   Keep the disk attached to the backend service before deploying image upload changes.
+9. Supabase object naming:
+   - Employee photo format:
+     employees/EmployeeID_DateHired_Branch.webp
+     Example:
+     employees/EMP-0001_2026-05-14_Main-Branch.webp
+
+   - Feedback image format:
+     feedback/dateUploaded_Branch.webp
+     Example:
+     feedback/2026-05-14T08-30-12Z_Main-Branch.webp
+
+   - Filename parts are sanitized so spaces and special characters become safe path characters.
+   - Feedback includes upload time to avoid same-day same-branch filename collisions.
+
+10. Delete/archive behavior:
+   - Archiving employee or feedback records does not delete Supabase images.
+   - Replacing an employee photo uploads the new image and removes the old object only when the path changed.
+   - Permanent delete utilities should call Backend/utils/deleteFromSupabase.js when records are truly removed.
+
+11. Deployment reminders:
+   - Add the same backend Supabase env vars in Render or the production backend host.
+   - Restart the backend after changing env vars or upload middleware.
+   - If uploads fail, check the backend terminal for "Supabase image upload failed".
+   - A publishable key is not enough for backend uploads; use the Supabase secret/service role key.

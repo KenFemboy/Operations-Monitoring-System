@@ -24,8 +24,10 @@
 - **Runtime:** Node.js with ES modules
 - **Framework:** Express 5.1.0
 - **Database:** MongoDB (Mongoose 8.14.1)
+- **Image Storage:** Supabase Storage bucket for uploaded employee and feedback images
 - **Authentication:** JWT (jsonwebtoken 9.0.3)
 - **Password Hashing:** bcryptjs 3.0.3
+- **Upload Handling:** multer memoryStorage, @supabase/supabase-js, uuid
 - **CORS:** Enabled for localhost:5173, 5174, and CLIENT_URL env var
 - **Port:** 8000 (default, configurable via PORT env var)
 - **Dev Server:** `npm run dev` with nodemon
@@ -41,6 +43,7 @@
 
 2. **Employee** - Employee records
    - Fields: employeeId, firstName, lastName, email, phone, position, assignedBranch, salaryRate
+   - Photo fields: photoUrl, photoPath, legacy photo
    - Government IDs: sssId, gsisId, pagibigId, philhealthId
    - Status: active, inactive, resigned, terminated
    - Salary tracking included
@@ -64,7 +67,8 @@
 
 11. **Purchase** - Purchase orders
 
-12. **Feedback** - Employee/customer feedback system
+12. **Feedback** - Customer feedback and review system
+   - Image fields: imageUrl, imagePath, legacy concernPhoto
 
 13. **ArchiveEntry** - Historical data archival
 
@@ -133,6 +137,15 @@
 
 ### Access Control Middleware (`accessControl.js`)
 - Fine-grained access control implementation
+
+### Upload Middleware (`uploadMiddleware.js`)
+- Uses multer memoryStorage; uploaded files are not written to local disk
+- Employee photo field: `photo`
+- Feedback concern image field: `image`
+- Allowed image types: JPEG, PNG, WebP
+- Employee photo limit: 5MB
+- Feedback image limit: 50MB
+- Invalid type and oversize uploads return 400-level responses
 
 ---
 
@@ -216,6 +229,54 @@
 
 ---
 
+## Image Uploads & Supabase Storage
+
+### Storage Provider
+- Supabase Storage is used only for uploaded images.
+- MongoDB remains the system of record for employee, feedback, and operations data.
+- The frontend does not use the Supabase service role key and does not upload directly to Supabase.
+- All Supabase upload/delete logic runs in the backend.
+
+### Bucket
+- Bucket name: `oms-images`
+- Folder prefixes:
+  - `employees/`
+  - `feedback/`
+- Bucket can be public for now so React can render stored public URLs directly.
+
+### Backend Files
+- `Backend/config/supabaseClient.js` - Lazy Supabase client initialization
+- `Backend/utils/uploadToSupabase.js` - Upload helper with validation, custom filenames, public URL return
+- `Backend/utils/deleteFromSupabase.js` - Delete helper for permanent object removal
+- `Backend/middleware/uploadMiddleware.js` - multer memoryStorage upload middleware
+
+### Stored MongoDB Fields
+- Employee:
+  - `photoUrl`
+  - `photoPath`
+  - `photo` retained for legacy display compatibility
+- Feedback:
+  - `imageUrl`
+  - `imagePath`
+  - `concernPhoto` retained for legacy display compatibility
+
+### Object Naming
+- Employee photo path format:
+  - `employees/EmployeeID_DateHired_Branch.webp`
+  - Example: `employees/EMP-0001_2026-05-14_Main-Branch.webp`
+- Feedback image path format:
+  - `feedback/dateUploaded_Branch.webp`
+  - Example: `feedback/2026-05-14T08-30-12Z_Main-Branch.webp`
+- Filename parts are sanitized before upload.
+- Feedback filenames include time to avoid same-day same-branch collisions.
+
+### Archive/Delete Rules
+- Archiving employee or feedback records must not delete Supabase images.
+- Employee photo replacement may remove the old Supabase object when the path changes.
+- Permanent record deletion should remove the related Supabase object using `deleteFromSupabase`.
+
+---
+
 ## Environment Variables
 
 ### Backend (.env)
@@ -223,10 +284,14 @@
 - `MONGODB_URI` - MongoDB connection string
 - `JWT_SECRET` - JWT signing secret
 - `CLIENT_URL` - Frontend URL for CORS
+- `SUPABASE_URL` - Supabase project URL
+- `SUPABASE_SERVICE_ROLE_KEY` - Backend-only Supabase secret/service role key
+- `SUPABASE_BUCKET` - Supabase Storage bucket name (`oms-images`)
 - DNS server configuration for MongoDB
 
 ### Frontend (.env)
 - `VITE_API_URL` - Backend API base URL
+- Do not add Supabase service role keys to frontend env files
 
 ---
 
@@ -244,6 +309,7 @@
 
 3. **Employee Management**
    - Complete employee records
+   - Employee profile photo uploads to Supabase Storage
    - Government ID tracking
    - Employment status tracking
    - Salary rate management
@@ -263,7 +329,8 @@
    - Sales reporting
 
 7. **HR Features**
-   - Feedback system
+   - Customer feedback and review system
+   - Feedback concern image uploads to Supabase Storage
    - Incident reporting
    - Disciplinary notices
    - Leave management
@@ -310,6 +377,7 @@
 | Backend Runtime | Node.js (ES modules) |
 | Web Framework | Express 5.1.0 |
 | Database | MongoDB + Mongoose 8.14.1 |
+| Image Storage | Supabase Storage |
 | Authentication | JWT + bcryptjs |
 | Frontend Library | React 19.2.4 |
 | Build Tool | Vite 8.0.4 |
@@ -400,3 +468,5 @@ Health check example:
 5. **Role Normalization**: Roles normalized to lowercase with underscore handling
 6. **ESM Modules**: Backend uses ES modules (`import/export`)
 7. **Timestamps**: Models include createdAt/updatedAt tracking
+8. **Image Uploads**: Only employee photos and feedback concern images use uploads
+9. **No Local Image Persistence**: Uploaded images should not be stored in Render disk or committed under Backend/uploads
