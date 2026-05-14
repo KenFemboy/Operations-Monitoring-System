@@ -41,6 +41,7 @@ function InventoryPage() {
 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const branchHues = [18, 32, 48, 88, 132, 176, 210, 238, 268, 300, 330];
 
   const fetchBranches = async () => {
     try {
@@ -126,15 +127,17 @@ function InventoryPage() {
       {loading && <p>Loading inventory...</p>}
 
       {isSuperAdmin && !selectedBranch && (
-        <section style={styles.branchSection}>
+        <section className="ops-branch-section">
           <h2>Branches</h2>
-          <div style={styles.branchGrid}>
-            {branches.map((branch) => (
+          <div className="ops-branch-grid">
+            {branches.map((branch, index) => (
               <button
                 key={branch._id}
                 type="button"
                 onClick={() => handleSelectBranch(branch)}
-                style={styles.branchCard}
+                className="ops-branch-card"
+                aria-pressed={false}
+                style={{ "--branch-hue": branchHues[index % branchHues.length] }}
               >
                 <strong>{branch.branchName}</strong>
                 <span>{branch.location || "No location"}</span>
