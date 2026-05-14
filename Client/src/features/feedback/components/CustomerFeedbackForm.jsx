@@ -5,7 +5,7 @@ import {
 } from "../../../api/public/feedbackPublicApi";
 
 const IMAGE_TYPES = ["image/jpeg", "image/png", "image/webp"];
-const MAX_IMAGE_SIZE = 5 * 1024 * 1024;
+const MAX_IMAGE_SIZE = 50 * 1024 * 1024;
 
 const validateImageFile = (file) => {
   if (!file) return "";
@@ -15,7 +15,7 @@ const validateImageFile = (file) => {
   }
 
   if (file.size > MAX_IMAGE_SIZE) {
-    return "Image must be 5MB or smaller";
+    return "Image must be 50MB or smaller";
   }
 
   return "";

@@ -67,7 +67,7 @@ app.use((error, _req, res, next) => {
       success: false,
       message:
         error.code === "LIMIT_FILE_SIZE"
-          ? "Image must be 5MB or smaller"
+          ? `Image must be ${error.field === "image" ? "50MB" : "5MB"} or smaller`
           : error.message,
     });
   }
