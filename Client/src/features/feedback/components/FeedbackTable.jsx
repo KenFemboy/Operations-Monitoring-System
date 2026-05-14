@@ -4,6 +4,7 @@ import ArchiveConfirmModal from "../../archive/components/ArchiveConfirmModal";
 
 const getImageUrl = (publicPath = "") => {
   if (!publicPath) return "";
+  if (/^https?:\/\//i.test(publicPath)) return publicPath;
 
   const apiUrl = import.meta.env.VITE_API_URL || "http://localhost:8000";
   return `${apiUrl}${publicPath}`;
@@ -55,7 +56,12 @@ function FeedbackTable({ feedbacks, onRefresh }) {
                 </td>
               </tr>
             ) : (
-              feedbacks.map((feedback) => (
+              feedbacks.map((feedback) => {
+                const feedbackImageUrl = getImageUrl(
+                  feedback.imageUrl || feedback.concernPhoto
+                );
+
+                return (
                 <tr key={feedback._id}>
                   <td style={styles.td}>
                     {new Date(feedback.createdAt).toLocaleDateString()}
@@ -83,16 +89,14 @@ function FeedbackTable({ feedbacks, onRefresh }) {
                   </td>
 
                   <td style={styles.td}>
-                    {feedback.concernPhoto ? (
+                    {feedbackImageUrl ? (
                       <button
                         type="button"
                         style={styles.thumbnailButton}
-                        onClick={() =>
-                          setPreviewImage(getImageUrl(feedback.concernPhoto))
-                        }
+                        onClick={() => setPreviewImage(feedbackImageUrl)}
                       >
                         <img
-                          src={getImageUrl(feedback.concernPhoto)}
+                          src={feedbackImageUrl}
                           alt="Feedback concern"
                           style={styles.thumbnail}
                         />
@@ -112,7 +116,8 @@ function FeedbackTable({ feedbacks, onRefresh }) {
                     </button>
                   </td>
                 </tr>
-              ))
+                );
+              })
             )}
           </tbody>
         </table>

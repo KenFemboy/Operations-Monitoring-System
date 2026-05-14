@@ -52,6 +52,16 @@ const feedbackSchema = new mongoose.Schema(
       default: "",
     },
 
+    imageUrl: {
+      type: String,
+      default: "",
+    },
+
+    imagePath: {
+      type: String,
+      default: "",
+    },
+
     isArchived: {
       type: Boolean,
       default: false,

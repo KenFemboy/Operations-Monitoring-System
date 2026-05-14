@@ -43,6 +43,8 @@ const MARITAL_STATUS_OPTIONS = ["Single", "In a relationship", "Seperated"];
 const EDUCATIONAL_ATTAINMENT_OPTIONS = ["Elementary", "Highschool", "College"];
 const EMPLOYMENT_OPTIONS = ["Regular", "Probationary"];
 const GENDER_OPTIONS = ["Male", "Female"];
+const IMAGE_TYPES = ["image/jpeg", "image/png", "image/webp"];
+const MAX_IMAGE_SIZE = 5 * 1024 * 1024;
 
 const getEmptyForm = () => ({
   firstName: "",
@@ -106,6 +108,20 @@ const appendFormDataValue = (formData, key, value) => {
 };
 
 const clamp = (value, min, max) => Math.min(Math.max(value, min), max);
+
+const validateImageFile = (file) => {
+  if (!file) return "";
+
+  if (!IMAGE_TYPES.includes(file.type)) {
+    return "Only JPG, PNG, and WEBP images are allowed";
+  }
+
+  if (file.size > MAX_IMAGE_SIZE) {
+    return "Image must be 5MB or smaller";
+  }
+
+  return "";
+};
 
 function EmployeeForm({ branches = [], onSubmit, selectedEmployee, onCancelEdit }) {
   const { user } = useContext(AuthContext);
@@ -304,6 +320,16 @@ function EmployeeForm({ branches = [], onSubmit, selectedEmployee, onCancelEdit 
 
     if (type === "file") {
       const selectedFile = files?.[0] || null;
+
+      const validationError = validateImageFile(selectedFile);
+      if (validationError) {
+        alert(validationError);
+        setSourcePhotoFile(null);
+        setIsCropModalOpen(false);
+        setFileInputKey((current) => current + 1);
+        return;
+      }
+
       setSourcePhotoFile(selectedFile);
       setIsCropModalOpen(Boolean(selectedFile));
       setPhotoCropBox({ x: 0, y: 0, size: 0 });

@@ -4,6 +4,23 @@ import {
   getPublicFeedbackFormConfig,
 } from "../../../api/public/feedbackPublicApi";
 
+const IMAGE_TYPES = ["image/jpeg", "image/png", "image/webp"];
+const MAX_IMAGE_SIZE = 5 * 1024 * 1024;
+
+const validateImageFile = (file) => {
+  if (!file) return "";
+
+  if (!IMAGE_TYPES.includes(file.type)) {
+    return "Only JPG, PNG, and WEBP images are allowed";
+  }
+
+  if (file.size > MAX_IMAGE_SIZE) {
+    return "Image must be 5MB or smaller";
+  }
+
+  return "";
+};
+
 function CustomerFeedbackForm({ branchSlug = "" }) {
   const [branch, setBranch] = useState(null);
   const [form, setForm] = useState({
@@ -12,7 +29,7 @@ function CustomerFeedbackForm({ branchSlug = "" }) {
     rating: 0,
     comment: "",
   });
-  const [concernPhoto, setConcernPhoto] = useState(null);
+  const [imageFile, setImageFile] = useState(null);
   const [fileInputKey, setFileInputKey] = useState(0);
 
   const [hoverRating, setHoverRating] = useState(0);
@@ -69,8 +86,8 @@ function CustomerFeedbackForm({ branchSlug = "" }) {
       formData.append("comment", form.comment);
       formData.append("customerName", form.customerName || "Anonymous");
 
-      if (concernPhoto) {
-        formData.append("concernPhoto", concernPhoto);
+      if (imageFile) {
+        formData.append("image", imageFile);
       }
 
       await createFeedback(formData, branchSlug);
@@ -83,7 +100,7 @@ function CustomerFeedbackForm({ branchSlug = "" }) {
         rating: 0,
         comment: "",
       });
-      setConcernPhoto(null);
+      setImageFile(null);
       setFileInputKey((current) => current + 1);
     } catch (err) {
       console.error(err);
@@ -174,9 +191,21 @@ function CustomerFeedbackForm({ branchSlug = "" }) {
         <input
           key={fileInputKey}
           type="file"
-          name="concernPhoto"
+          name="image"
           accept="image/jpeg,image/png,image/webp"
-          onChange={(e) => setConcernPhoto(e.target.files?.[0] || null)}
+          onChange={(e) => {
+            const selectedFile = e.target.files?.[0] || null;
+            const validationError = validateImageFile(selectedFile);
+
+            if (validationError) {
+              alert(validationError);
+              setImageFile(null);
+              setFileInputKey((current) => current + 1);
+              return;
+            }
+
+            setImageFile(selectedFile);
+          }}
           style={styles.input}
         />
 

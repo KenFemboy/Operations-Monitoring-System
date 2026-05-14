@@ -18,6 +18,7 @@ const getPayrollDaysWorked = (payroll) => {
 
 const getImageUrl = (publicPath = "") => {
   if (!publicPath) return "";
+  if (/^https?:\/\//i.test(publicPath)) return publicPath;
 
   const apiUrl = import.meta.env.VITE_API_URL || "http://localhost:8000";
   return `${apiUrl}${publicPath}`;
@@ -52,7 +53,7 @@ function EmployeeDetails({ details, onClose }) {
     incidentReports,
     ntes,
   } = details;
-  const employeePhotoUrl = getImageUrl(employee.photo);
+  const employeePhotoUrl = getImageUrl(employee.photoUrl || employee.photo);
 
   return (
     <div

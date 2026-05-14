@@ -1,9 +1,11 @@
 import mongoose from "mongoose";
 
-const SUPER_ADMIN_ROLES = new Set(["super_admin", "superadmin"]);
-const BRANCH_SCOPED_ROLES = new Set(["admin", "hr", "console_user"]);
+const SUPER_ADMIN_ROLES = new Set(["superadmin"]);
+const BRANCH_SCOPED_ROLES = new Set(["admin", "hr", "consoleuser"]);
+const normalizeRole = (role = "") =>
+  role.toString().toLowerCase().replace(/[_\s]/g, "");
 
-export const isSuperAdmin = (user) => SUPER_ADMIN_ROLES.has(user?.role);
+export const isSuperAdmin = (user) => SUPER_ADMIN_ROLES.has(normalizeRole(user?.role));
 
 export const getUserBranchId = (user) => {
   const branchId = user?.branchId;
@@ -64,7 +66,7 @@ export const attachBranchScope = (req, _res, next) => {
     return next();
   }
 
-  if (BRANCH_SCOPED_ROLES.has(req.user?.role)) {
+  if (BRANCH_SCOPED_ROLES.has(normalizeRole(req.user?.role))) {
     const branchId = getUserBranchId(req.user);
     req.branchScope = branchId ? { branchId } : { branchId: null };
     return next();

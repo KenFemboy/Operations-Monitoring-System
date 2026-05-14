@@ -2,7 +2,7 @@ import express from "express";
 import { protect } from "../../middleware/authMiddleware.js";
 import { allowRoles } from "../../middleware/roleMiddleware.js";
 import { branchScopeMiddleware } from "../../middleware/branchScopeMiddleware.js";
-import { uploadEmployeePhoto } from "../../middleware/imageUploadMiddleware.js";
+import { uploadImage } from "../../middleware/uploadMiddleware.js";
 import {
   createEmployee,
   getEmployees,
@@ -34,13 +34,8 @@ const router = express.Router();
 
 router.use(protect, allowRoles("admin", "console_user"), branchScopeMiddleware);
 
-router.post("/", uploadEmployeePhoto, createEmployee);
+router.post("/", uploadImage.single("photo"), createEmployee);
 router.get("/", getEmployees);
-router.get("/:id", getEmployeeById);
-router.get("/:id/details", getEmployeeFullDetails);
-router.put("/:id", uploadEmployeePhoto, updateEmployee);
-router.patch("/:id/archive", deleteEmployee);
-router.delete("/:id", deleteEmployee);
 
 router.post("/attendance/create", createAttendance);
 router.get("/attendance/list", getAttendance);
@@ -64,5 +59,11 @@ router.put("/ir/:id/status", updateIncidentReportStatus);
 router.post("/nte/create", createNTE);
 router.get("/nte/list", getNTEs);
 router.put("/nte/:id/status", updateNTEStatus);
+
+router.get("/:id/details", getEmployeeFullDetails);
+router.get("/:id", getEmployeeById);
+router.put("/:id", uploadImage.single("photo"), updateEmployee);
+router.patch("/:id/archive", deleteEmployee);
+router.delete("/:id", deleteEmployee);
 
 export default router;

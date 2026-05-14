@@ -1,17 +1,15 @@
 import api from "../axiosInstance";
 
 const SUPER_ADMIN_PREFIX = "/superadmin";
-const multipartConfig = { headers: { "Content-Type": "multipart/form-data" } };
-const getConfig = (data) => (data instanceof FormData ? multipartConfig : undefined);
 
 export const getSuperAdminEmployees = () =>
   api.get(`${SUPER_ADMIN_PREFIX}/employees`);
 
 export const createSuperAdminEmployee = (data) =>
-  api.post(`${SUPER_ADMIN_PREFIX}/employees`, data, getConfig(data));
+  api.post(`${SUPER_ADMIN_PREFIX}/employees`, data);
 
 export const updateSuperAdminEmployee = (id, data) =>
-  api.put(`${SUPER_ADMIN_PREFIX}/employees/${id}`, data, getConfig(data));
+  api.put(`${SUPER_ADMIN_PREFIX}/employees/${id}`, data);
 
 export const archiveSuperAdminEmployee = (id, reason = "") =>
   api.patch(`${SUPER_ADMIN_PREFIX}/employees/${id}/archive`, { reason });

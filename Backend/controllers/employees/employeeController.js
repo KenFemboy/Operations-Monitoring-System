@@ -8,7 +8,8 @@ import Contribution from "../../models/Contribution.js";
 import IncidentReport from "../../models/IncidentReport.js";
 import NoticeToExplain from "../../models/NoticeToExplain.js";
 import { isSuperAdmin } from "../../middleware/accessControl.js";
-import { processUploadedEmployeePhoto } from "../../middleware/imageUploadMiddleware.js";
+import { uploadToSupabase } from "../../utils/uploadToSupabase.js";
+import { deleteFromSupabase } from "../../utils/deleteFromSupabase.js";
 
 const getBranchName = (req) => {
   if (isSuperAdmin(req.user)) {
@@ -108,7 +109,7 @@ const getEmployeeBranchId = async (employeeId) => {
 
 const assertEmployeeAccess = async (req, employeeId) => {
   const employee = await Employee.findOne({ _id: employeeId, isArchived: { $ne: true } })
-    .select("employeeId assignedBranch branch")
+    .select("employeeId assignedBranch branch photoPath")
     .lean();
 
   if (!employee) {
@@ -297,6 +298,9 @@ const normalizeEmployeePayload = (body = {}) => {
   }
 
   delete payload.gsisId;
+  delete payload.photo;
+  delete payload.photoUrl;
+  delete payload.photoPath;
 
   return payload;
 };
@@ -304,6 +308,8 @@ const normalizeEmployeePayload = (body = {}) => {
 // ================= EMPLOYEE =================
 
 export const createEmployee = async (req, res) => {
+  let uploadedPhoto = null;
+
   try {
     const lastEmployee = await Employee.findOne().sort({ createdAt: -1 });
 
@@ -316,14 +322,16 @@ export const createEmployee = async (req, res) => {
     }
 
     const branch = await resolveBranchForEmployeeCreate(req);
-    const photo = await processUploadedEmployeePhoto(req, newEmployeeId);
+    uploadedPhoto = req.file ? await uploadToSupabase(req.file, "employees") : null;
 
     const employee = await Employee.create({
       ...normalizeEmployeePayload(req.body),
       assignedBranch: branch.branchName,
       branch: branch.branchId,
       employeeId: newEmployeeId,
-      photo,
+      photo: uploadedPhoto?.url || "",
+      photoUrl: uploadedPhoto?.url || "",
+      photoPath: uploadedPhoto?.path || "",
     });
 
     res.status(201).json({
@@ -332,9 +340,18 @@ export const createEmployee = async (req, res) => {
       data: employee,
     });
   } catch (error) {
+    if (uploadedPhoto?.path) {
+      await deleteFromSupabase(uploadedPhoto.path).catch((deleteError) => {
+        console.error("Failed to delete unassigned employee photo:", deleteError);
+      });
+    }
+
     res.status(error.statusCode || 500).json({
       success: false,
-      message: "Failed to create employee",
+      message:
+        error.message === "Image upload failed"
+          ? "Image upload failed"
+          : "Failed to create employee",
       error: error.message,
     });
   }
@@ -401,6 +418,8 @@ export const getEmployeeById = async (req, res) => {
 };
 
 export const updateEmployee = async (req, res) => {
+  let uploadedPhoto = null;
+
   try {
     const existingEmployee = await assertEmployeeAccess(req, req.params.id);
     const branchName = getBranchName(req);
@@ -424,13 +443,12 @@ export const updateEmployee = async (req, res) => {
       branch: branch.branchId || existingEmployee.branch,
     };
 
-    const photo = await processUploadedEmployeePhoto(
-      req,
-      existingEmployee.employeeId
-    );
+    uploadedPhoto = req.file ? await uploadToSupabase(req.file, "employees") : null;
 
-    if (photo) {
-      updatePayload.photo = photo;
+    if (uploadedPhoto) {
+      updatePayload.photo = uploadedPhoto.url;
+      updatePayload.photoUrl = uploadedPhoto.url;
+      updatePayload.photoPath = uploadedPhoto.path;
     }
 
     const employee = await Employee.findByIdAndUpdate(
@@ -452,9 +470,18 @@ export const updateEmployee = async (req, res) => {
       data: employee,
     });
   } catch (error) {
+    if (uploadedPhoto?.path) {
+      await deleteFromSupabase(uploadedPhoto.path).catch((deleteError) => {
+        console.error("Failed to delete unassigned employee photo:", deleteError);
+      });
+    }
+
     res.status(error.statusCode || 500).json({
       success: false,
-      message: "Failed to update employee",
+      message:
+        error.message === "Image upload failed"
+          ? "Image upload failed"
+          : "Failed to update employee",
       error: error.message,
     });
   }
@@ -471,6 +498,12 @@ export const deleteEmployee = async (req, res) => {
       return res.status(404).json({
         success: false,
         message: "Employee not found",
+      });
+    }
+
+    if (uploadedPhoto && existingEmployee.photoPath) {
+      await deleteFromSupabase(existingEmployee.photoPath).catch((deleteError) => {
+        console.error("Failed to delete replaced employee photo:", deleteError);
       });
     }
 

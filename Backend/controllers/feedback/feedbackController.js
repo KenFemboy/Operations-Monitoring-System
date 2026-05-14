@@ -2,6 +2,8 @@ import Feedback from "../../models/Feedback.js";
 import Branch from "../../models/Branch.js";
 import { isSuperAdmin, getUserBranchId } from "../../middleware/accessControl.js";
 import { getBranchFilter } from "../../utils/branchFilter.js";
+import { uploadToSupabase } from "../../utils/uploadToSupabase.js";
+import { deleteFromSupabase } from "../../utils/deleteFromSupabase.js";
 
 const slugify = (value = "") =>
   value
@@ -69,6 +71,8 @@ const applyBranchFilter = async (filter, branch) => {
 };
 
 export const createFeedback = async (req, res) => {
+  let uploadedImage = null;
+
   try {
     const {
       customerName,
@@ -142,6 +146,8 @@ export const createFeedback = async (req, res) => {
       }
     }
 
+    uploadedImage = req.file ? await uploadToSupabase(req.file, "feedback") : null;
+
     const feedback = await Feedback.create({
       customerName: customerName || "Anonymous",
       branch: resolvedBranch._id,
@@ -150,7 +156,9 @@ export const createFeedback = async (req, res) => {
       rating: numericRating,
       review: selectedComment,
       comment: selectedComment,
-      concernPhoto: req.uploadedImage?.publicPath || "",
+      concernPhoto: uploadedImage?.url || "",
+      imageUrl: uploadedImage?.url || "",
+      imagePath: uploadedImage?.path || "",
     });
 
     await feedback.populate("branch", "branchName location address status");
@@ -161,9 +169,18 @@ export const createFeedback = async (req, res) => {
       feedback,
     });
   } catch (error) {
+    if (uploadedImage?.path) {
+      await deleteFromSupabase(uploadedImage.path).catch((deleteError) => {
+        console.error("Failed to delete unassigned feedback image:", deleteError);
+      });
+    }
+
     res.status(error.statusCode || 500).json({
       success: false,
-      message: "Failed to submit feedback",
+      message:
+        error.message === "Image upload failed"
+          ? "Image upload failed"
+          : "Failed to submit feedback",
       error: error.message,
     });
   }

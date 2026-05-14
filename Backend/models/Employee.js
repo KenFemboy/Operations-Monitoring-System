@@ -47,6 +47,16 @@ const employeeSchema = new mongoose.Schema(
       default: "",
     },
 
+    photoUrl: {
+      type: String,
+      default: "",
+    },
+
+    photoPath: {
+      type: String,
+      default: "",
+    },
+
     position: {
       type: String,
       required: true,
