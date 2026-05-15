@@ -443,6 +443,7 @@ export const getFeedbackAnalytics = async (req, res) => {
 export const getIRNTEAnalytics = async (req, res) => {
   try {
     const branchFilter = getBranchFilter(req);
+    const activeFilter = { ...branchFilter, isArchived: { $ne: true } };
 
     const [
       totalIR,
