@@ -26,6 +26,7 @@ app.use(
       "http://127.0.0.1:5173",
       "http://127.0.0.1:5174",
       process.env.CLIENT_URL,
+      "https://operations-monitoring-system.onrender.com",
     ].filter(Boolean),
     credentials: true,
   })
