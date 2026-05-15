@@ -1,0 +1,10 @@
+{
+  "name": "operations-monitoring-system",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "postinstall": "npm install --prefix Backend && npm install --prefix Client",
+    "build": "npm run build --prefix Client",
+    "start": "npm --prefix Backend start"
+  }
+}

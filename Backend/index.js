@@ -4,6 +4,9 @@ import bodyParser from "body-parser";
 import dotenv from "dotenv";
 import cors from "cors";
 import multer from "multer";
+import fs from "fs";
+import path from "path";
+import { fileURLToPath } from "url";
 import { connectDatabase } from "./config/database.js";
 import adminRoutes from "./routes/admin/index.js";
 import authRoutes from "./routes/public/authRoutes.js";
@@ -15,6 +18,11 @@ dotenv.config();
 
 const app = express();
 const PORT = process.env.PORT || 8000;
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+const clientDistPath = path.resolve(__dirname, "../Client/dist");
+const clientIndexPath = path.join(clientDistPath, "index.html");
+const hasClientBuild = fs.existsSync(clientIndexPath);
 
 validateRequiredEnv();
 
@@ -60,6 +68,14 @@ app.use("/api/public", publicRoutes);
 // Temporary aliases for clients that still use the previous super-admin spelling.
 app.use("/api/super-admin", superAdminRoutes);
 app.use("/api/super_admin", superAdminRoutes);
+
+if (hasClientBuild) {
+  app.use(express.static(clientDistPath));
+
+  app.get(/^\/(?!api(?:\/|$)).*/, (_req, res) => {
+    res.sendFile(clientIndexPath);
+  });
+}
 
 app.use((error, _req, res, next) => {
   if (!error) {
