@@ -6,6 +6,7 @@ import {
 
 const IMAGE_TYPES = ["image/jpeg", "image/png", "image/webp"];
 const MAX_IMAGE_SIZE = 50 * 1024 * 1024;
+const SUBMITTED_KEY_PREFIX = "customer-feedback-submitted";
 
 const validateImageFile = (file) => {
   if (!file) return "";
@@ -21,6 +22,9 @@ const validateImageFile = (file) => {
   return "";
 };
 
+const getSubmittedKey = (branchSlug, branchId) =>
+  `${SUBMITTED_KEY_PREFIX}:${branchSlug || branchId || "default"}`;
+
 function CustomerFeedbackForm({ branchSlug = "" }) {
   const [branch, setBranch] = useState(null);
   const [form, setForm] = useState({
@@ -34,6 +38,8 @@ function CustomerFeedbackForm({ branchSlug = "" }) {
 
   const [hoverRating, setHoverRating] = useState(0);
   const [message, setMessage] = useState("");
+  const [hasSubmitted, setHasSubmitted] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
     const fetchBranch = async () => {
@@ -44,7 +50,11 @@ function CustomerFeedbackForm({ branchSlug = "" }) {
 
       try {
         const res = await getPublicFeedbackFormConfig(branchSlug);
-        setBranch(res.data.data || null);
+        const feedbackBranch = res.data.data || null;
+        setBranch(feedbackBranch);
+
+        const submittedKey = getSubmittedKey(branchSlug, feedbackBranch?._id);
+        setHasSubmitted(localStorage.getItem(submittedKey) === "true");
       } catch (err) {
         console.error(err);
         setMessage("Unable to load this feedback branch right now.");
@@ -56,6 +66,10 @@ function CustomerFeedbackForm({ branchSlug = "" }) {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+
+    if (hasSubmitted || isSubmitting) {
+      return;
+    }
 
     if (!branch?._id) {
       alert("Feedback branch is not available");
@@ -78,6 +92,7 @@ function CustomerFeedbackForm({ branchSlug = "" }) {
     }
 
     try {
+      setIsSubmitting(true);
       const formData = new FormData();
 
       formData.append("branch", branch._id);
@@ -92,6 +107,8 @@ function CustomerFeedbackForm({ branchSlug = "" }) {
 
       await createFeedback(formData, branchSlug);
 
+      localStorage.setItem(getSubmittedKey(branchSlug, branch._id), "true");
+      setHasSubmitted(true);
       setMessage("Thank you for your feedback!");
 
       setForm({
@@ -105,8 +122,24 @@ function CustomerFeedbackForm({ branchSlug = "" }) {
     } catch (err) {
       console.error(err);
       alert(err.response?.data?.message || "Failed to submit feedback");
+    } finally {
+      setIsSubmitting(false);
     }
   };
+
+  if (hasSubmitted) {
+    return (
+      <div style={{ ...styles.card, ...styles.thankYouCard }}>
+        <div style={styles.thankYouIcon}>{"\u2713"}</div>
+        <h2 style={styles.thankYouTitle}>Thank you for your feedback</h2>
+        {branch && (
+          <p style={styles.thankYouText}>
+            Your response for {branch.branchName} has been submitted.
+          </p>
+        )}
+      </div>
+    );
+  }
 
   return (
     <div style={styles.card}>
@@ -121,8 +154,13 @@ function CustomerFeedbackForm({ branchSlug = "" }) {
 
       {branch && (
         <div style={styles.branchBox}>
-          <strong>{branch.branchName}</strong>
-          <span>{branch.location || branch.address || ""}</span>
+          <span style={styles.branchLabel}>Branch</span>
+          <strong style={styles.branchName}>{branch.branchName}</strong>
+          {(branch.location || branch.address) && (
+            <span style={styles.branchLocation}>
+              {branch.location || branch.address}
+            </span>
+          )}
         </div>
       )}
 
@@ -137,22 +175,32 @@ function CustomerFeedbackForm({ branchSlug = "" }) {
           style={styles.input}
         />
 
-        <select
-          value={form.serviceType}
-          onChange={(e) =>
-            setForm({ ...form, serviceType: e.target.value })
-          }
-          required
-          style={styles.input}
-          name="serviceType"
-        >
-          <option value="">Select Lunch / Dinner</option>
-          <option value="Lunch">Lunch</option>
-          <option value="Dinner">Dinner</option>
-        </select>
+        <div>
+          <label style={styles.label}>Meal</label>
+          <div style={styles.mealButtons}>
+            {["Lunch", "Dinner"].map((meal) => {
+              const selected = form.serviceType === meal;
+
+              return (
+                <button
+                  key={meal}
+                  type="button"
+                  onClick={() => setForm({ ...form, serviceType: meal })}
+                  style={{
+                    ...styles.mealButton,
+                    ...(selected ? styles.mealButtonSelected : {}),
+                  }}
+                  aria-pressed={selected}
+                >
+                  {meal}
+                </button>
+              );
+            })}
+          </div>
+        </div>
 
         <div>
-          <label style={styles.label}>Rating</label>
+          <label style={styles.label}>How would you rate your experience</label>
 
           <div style={styles.stars}>
             {[1, 2, 3, 4, 5].map((star) => {
@@ -188,29 +236,38 @@ function CustomerFeedbackForm({ branchSlug = "" }) {
 
         <p style={styles.counter}>{form.comment.length}/120 characters</p>
 
-        <input
-          key={fileInputKey}
-          type="file"
-          name="image"
-          accept="image/jpeg,image/png,image/webp"
-          onChange={(e) => {
-            const selectedFile = e.target.files?.[0] || null;
-            const validationError = validateImageFile(selectedFile);
+        <div style={styles.photoSection}>
+          <label style={styles.label}>
+            If you have any concern you can add a photo
+          </label>
+          <input
+            key={fileInputKey}
+            type="file"
+            name="image"
+            accept="image/jpeg,image/png,image/webp"
+            onChange={(e) => {
+              const selectedFile = e.target.files?.[0] || null;
+              const validationError = validateImageFile(selectedFile);
 
-            if (validationError) {
-              alert(validationError);
-              setImageFile(null);
-              setFileInputKey((current) => current + 1);
-              return;
-            }
+              if (validationError) {
+                alert(validationError);
+                setImageFile(null);
+                setFileInputKey((current) => current + 1);
+                return;
+              }
 
-            setImageFile(selectedFile);
-          }}
-          style={styles.input}
-        />
+              setImageFile(selectedFile);
+            }}
+            style={styles.input}
+          />
+        </div>
 
-        <button type="submit" style={styles.primaryButton}>
-          Submit Feedback
+        <button
+          type="submit"
+          style={styles.primaryButton}
+          disabled={isSubmitting}
+        >
+          {isSubmitting ? "Submitting..." : "Submit Feedback"}
         </button>
       </form>
     </div>
@@ -234,13 +291,26 @@ const styles = {
   },
   branchBox: {
     display: "grid",
-    gap: "4px",
-    padding: "12px",
-    marginBottom: "16px",
-    backgroundColor: "#eff6ff",
-    border: "1px solid #bfdbfe",
+    gap: "6px",
+    padding: "16px",
+    marginBottom: "18px",
+    backgroundColor: "#f0f9ff",
+    border: "2px solid #38bdf8",
     borderRadius: "8px",
-    color: "#1e3a8a",
+    color: "#0c4a6e",
+  },
+  branchLabel: {
+    fontSize: "12px",
+    fontWeight: "bold",
+    letterSpacing: "0.08em",
+    textTransform: "uppercase",
+  },
+  branchName: {
+    fontSize: "22px",
+    lineHeight: "1.2",
+  },
+  branchLocation: {
+    color: "#0369a1",
   },
   form: {
     display: "flex",
@@ -264,6 +334,25 @@ const styles = {
     marginBottom: "6px",
     fontWeight: "bold",
   },
+  mealButtons: {
+    display: "grid",
+    gridTemplateColumns: "1fr 1fr",
+    gap: "10px",
+  },
+  mealButton: {
+    padding: "12px",
+    border: "1px solid #cbd5e1",
+    borderRadius: "8px",
+    backgroundColor: "#fff",
+    color: "#334155",
+    cursor: "pointer",
+    fontWeight: "bold",
+  },
+  mealButtonSelected: {
+    borderColor: "#2563eb",
+    backgroundColor: "#dbeafe",
+    color: "#1d4ed8",
+  },
   stars: {
     display: "flex",
     gap: "6px",
@@ -280,6 +369,10 @@ const styles = {
     color: "#666",
     marginTop: "-8px",
   },
+  photoSection: {
+    display: "grid",
+    gap: "8px",
+  },
   primaryButton: {
     padding: "12px",
     backgroundColor: "#2563eb",
@@ -288,6 +381,28 @@ const styles = {
     borderRadius: "8px",
     cursor: "pointer",
     fontWeight: "bold",
+  },
+  thankYouCard: {
+    textAlign: "center",
+  },
+  thankYouIcon: {
+    width: "54px",
+    height: "54px",
+    margin: "0 auto 14px",
+    display: "grid",
+    placeItems: "center",
+    borderRadius: "50%",
+    backgroundColor: "#dcfce7",
+    color: "#15803d",
+    fontSize: "30px",
+    fontWeight: "bold",
+  },
+  thankYouTitle: {
+    marginBottom: "8px",
+  },
+  thankYouText: {
+    color: "#475569",
+    margin: 0,
   },
   success: {
     backgroundColor: "#d1fae5",
