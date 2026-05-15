@@ -73,10 +73,10 @@ function InventoryPage() {
       const stockInRes = await getStockIns(params);
       const stockOutRes = await getStockOuts(params);
 
-      setProducts(productRes.data.products || []);
-      setPurchases(purchaseRes.data.purchases || []);
-      setStockIns(stockInRes.data.stockIns || []);
-      setStockOuts(stockOutRes.data.stockOuts || []);
+      setProducts(productRes.data.data || []);
+      setPurchases(purchaseRes.data.data || []);
+      setStockIns(stockInRes.data.data || []);
+      setStockOuts(stockOutRes.data.data || []);
     } catch (err) {
       console.error(err);
       setError("Failed to load inventory data");

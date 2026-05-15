@@ -1,11 +1,9 @@
-import { getUserBranchId, isSuperAdmin } from "./accessControl.js";
-
-const normalizeRole = (role) =>
-  (role || "").toString().toLowerCase().replace(/[_\s]/g, "");
+import { getUserBranchId, isSuperAdmin } from "../utils/branchAccess.js";
+import { normalizeRole } from "../utils/roles.js";
 
 export const branchScopeMiddleware = (req, res, next) => {
   if (!req.user) {
-    return res.status(401).json({ message: "Unauthorized" });
+    return res.status(401).json({ success: false, message: "Unauthorized" });
   }
 
   if (isSuperAdmin(req.user)) {
@@ -16,7 +14,7 @@ export const branchScopeMiddleware = (req, res, next) => {
 
   const role = normalizeRole(req.user.role);
 
-  if (["admin", "consoleuser"].includes(role)) {
+  if (["admin", "console_user"].includes(role)) {
     const branchId = getUserBranchId(req.user);
 
     if (!branchId) {
@@ -35,7 +33,10 @@ export const branchScopeMiddleware = (req, res, next) => {
     return next();
   }
 
-  return res.status(403).json({ message: "Forbidden: unsupported role" });
+  return res.status(403).json({
+    success: false,
+    message: "Forbidden: unsupported role",
+  });
 };
 
 export default branchScopeMiddleware;

@@ -8,6 +8,7 @@ import Contribution from "../../models/Contribution.js";
 import IncidentReport from "../../models/IncidentReport.js";
 import NoticeToExplain from "../../models/NoticeToExplain.js";
 import { isSuperAdmin } from "../../middleware/accessControl.js";
+import { assertCanAccessBranch } from "../../utils/branchAccess.js";
 import { uploadToSupabase } from "../../utils/uploadToSupabase.js";
 import { deleteFromSupabase } from "../../utils/deleteFromSupabase.js";
 
@@ -120,11 +121,11 @@ const assertEmployeeAccess = async (req, employeeId) => {
 
   const branchName = getBranchName(req);
 
-  if (branchName && employee.assignedBranch !== branchName) {
-    const error = new Error("Forbidden: you can only access your assigned branch");
-    error.statusCode = 403;
-    throw error;
-  }
+    if (branchName && employee.assignedBranch !== branchName) {
+      const error = new Error("You are not allowed to access this branch record");
+      error.statusCode = 403;
+      throw error;
+    }
 
   return employee;
 };
@@ -587,12 +588,6 @@ export const deleteEmployee = async (req, res) => {
       });
     }
 
-    if (uploadedPhoto && existingEmployee.photoPath && existingEmployee.photoPath !== uploadedPhoto.path) {
-      await deleteFromSupabase(existingEmployee.photoPath).catch((deleteError) => {
-        console.error("Failed to delete replaced employee photo:", deleteError);
-      });
-    }
-
     await assertEmployeeAccess(req, req.params.id);
 
     employee.isArchived = true;
@@ -714,7 +709,10 @@ export const createAttendance = async (req, res) => {
 export const getAttendance = async (req, res) => {
   try {
     const branchScope = await getBranchScopeFromRequest(req);
-    const filter = await buildHrRecordBranchFilter(branchScope);
+    const filter = {
+      ...(await buildHrRecordBranchFilter(branchScope)),
+      isArchived: { $ne: true },
+    };
 
     const attendance = await Attendance.find(filter)
       .populate("employee")
@@ -871,7 +869,10 @@ export const getPayrolls = async (req, res) => {
   try {
     const branchScope = await getBranchScopeFromRequest(req);
     const filter = applyRangeMonthFilter(
-      await buildHrRecordBranchFilter(branchScope),
+      {
+        ...(await buildHrRecordBranchFilter(branchScope)),
+        isArchived: { $ne: true },
+      },
       "payPeriodStart",
       "payPeriodEnd",
       getMonthRangeFromRequest(req)
@@ -916,14 +917,7 @@ export const updatePayrollStatus = async (req, res) => {
       });
     }
 
-    const branchName = getBranchName(req);
-
-    if (branchName && existingPayroll.employee?.assignedBranch !== branchName) {
-      return res.status(403).json({
-        success: false,
-        message: "Forbidden: you can only access your assigned branch",
-      });
-    }
+    assertCanAccessBranch(req, existingPayroll.branch);
 
     const payroll = await Payroll.findByIdAndUpdate(
       req.params.id,
@@ -986,7 +980,10 @@ export const getLeaves = async (req, res) => {
   try {
     const branchScope = await getBranchScopeFromRequest(req);
     const filter = applyRangeMonthFilter(
-      await buildHrRecordBranchFilter(branchScope),
+      {
+        ...(await buildHrRecordBranchFilter(branchScope)),
+        isArchived: { $ne: true },
+      },
       "startDate",
       "endDate",
       getMonthRangeFromRequest(req)
@@ -1022,14 +1019,7 @@ export const updateLeave = async (req, res) => {
       });
     }
 
-    const branchName = getBranchName(req);
-
-    if (branchName && existingLeave.employee?.assignedBranch !== branchName) {
-      return res.status(403).json({
-        success: false,
-        message: "Forbidden: you can only access your assigned branch",
-      });
-    }
+    assertCanAccessBranch(req, existingLeave.branch);
 
     const leave = await Leave.findByIdAndUpdate(
       req.params.id,
@@ -1080,14 +1070,7 @@ export const updateLeaveStatus = async (req, res) => {
       });
     }
 
-    const branchName = getBranchName(req);
-
-    if (branchName && existingLeave.employee?.assignedBranch !== branchName) {
-      return res.status(403).json({
-        success: false,
-        message: "Forbidden: you can only access your assigned branch",
-      });
-    }
+    assertCanAccessBranch(req, existingLeave.branch);
 
     const leave = await Leave.findByIdAndUpdate(
       req.params.id,
@@ -1161,7 +1144,10 @@ export const createContribution = async (req, res) => {
 export const getContributions = async (req, res) => {
   try {
     const branchScope = await getBranchScopeFromRequest(req);
-    const filter = await buildHrRecordBranchFilter(branchScope);
+    const filter = {
+      ...(await buildHrRecordBranchFilter(branchScope)),
+      isArchived: { $ne: true },
+    };
     const month = req.query?.month;
 
     if (month) {
@@ -1231,7 +1217,10 @@ export const getIncidentReports = async (req, res) => {
   try {
     const branchScope = await getBranchScopeFromRequest(req);
     const filter = applyDateMonthFilter(
-      await buildHrRecordBranchFilter(branchScope),
+      {
+        ...(await buildHrRecordBranchFilter(branchScope)),
+        isArchived: { $ne: true },
+      },
       "incidentDate",
       getMonthRangeFromRequest(req)
     );
@@ -1276,14 +1265,7 @@ export const updateIncidentReportStatus = async (req, res) => {
       });
     }
 
-    const branchName = getBranchName(req);
-
-    if (branchName && existingReport.employee?.assignedBranch !== branchName) {
-      return res.status(403).json({
-        success: false,
-        message: "Forbidden: you can only access your assigned branch",
-      });
-    }
+    assertCanAccessBranch(req, existingReport.branch);
 
     const report = await IncidentReport.findByIdAndUpdate(
       req.params.id,
@@ -1361,7 +1343,10 @@ export const getNTEs = async (req, res) => {
   try {
     const branchScope = await getBranchScopeFromRequest(req);
     const filter = applyDateMonthFilter(
-      await buildHrRecordBranchFilter(branchScope),
+      {
+        ...(await buildHrRecordBranchFilter(branchScope)),
+        isArchived: { $ne: true },
+      },
       "issueDate",
       getMonthRangeFromRequest(req)
     );
@@ -1417,14 +1402,7 @@ export const updateNTEStatus = async (req, res) => {
       });
     }
 
-    const branchName = getBranchName(req);
-
-    if (branchName && existingNte.employee?.assignedBranch !== branchName) {
-      return res.status(403).json({
-        success: false,
-        message: "Forbidden: you can only access your assigned branch",
-      });
-    }
+    assertCanAccessBranch(req, existingNte.branch);
 
     const nte = await NoticeToExplain.findByIdAndUpdate(
       req.params.id,
@@ -1482,12 +1460,13 @@ export const getEmployeeFullDetails = async (req, res) => {
       });
     }
 
-    const attendance = await Attendance.find({ employee: id }).sort({ date: -1 });
-    const payrolls = await Payroll.find({ employee: id }).sort({ createdAt: -1 });
-    const leaves = await Leave.find({ employee: id }).sort({ createdAt: -1 });
-    const contributions = await Contribution.find({ employee: id }).sort({ createdAt: -1 });
-    const incidentReports = await IncidentReport.find({ employee: id }).sort({ createdAt: -1 });
-    const ntes = await NoticeToExplain.find({ employee: id }).sort({ createdAt: -1 });
+    const activeRelatedFilter = { employee: id, isArchived: { $ne: true } };
+    const attendance = await Attendance.find(activeRelatedFilter).sort({ date: -1 });
+    const payrolls = await Payroll.find(activeRelatedFilter).sort({ createdAt: -1 });
+    const leaves = await Leave.find(activeRelatedFilter).sort({ createdAt: -1 });
+    const contributions = await Contribution.find(activeRelatedFilter).sort({ createdAt: -1 });
+    const incidentReports = await IncidentReport.find(activeRelatedFilter).sort({ createdAt: -1 });
+    const ntes = await NoticeToExplain.find(activeRelatedFilter).sort({ createdAt: -1 });
 
     res.status(200).json({
       success: true,

@@ -67,7 +67,7 @@ function SalesPage({ pageView = "input" }) {
         branchId || ""
       );
 
-      setSales(res.data.sales || []);
+      setSales(res.data.data || []);
     } catch (error) {
       console.error(error);
       setError("Failed to fetch sales");
@@ -85,8 +85,8 @@ function SalesPage({ pageView = "input" }) {
       const dailyRes = await getDailySales(today, branchId || "");
       const monthlyRes = await getMonthlySales(currentYear, currentMonth, branchId || "");
 
-      setDailySummary(dailyRes.data);
-      setMonthlySummary(monthlyRes.data);
+      setDailySummary(dailyRes.data.data);
+      setMonthlySummary(monthlyRes.data.data);
     } catch (error) {
       console.error(error);
     }

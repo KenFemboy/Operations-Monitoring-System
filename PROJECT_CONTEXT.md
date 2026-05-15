@@ -179,9 +179,11 @@
 
 - `/src/layouts/` - Layout components
   - `AdminLayout.jsx` - Admin interface layout
+  - `DashboardLayout.jsx` - Shared app shell that passes the authenticated user to `TopNavbar`
   - Other role-specific layouts
 
 - `/src/shared/` - Shared components and utilities
+  - `components/TopNavbar.jsx` - Sticky top bar; displays page title, logout action, logged-in user, and branch identity
 
 - `/src/roles/` - Role-based configuration
 
@@ -359,13 +361,7 @@
 
 ## Default Credentials
 
-**SuperAdmin Account:**
-- Email: superadmin@ally.local
-- Password: 12345678
-
-**Console User Account:**
-- Email: jamessandayan17@gmail.com
-- Password: #Akosijames2003
+Real credentials must not be committed. Use private `.env` files or a secure password manager for local seed/admin accounts.
 
 ---
 
@@ -391,7 +387,6 @@
 
 ```
 Operations-Monitoring-System/
-├── Credentials.txt (auth details)
 ├── Backend/
 │   ├── index.js (main entry point)
 │   ├── package.json
@@ -469,3 +464,4 @@ Health check example:
 7. **Timestamps**: Models include createdAt/updatedAt tracking
 8. **Image Uploads**: Only employee photos and feedback concern images use uploads
 9. **No Local Image Persistence**: Uploaded images should not be stored in Render disk or committed under Backend/uploads
+10. **Top Bar Identity**: `Client/src/shared/components/TopNavbar.jsx` shows the logged-in user and branch. It reads `user.name`, `user.email`, `user.branchName`, `user.branch`, and populated `user.branchId.branchName`; superadmin users fall back to `All branches`.

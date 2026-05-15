@@ -1,21 +1,11 @@
-import { isSuperAdmin } from "../middleware/accessControl.js";
+import { getBranchFilter as getBranchAccessFilter } from "./branchAccess.js";
 
-export const getBranchFilter = (context) => {
-  if (context?.branchFilter) {
+export const getBranchFilter = (context, branchField = "branch") => {
+  if (context?.branchFilter && branchField === "branch") {
     return context.branchFilter;
   }
 
-  const user = context?.user || context;
-
-  if (!user) return {};
-
-  if (isSuperAdmin(user)) return {};
-
-  const branchId = user.branchId || user.branch || null;
-
-  if (!branchId) return { branch: null };
-
-  return { branch: branchId };
+  return getBranchAccessFilter(context, branchField);
 };
 
 export default getBranchFilter;

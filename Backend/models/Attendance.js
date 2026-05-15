@@ -34,6 +34,39 @@ const attendanceSchema = new mongoose.Schema(
     },
 
     remarks: String,
+
+    isArchived: {
+      type: Boolean,
+      default: false,
+      index: true,
+    },
+
+    archivedAt: {
+      type: Date,
+      default: null,
+    },
+
+    archivedBy: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+      default: null,
+    },
+
+    archiveReason: {
+      type: String,
+      default: "",
+    },
+
+    restoredAt: {
+      type: Date,
+      default: null,
+    },
+
+    restoredBy: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+      default: null,
+    },
   },
   { timestamps: true }
 );

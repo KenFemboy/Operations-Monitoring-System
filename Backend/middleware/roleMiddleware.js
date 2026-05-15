@@ -1,16 +1,23 @@
+import { normalizeRole } from "../utils/roles.js";
+
 export const allowRoles = (...roles) => {
-  const normalize = (r) => (r || "").toString().toLowerCase().replace(/[_\s]/g, "");
-  const allowed = new Set(roles.map(normalize));
+  const allowed = new Set(roles.map(normalizeRole));
 
   return (req, res, next) => {
     if (!req.user) {
-      return res.status(401).json({ message: "Unauthorized" });
+      return res.status(401).json({
+        success: false,
+        message: "Unauthorized",
+      });
     }
 
-    const userRole = normalize(req.user.role);
+    const userRole = normalizeRole(req.user.role);
 
     if (!allowed.has(userRole)) {
-      return res.status(403).json({ message: "Forbidden: insufficient role" });
+      return res.status(403).json({
+        success: false,
+        message: "Forbidden: insufficient role",
+      });
     }
 
     next();

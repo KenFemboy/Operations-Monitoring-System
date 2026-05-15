@@ -64,10 +64,10 @@ function SuperAdminFeedbackPage() {
       setError("");
 
       const res = await getFeedbacks(withSelectedBranch(filter, branchId));
-      setFeedbacks(res.data.feedbacks || []);
+      setFeedbacks(res.data.data || []);
     } catch (err) {
       console.error(err);
-      setError("Failed to load customer reviews");
+      setError("Failed to load customer feedback");
     } finally {
       setLoading(false);
     }
@@ -90,7 +90,7 @@ function SuperAdminFeedbackPage() {
         mealSession: selectedFilter.mealSession,
       });
 
-      setBranchSummary(res.data.summary || []);
+      setBranchSummary(res.data.data || []);
     } catch (err) {
       console.error("Failed to fetch branch summary:", err);
     }
@@ -113,7 +113,7 @@ function SuperAdminFeedbackPage() {
         mealSession: selectedFilter.mealSession,
       });
 
-      setMonthSummary(res.data.summary || []);
+      setMonthSummary(res.data.data || []);
     } catch (err) {
       console.error("Failed to fetch month summary:", err);
     }
@@ -195,9 +195,9 @@ function SuperAdminFeedbackPage() {
   return (
     <div style={styles.page}>
       <h1>Feedback Management</h1>
-      <p>Select a branch to view customer ratings, reviews, and performance.</p>
+      <p>Select a branch to view customer ratings, feedback, and performance.</p>
 
-      {loading && <p>Loading reviews...</p>}
+      {loading && <p>Loading feedback...</p>}
       {error && <p style={styles.error}>{error}</p>}
 
       {!selectedBranch && (

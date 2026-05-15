@@ -260,6 +260,7 @@ export const getAttendancePayrollAnalytics = async (req, res) => {
     const { startOfToday, endOfToday } = getDateRanges();
 
     const branchFilter = getBranchFilter(req);
+    const activeFilter = { ...branchFilter, isArchived: { $ne: true } };
 
     const [
       totalAttendance,
@@ -271,14 +272,14 @@ export const getAttendancePayrollAnalytics = async (req, res) => {
 
       totalContributions,
     ] = await Promise.all([
-      Attendance.countDocuments(branchFilter),
-      Attendance.countDocuments({ ...branchFilter, date: { $gte: startOfToday, $lt: endOfToday } }),
+      Attendance.countDocuments(activeFilter),
+      Attendance.countDocuments({ ...activeFilter, date: { $gte: startOfToday, $lt: endOfToday } }),
 
-      Payroll.countDocuments(branchFilter),
-      Payroll.countDocuments({ ...branchFilter, status: "pending" }),
-      Payroll.countDocuments({ ...branchFilter, status: "done" }),
+      Payroll.countDocuments(activeFilter),
+      Payroll.countDocuments({ ...activeFilter, status: "pending" }),
+      Payroll.countDocuments({ ...activeFilter, status: "done" }),
 
-      Contribution.countDocuments(branchFilter),
+      Contribution.countDocuments(activeFilter),
     ]);
 
     res.status(200).json({
@@ -453,14 +454,14 @@ export const getIRNTEAnalytics = async (req, res) => {
       submittedNTE,
       closedNTE,
     ] = await Promise.all([
-      IncidentReport.countDocuments(branchFilter),
-      IncidentReport.countDocuments({ ...branchFilter, status: "open" }),
-      IncidentReport.countDocuments({ ...branchFilter, status: "resolved" }),
+      IncidentReport.countDocuments(activeFilter),
+      IncidentReport.countDocuments({ ...activeFilter, status: "open" }),
+      IncidentReport.countDocuments({ ...activeFilter, status: "resolved" }),
 
-      NoticeToExplain.countDocuments(branchFilter),
-      NoticeToExplain.countDocuments({ ...branchFilter, status: "pending" }),
-      NoticeToExplain.countDocuments({ ...branchFilter, status: "submitted" }),
-      NoticeToExplain.countDocuments({ ...branchFilter, status: "closed" }),
+      NoticeToExplain.countDocuments(activeFilter),
+      NoticeToExplain.countDocuments({ ...activeFilter, status: "pending" }),
+      NoticeToExplain.countDocuments({ ...activeFilter, status: "submitted" }),
+      NoticeToExplain.countDocuments({ ...activeFilter, status: "closed" }),
     ]);
 
     res.status(200).json({
@@ -495,6 +496,7 @@ export const getIRNTEAnalytics = async (req, res) => {
 export const getLeavePlantillaAnalytics = async (req, res) => {
   try {
     const branchFilter = getBranchFilter(req);
+    const activeFilter = { ...branchFilter, isArchived: { $ne: true } };
 
     const [
       totalLeaves,
@@ -507,15 +509,15 @@ export const getLeavePlantillaAnalytics = async (req, res) => {
       understaffedPlantilla,
       overstaffedPlantilla,
     ] = await Promise.all([
-      Leave.countDocuments(branchFilter),
-      Leave.countDocuments({ ...branchFilter, status: "pending" }),
-      Leave.countDocuments({ ...branchFilter, status: "approved" }),
+      Leave.countDocuments(activeFilter),
+      Leave.countDocuments({ ...activeFilter, status: "pending" }),
+      Leave.countDocuments({ ...activeFilter, status: "approved" }),
 
-      Plantilla.countDocuments(branchFilter),
-      Plantilla.countDocuments({ ...branchFilter, status: "open" }),
-      Plantilla.countDocuments({ ...branchFilter, status: "filled" }),
-      Plantilla.countDocuments({ ...branchFilter, status: "understaffed" }),
-      Plantilla.countDocuments({ ...branchFilter, status: "overstaffed" }),
+      Plantilla.countDocuments(activeFilter),
+      Plantilla.countDocuments({ ...activeFilter, status: "open" }),
+      Plantilla.countDocuments({ ...activeFilter, status: "filled" }),
+      Plantilla.countDocuments({ ...activeFilter, status: "understaffed" }),
+      Plantilla.countDocuments({ ...activeFilter, status: "overstaffed" }),
     ]);
 
     res.status(200).json({

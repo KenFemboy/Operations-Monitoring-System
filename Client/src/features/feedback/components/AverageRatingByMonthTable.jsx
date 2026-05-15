@@ -32,7 +32,7 @@ function AverageRatingByMonthTable({ data }) {
             <th style={styles.th}>Month</th>
             <th style={styles.th}>Average Rating</th>
             <th style={styles.th}>Stars</th>
-            <th style={styles.th}>Total Reviews</th>
+            <th style={styles.th}>Total Feedback</th>
           </tr>
         </thead>
 
@@ -60,7 +60,7 @@ function AverageRatingByMonthTable({ data }) {
                   </span>
                 </td>
 
-                <td style={styles.td}>{item.totalReviews}</td>
+                <td style={styles.td}>{item.totalFeedback}</td>
               </tr>
             ))
           )}

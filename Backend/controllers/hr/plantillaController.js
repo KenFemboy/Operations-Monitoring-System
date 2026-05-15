@@ -2,6 +2,7 @@ import Plantilla from "../../models/Plantilla.js";
 import Branch from "../../models/Branch.js";
 import { isSuperAdmin, getUserBranchId } from "../../middleware/accessControl.js";
 import { getBranchFilter } from "../../utils/branchFilter.js";
+import { assertCanAccessBranch } from "../../utils/branchAccess.js";
 
 const getPlantillaStatus = (requiredCount, currentCount) => {
   const required = Number(requiredCount || 0);
@@ -78,7 +79,7 @@ export const createPlantilla = async (req, res) => {
 
 export const getPlantillas = async (req, res) => {
   try {
-    const filter = getBranchFilter(req);
+    const filter = { ...getBranchFilter(req), isArchived: { $ne: true } };
     const plantillas = await Plantilla.find(filter)
       .populate("branch", "branchName location address status")
       .sort({ createdAt: -1 });
@@ -98,10 +99,10 @@ export const getPlantillas = async (req, res) => {
 
 export const getPlantillaById = async (req, res) => {
   try {
-    const plantilla = await Plantilla.findById(req.params.id).populate(
-      "branch",
-      "branchName location address status"
-    );
+    const plantilla = await Plantilla.findOne({
+      _id: req.params.id,
+      isArchived: { $ne: true },
+    }).populate("branch", "branchName location address status");
 
     if (!plantilla) {
       return res.status(404).json({
@@ -110,9 +111,7 @@ export const getPlantillaById = async (req, res) => {
       });
     }
 
-    if (!isSuperAdmin(req.user) && String(plantilla.branch._id) !== String(getUserBranchId(req.user))) {
-      return res.status(403).json({ success: false, message: "Forbidden: branch mismatch" });
-    }
+    assertCanAccessBranch(req, plantilla.branch);
 
     res.status(200).json({
       success: true,
@@ -130,7 +129,10 @@ export const getPlantillaById = async (req, res) => {
 export const updatePlantilla = async (req, res) => {
   try {
     const { position, branch, branchId, branchName, requiredCount, currentCount } = req.body;
-    const existingPlantilla = await Plantilla.findById(req.params.id);
+    const existingPlantilla = await Plantilla.findOne({
+      _id: req.params.id,
+      isArchived: { $ne: true },
+    });
 
     if (!existingPlantilla) {
       return res.status(404).json({
@@ -139,12 +141,7 @@ export const updatePlantilla = async (req, res) => {
       });
     }
 
-    if (!isSuperAdmin(req.user) && String(existingPlantilla.branch) !== String(getUserBranchId(req.user))) {
-      return res.status(403).json({
-        success: false,
-        message: "Forbidden: branch mismatch",
-      });
-    }
+    assertCanAccessBranch(req, existingPlantilla.branch);
 
     const resolvedBranch = isSuperAdmin(req.user)
       ? await resolveBranch({
@@ -188,7 +185,10 @@ export const updatePlantilla = async (req, res) => {
 };
 export const deletePlantilla = async (req, res) => {
   try {
-    const plantilla = await Plantilla.findById(req.params.id);
+    const plantilla = await Plantilla.findOne({
+      _id: req.params.id,
+      isArchived: { $ne: true },
+    });
 
     if (!plantilla) {
       return res.status(404).json({
@@ -197,18 +197,18 @@ export const deletePlantilla = async (req, res) => {
       });
     }
 
-    if (!isSuperAdmin(req.user) && String(plantilla.branch) !== String(getUserBranchId(req.user))) {
-      return res.status(403).json({
-        success: false,
-        message: "Forbidden: branch mismatch",
-      });
-    }
+    assertCanAccessBranch(req, plantilla.branch);
 
-    await plantilla.deleteOne();
+    plantilla.isArchived = true;
+    plantilla.archivedAt = new Date();
+    plantilla.archivedBy = req.user?._id || req.user?.id || null;
+    plantilla.archiveReason = req.body?.reason || "No reason provided";
+    await plantilla.save();
 
     res.status(200).json({
       success: true,
-      message: "Plantilla deleted successfully",
+      message: "Plantilla archived successfully",
+      data: plantilla,
     });
   } catch (error) {
     res.status(500).json({

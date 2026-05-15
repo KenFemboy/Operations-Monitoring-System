@@ -9,11 +9,14 @@ import adminRoutes from "./routes/admin/index.js";
 import authRoutes from "./routes/public/authRoutes.js";
 import publicRoutes from "./routes/public/index.js";
 import superAdminRoutes from "./routes/superadmin/index.js";
+import { validateRequiredEnv } from "./config/env.js";
 
 dotenv.config();
 
 const app = express();
 const PORT = process.env.PORT || 8000;
+
+validateRequiredEnv();
 
 app.use(
   cors({

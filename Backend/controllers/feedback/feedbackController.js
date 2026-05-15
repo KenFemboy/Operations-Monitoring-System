@@ -1,6 +1,10 @@
 import Feedback from "../../models/Feedback.js";
 import Branch from "../../models/Branch.js";
-import { isSuperAdmin, getUserBranchId } from "../../middleware/accessControl.js";
+import {
+  assertCanAccessBranch,
+  getUserBranchId,
+  isSuperAdmin,
+} from "../../utils/branchAccess.js";
 import { getBranchFilter } from "../../utils/branchFilter.js";
 import { uploadToSupabase } from "../../utils/uploadToSupabase.js";
 import { deleteFromSupabase } from "../../utils/deleteFromSupabase.js";
@@ -32,6 +36,13 @@ const formatTimestampForFilename = (value = new Date()) =>
 
 const buildFeedbackImageFilenameBase = ({ dateUploaded, branchName }) =>
   `${formatTimestampForFilename(dateUploaded)}_${branchName}`;
+
+const normalizeServiceType = (value = "") => {
+  const normalized = value.toString().trim().toLowerCase();
+  if (normalized === "lunch") return "Lunch";
+  if (normalized === "dinner") return "Dinner";
+  return value;
+};
 
 const resolveBranchBySlug = async (branchSlug) => {
   if (!branchSlug) return null;
@@ -96,7 +107,7 @@ export const createFeedback = async (req, res) => {
       comment,
     } = req.body;
     const selectedBranchSlug = req.params?.branchSlug || branchSlug;
-    const selectedServiceType = mealSession || serviceType;
+    const selectedServiceType = normalizeServiceType(mealSession || serviceType);
     const selectedComment = (review || comment || "").trim();
 
     if (
@@ -184,7 +195,7 @@ export const createFeedback = async (req, res) => {
     res.status(201).json({
       success: true,
       message: "Feedback submitted successfully",
-      feedback,
+      data: feedback,
     });
   } catch (error) {
     if (uploadedImage?.path) {
@@ -217,7 +228,6 @@ export const getPublicFeedbackBranchConfig = async (req, res) => {
 
     res.status(200).json({
       success: true,
-      branch,
       data: branch,
     });
   } catch (error) {
@@ -237,7 +247,6 @@ export const getPublicFeedbackFormConfig = async (_req, res) => {
 
     res.status(200).json({
       success: true,
-      branches,
       data: branches,
     });
   } catch (error) {
@@ -280,7 +289,7 @@ export const getFeedbacks = async (req, res) => {
 
     res.status(200).json({
       success: true,
-      feedbacks,
+      data: feedbacks,
     });
   } catch (error) {
     res.status(error.statusCode || 500).json({
@@ -321,7 +330,7 @@ export const getAverageRatingByBranch = async (req, res) => {
         $group: {
           _id: "$branch",
           averageRating: { $avg: "$rating" },
-          totalReviews: { $sum: 1 },
+          totalFeedback: { $sum: 1 },
         },
       },
       {
@@ -344,7 +353,7 @@ export const getAverageRatingByBranch = async (req, res) => {
           branchId: "$_id",
           branch: { $ifNull: ["$branch.branchName", "Unknown Branch"] },
           averageRating: { $round: ["$averageRating", 2] },
-          totalReviews: 1,
+          totalFeedback: 1,
         },
       },
       { $sort: { branch: 1 } },
@@ -352,7 +361,7 @@ export const getAverageRatingByBranch = async (req, res) => {
 
     res.status(200).json({
       success: true,
-      summary,
+      data: summary,
     });
   } catch (error) {
     res.status(error.statusCode || 500).json({
@@ -396,7 +405,7 @@ export const getAverageRatingByMonth = async (req, res) => {
             month: { $month: "$createdAt" },
           },
           averageRating: { $avg: "$rating" },
-          totalReviews: { $sum: 1 },
+          totalFeedback: { $sum: 1 },
         },
       },
       {
@@ -405,7 +414,7 @@ export const getAverageRatingByMonth = async (req, res) => {
           year: "$_id.year",
           month: "$_id.month",
           averageRating: { $round: ["$averageRating", 2] },
-          totalReviews: 1,
+          totalFeedback: 1,
         },
       },
       { $sort: { year: -1, month: -1 } },
@@ -413,7 +422,7 @@ export const getAverageRatingByMonth = async (req, res) => {
 
     res.status(200).json({
       success: true,
-      summary,
+      data: summary,
     });
   } catch (error) {
     res.status(error.statusCode || 500).json({
@@ -437,6 +446,8 @@ export const deleteFeedback = async (req, res) => {
         message: "Feedback not found",
       });
     }
+
+    assertCanAccessBranch(req, feedback.branch);
 
     feedback.isArchived = true;
     feedback.archivedAt = new Date();

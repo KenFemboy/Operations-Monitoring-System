@@ -10,7 +10,7 @@ const ROLE_PREFIXES = ["/admin", "/superadmin", "/super-admin", "/super_admin"];
 const PUBLIC_PREFIXES = ["/auth", "/health", "/public"];
 
 const normalizeRole = (role = "") =>
-  role.toString().toLowerCase().replace(/[_\s]/g, "");
+  role.toString().trim().toLowerCase().replace(/[\s-]+/g, "_");
 
 const getStoredRole = () => {
   const rawUser = localStorage.getItem("user");
@@ -27,8 +27,8 @@ const getStoredRole = () => {
 const getRolePrefix = () => {
   const role = normalizeRole(getStoredRole());
 
-  if (role === "superadmin") return "/superadmin";
-  if (["admin", "consoleuser"].includes(role)) return "/admin";
+  if (role === "super_admin" || role === "superadmin") return "/superadmin";
+  if (["admin", "console_user", "consoleuser"].includes(role)) return "/admin";
 
   return "";
 };

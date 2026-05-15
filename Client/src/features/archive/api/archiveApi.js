@@ -1,6 +1,6 @@
 import api from "../../../api/axiosInstance";
 
-const ARCHIVE_PREFIX = "/superadmin/archive";
+const ARCHIVE_PREFIX = "/archive";
 
 export const getArchivedEmployees = () =>
   api.get(`${ARCHIVE_PREFIX}/employees`);

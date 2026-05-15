@@ -1,25 +1,11 @@
 import mongoose from "mongoose";
+import {
+  getBranchIdValue,
+  getUserBranchId,
+  isSuperAdmin,
+} from "../utils/branchAccess.js";
 
-const SUPER_ADMIN_ROLES = new Set(["superadmin"]);
-const BRANCH_SCOPED_ROLES = new Set(["admin", "hr", "consoleuser"]);
-const normalizeRole = (role = "") =>
-  role.toString().toLowerCase().replace(/[_\s]/g, "");
-
-export const isSuperAdmin = (user) => SUPER_ADMIN_ROLES.has(normalizeRole(user?.role));
-
-export const getUserBranchId = (user) => {
-  const branchId = user?.branchId;
-
-  if (!branchId) {
-    return null;
-  }
-
-  if (typeof branchId === "object" && branchId._id) {
-    return String(branchId._id);
-  }
-
-  return String(branchId);
-};
+export { getUserBranchId, isSuperAdmin };
 
 export const assertValidObjectId = (value, fieldName = "id") => {
   if (!mongoose.Types.ObjectId.isValid(value)) {
@@ -35,7 +21,7 @@ export const canAccessBranch = (user, branchId) => {
   }
 
   const userBranchId = getUserBranchId(user);
-  return Boolean(userBranchId && String(branchId) === userBranchId);
+  return Boolean(userBranchId && getBranchIdValue(branchId) === userBranchId);
 };
 
 export const requireBranchAccess = (branchIdGetter) => {
@@ -66,7 +52,7 @@ export const attachBranchScope = (req, _res, next) => {
     return next();
   }
 
-  if (BRANCH_SCOPED_ROLES.has(normalizeRole(req.user?.role))) {
+  if (["admin", "console_user"].includes(req.user?.role)) {
     const branchId = getUserBranchId(req.user);
     req.branchScope = branchId ? { branchId } : { branchId: null };
     return next();

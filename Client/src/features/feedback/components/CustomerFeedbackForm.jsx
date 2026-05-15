@@ -44,7 +44,7 @@ function CustomerFeedbackForm({ branchSlug = "" }) {
 
       try {
         const res = await getPublicFeedbackFormConfig(branchSlug);
-        setBranch(res.data.branch || res.data.data || null);
+        setBranch(res.data.data || null);
       } catch (err) {
         console.error(err);
         setMessage("Unable to load this feedback branch right now.");

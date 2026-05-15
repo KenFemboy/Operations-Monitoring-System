@@ -3,6 +3,20 @@ import { getMe, loginUser } from "../../api/authApi";
 
 export const AuthContext = createContext();
 
+const normalizeRole = (role = "") => {
+  const normalized = role.toString().trim().toLowerCase().replace(/[\s-]+/g, "_");
+
+  if (normalized === "super_admin" || normalized === "superadmin") {
+    return "superadmin";
+  }
+
+  if (normalized === "consoleuser" || normalized === "console_user") {
+    return "console_user";
+  }
+
+  return normalized;
+};
+
 const parseStoredUser = () => {
   const rawUser = localStorage.getItem("user");
 
@@ -25,7 +39,7 @@ export function AuthProvider({ children }) {
 
     return {
       ...userData,
-      role: userData.role,
+      role: normalizeRole(userData.role),
       branchId: userData.branchId || null,
       branchName: userData.branchName || userData.branch || null,
       branchLocation: userData.branchLocation || null,
@@ -45,7 +59,7 @@ export function AuthProvider({ children }) {
 
     try {
       const res = await getMe();
-      const loggedInUser = normalizeUser(res.data?.user);
+      const loggedInUser = normalizeUser(res.data?.data || res.data?.user);
 
       if (!loggedInUser) {
         throw new Error("Invalid /auth/me response");
@@ -76,8 +90,9 @@ export function AuthProvider({ children }) {
       password,
     });
 
-    const token = res.data?.token;
-    const loggedInUser = normalizeUser(res.data?.user);
+    const authData = res.data?.data || res.data;
+    const token = authData?.token;
+    const loggedInUser = normalizeUser(authData?.user);
 
     if (!token || !loggedInUser) {
       throw new Error("Invalid login response from server");
@@ -105,7 +120,7 @@ export function AuthProvider({ children }) {
 
   const isAuthenticated = Boolean(user && localStorage.getItem("token"));
 
-  const isSuperAdmin = ["super_admin", "superadmin"].includes(user?.role);
+  const isSuperAdmin = normalizeRole(user?.role) === "superadmin";
   const isConsoleUser = user?.role === "console_user";
 
   return (

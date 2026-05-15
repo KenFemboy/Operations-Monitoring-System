@@ -34,7 +34,7 @@ function FeedbackDateFilter({
 
   return (
     <div style={styles.card}>
-      <h2>Filter Reviews</h2>
+      <h2>Filter Feedback</h2>
 
       <form onSubmit={handleSubmit} style={styles.form}>
         <div>

@@ -32,7 +32,7 @@ function FeedbackTable({ feedbacks, onRefresh }) {
   return (
     <>
       <div style={styles.card}>
-        <h2>Customer Reviews</h2>
+        <h2>Customer Feedback</h2>
 
         <table style={styles.table}>
           <thead>
@@ -42,7 +42,7 @@ function FeedbackTable({ feedbacks, onRefresh }) {
               <th style={styles.th}>Branch</th>
               <th style={styles.th}>Lunch / Dinner</th>
               <th style={styles.th}>Rating</th>
-              <th style={styles.th}>Review</th>
+              <th style={styles.th}>Feedback</th>
               <th style={styles.th}>Concern Photo</th>
               <th style={styles.th}>Action</th>
             </tr>
@@ -52,7 +52,7 @@ function FeedbackTable({ feedbacks, onRefresh }) {
             {feedbacks.length === 0 ? (
               <tr>
                 <td style={styles.empty} colSpan="8">
-                  No customer reviews found.
+                  No customer feedback found.
                 </td>
               </tr>
             ) : (

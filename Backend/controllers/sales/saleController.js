@@ -1,6 +1,10 @@
 import Sale from "../../models/Sale.js";
 import { getBranchFilter } from "../../utils/branchFilter.js";
-import { isSuperAdmin, getUserBranchId } from "../../middleware/accessControl.js";
+import {
+  assertCanAccessBranch,
+  getUserBranchId,
+  isSuperAdmin,
+} from "../../utils/branchAccess.js";
 import mongoose from "mongoose";
 
 const getSalesBranchFilter = (req) => {
@@ -134,7 +138,7 @@ export const createSale = async (req, res) => {
     res.status(201).json({
       success: true,
       message: "Sale recorded successfully",
-      sale,
+      data: sale,
     });
   } catch (error) {
     res.status(500).json({
@@ -169,7 +173,7 @@ export const getSales = async (req, res) => {
 
     res.status(200).json({
       success: true,
-      sales,
+      data: sales,
     });
   } catch (error) {
     res.status(500).json({
@@ -217,6 +221,7 @@ export const getDailySales = async (req, res) => {
 
     res.status(200).json({
       success: true,
+      data: {
       date,
       lunch: lunch || {
         _id: "lunch",
@@ -233,6 +238,7 @@ export const getDailySales = async (req, res) => {
         totalSales: 0,
       },
       dailyTotal,
+      },
     });
   } catch (error) {
     res.status(500).json({
@@ -290,10 +296,12 @@ export const getMonthlySales = async (req, res) => {
 
     res.status(200).json({
       success: true,
+      data: {
       year,
       month: monthString,
       summary,
       monthlyTotal,
+      },
     });
   } catch (error) {
     res.status(500).json({
@@ -317,15 +325,7 @@ export const deleteSale = async (req, res) => {
       });
     }
 
-    if (
-      !isSuperAdmin(req.user) &&
-      String(sale.branch) !== String(getUserBranchId(req.user))
-    ) {
-      return res.status(403).json({
-        success: false,
-        message: "Forbidden: branch mismatch",
-      });
-    }
+    assertCanAccessBranch(req, sale.branch);
 
     sale.isArchived = true;
     sale.archivedAt = new Date();

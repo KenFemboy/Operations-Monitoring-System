@@ -5,7 +5,10 @@ import Purchase from "../../models/Purchase.js";
 import Sale from "../../models/Sale.js";
 import StockIn from "../../models/StockIn.js";
 import StockOut from "../../models/StockOut.js";
-import { getUserBranchId, isSuperAdmin } from "../../middleware/accessControl.js";
+import {
+  assertCanAccessBranch,
+  getBranchFilter,
+} from "../../utils/branchAccess.js";
 
 const archiveActorFields = [
   { path: "archivedBy", select: "name email" },
@@ -64,17 +67,7 @@ const populateArchiveRecord = (query, populate = []) =>
   }, query);
 
 const assertArchiveAccess = (req, record) => {
-  if (isSuperAdmin(req.user)) {
-    return;
-  }
-
-  const userBranchId = getUserBranchId(req.user);
-
-  if (!userBranchId || String(record.branch) !== userBranchId) {
-    const error = new Error("Forbidden: you can only archive records from your assigned branch");
-    error.statusCode = 403;
-    throw error;
-  }
+  assertCanAccessBranch(req, record.branch);
 };
 
 export const archiveRecord = (configKey) => async (req, res) => {
@@ -130,6 +123,8 @@ export const restoreRecord = (configKey) => async (req, res) => {
       });
     }
 
+    assertArchiveAccess(req, record);
+
     record.isArchived = false;
     record.restoredAt = new Date();
     record.restoredBy = getActorId(req);
@@ -146,7 +141,7 @@ export const restoreRecord = (configKey) => async (req, res) => {
       data: restoredRecord,
     });
   } catch (error) {
-    return res.status(500).json({
+    return res.status(error.statusCode || 500).json({
       success: false,
       message: `Failed to restore ${config.label.toLowerCase()}`,
       error: error.message,
@@ -154,11 +149,14 @@ export const restoreRecord = (configKey) => async (req, res) => {
   }
 };
 
-export const getArchivedRecords = (configKey) => async (_req, res) => {
+export const getArchivedRecords = (configKey) => async (req, res) => {
   const config = archiveConfigs[configKey];
 
   try {
-    const query = config.Model.find({ isArchived: true }).sort({
+    const query = config.Model.find({
+      isArchived: true,
+      ...getBranchFilter(req),
+    }).sort({
       archivedAt: -1,
       createdAt: -1,
     });

@@ -2,8 +2,37 @@ import { useState } from 'react'
 import Button from './Button'
 import Modal from './Modal'
 
+const superAdminRoles = ['super_admin', 'superadmin']
+
+const getUserDisplayName = (user) => user?.name || user?.email || 'User'
+
+const getInitials = (name) =>
+  name
+    .split(/\s+/)
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((part) => part[0]?.toUpperCase())
+    .join('') || 'U'
+
+const getBranchDisplayName = (user) => {
+  const populatedBranch = typeof user?.branchId === 'object' ? user.branchId : null
+  const branchName =
+    user?.branchName ||
+    user?.branch ||
+    populatedBranch?.branchName ||
+    populatedBranch?.name
+
+  if (branchName) {
+    return branchName
+  }
+
+  return superAdminRoles.includes(user?.role) ? 'All branches' : 'No branch assigned'
+}
+
 export default function TopNavbar({ title, user, onToggleSidebar, onLogout }) {
   const [isLogoutConfirmOpen, setIsLogoutConfirmOpen] = useState(false)
+  const userDisplayName = getUserDisplayName(user)
+  const branchDisplayName = getBranchDisplayName(user)
 
   const handleConfirmLogout = () => {
     setIsLogoutConfirmOpen(false)
@@ -30,7 +59,19 @@ export default function TopNavbar({ title, user, onToggleSidebar, onLogout }) {
         </div>
 
         <div className="sd-navbar-right">
-          <p className="sd-user-name">{user?.name || 'User'}</p>
+          <div className="sd-user-summary" aria-label="Logged in user and branch">
+            <span className="sd-user-avatar" aria-hidden="true">
+              {getInitials(userDisplayName)}
+            </span>
+            <span className="sd-user-details">
+              <span className="sd-user-label">Logged in as</span>
+              <span className="sd-user-name">{userDisplayName}</span>
+            </span>
+            <span className="sd-branch-badge">
+              <span className="sd-branch-label">Branch</span>
+              <span className="sd-branch-name">{branchDisplayName}</span>
+            </span>
+          </div>
           <button
             type="button"
             className="sd-logout-btn"

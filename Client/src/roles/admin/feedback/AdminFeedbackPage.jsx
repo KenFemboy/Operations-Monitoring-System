@@ -22,11 +22,11 @@ const buildMonthSummary = (feedbacks = []) => {
       year,
       month,
       ratingTotal: 0,
-      totalReviews: 0,
+      totalFeedback: 0,
     };
 
     current.ratingTotal += rating;
-    current.totalReviews += 1;
+    current.totalFeedback += 1;
     summary.set(key, current);
 
     return summary;
@@ -36,8 +36,8 @@ const buildMonthSummary = (feedbacks = []) => {
     .map((item) => ({
       year: item.year,
       month: item.month,
-      averageRating: Number((item.ratingTotal / item.totalReviews).toFixed(2)),
-      totalReviews: item.totalReviews,
+      averageRating: Number((item.ratingTotal / item.totalFeedback).toFixed(2)),
+      totalFeedback: item.totalFeedback,
     }))
     .sort((a, b) => b.year - a.year || b.month - a.month);
 };
@@ -63,13 +63,13 @@ function AdminFeedbackPage() {
       setError("");
 
       const res = await getFeedbacks(filter);
-      const nextFeedbacks = res.data.feedbacks || [];
+      const nextFeedbacks = res.data.data || [];
 
       setFeedbacks(nextFeedbacks);
       setMonthSummary(buildMonthSummary(nextFeedbacks));
     } catch (err) {
       console.error(err);
-      setError("Failed to load customer reviews");
+      setError("Failed to load customer feedback");
     } finally {
       setLoading(false);
     }
@@ -108,7 +108,7 @@ function AdminFeedbackPage() {
   return (
     <div style={styles.page}>
       <h1>Branch Feedback Management</h1>
-      <p>View customer ratings, short reviews, and rating summaries for your assigned branch.</p>
+      <p>View customer ratings, short feedback, and rating summaries for your assigned branch.</p>
 
       <div style={styles.summaryGrid}>
         <AverageRatingByMonthTable data={monthSummary} />
@@ -121,7 +121,7 @@ function AdminFeedbackPage() {
         assignedBranchName={user?.branchName || user?.branch}
       />
 
-      {loading && <p>Loading reviews...</p>}
+      {loading && <p>Loading feedback...</p>}
       {error && <p style={styles.error}>{error}</p>}
 
       <FeedbackTable

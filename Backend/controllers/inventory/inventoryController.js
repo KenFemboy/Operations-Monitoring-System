@@ -2,7 +2,11 @@ import Product from "../../models/Product.js";
 import Purchase from "../../models/Purchase.js";
 import StockIn from "../../models/StockIn.js";
 import StockOut from "../../models/StockOut.js";
-import { isSuperAdmin, getUserBranchId } from "../../middleware/accessControl.js";
+import {
+  assertCanAccessBranch,
+  getUserBranchId,
+  isSuperAdmin,
+} from "../../utils/branchAccess.js";
 import { getBranchFilter } from "../../utils/branchFilter.js";
 
 const getInventoryBranchFilter = (req) => {
@@ -91,7 +95,7 @@ export const createProduct = async (req, res) => {
     res.status(201).json({
       success: true,
       message: "Product created successfully",
-      product,
+      data: product,
     });
   } catch (error) {
     res.status(500).json({
@@ -111,7 +115,7 @@ export const getProducts = async (req, res) => {
 
     res.status(200).json({
       success: true,
-      products,
+      data: products,
     });
   } catch (error) {
     res.status(500).json({
@@ -148,16 +152,16 @@ export const getProductById = async (req, res) => {
       });
     }
 
-    if (!isSuperAdmin(req.user) && String(product.branch) !== String(getUserBranchId(req.user))) {
-      return res.status(403).json({ success: false, message: "Forbidden: branch mismatch" });
-    }
+    assertCanAccessBranch(req, product.branch);
 
     res.status(200).json({
       success: true,
-      product,
-      stockIns,
-      stockOuts,
-      purchases,
+      data: {
+        product,
+        stockIns,
+        stockOuts,
+        purchases,
+      },
     });
   } catch (error) {
     res.status(500).json({
@@ -192,12 +196,7 @@ export const updateProduct = async (req, res) => {
       });
     }
 
-    if (!isSuperAdmin(req.user) && String(product.branch) !== String(getUserBranchId(req.user))) {
-      return res.status(403).json({
-        success: false,
-        message: "Forbidden: branch mismatch",
-      });
-    }
+    assertCanAccessBranch(req, product.branch);
 
     product.name = name || product.name;
     product.category = category || product.category;
@@ -212,7 +211,7 @@ export const updateProduct = async (req, res) => {
     res.status(200).json({
       success: true,
       message: "Product updated successfully",
-      product,
+      data: product,
     });
   } catch (error) {
     res.status(500).json({
@@ -237,12 +236,7 @@ export const deleteProduct = async (req, res) => {
       });
     }
 
-    if (!isSuperAdmin(req.user) && String(product.branch) !== String(getUserBranchId(req.user))) {
-      return res.status(403).json({
-        success: false,
-        message: "Forbidden: branch mismatch",
-      });
-    }
+    assertCanAccessBranch(req, product.branch);
 
     product.isArchived = true;
     product.archivedAt = new Date();
@@ -295,12 +289,7 @@ export const createPurchase = async (req, res) => {
       ? req.body.branch || req.body.branchId || existingProduct.branch
       : getUserBranchId(req.user);
 
-    if (!isSuperAdmin(req.user) && String(existingProduct.branch) !== String(branch)) {
-      return res.status(403).json({
-        success: false,
-        message: "Forbidden: product belongs to different branch",
-      });
-    }
+    assertCanAccessBranch(req, existingProduct.branch);
 
     const purchase = await Purchase.create({
       product,
@@ -319,7 +308,7 @@ export const createPurchase = async (req, res) => {
     res.status(201).json({
       success: true,
       message: "Purchase created successfully",
-      purchase: populatedPurchase,
+      data: populatedPurchase,
     });
   } catch (error) {
     res.status(500).json({
@@ -340,7 +329,7 @@ export const getPurchases = async (req, res) => {
 
     res.status(200).json({
       success: true,
-      purchases,
+      data: purchases,
     });
   } catch (error) {
     res.status(500).json({
@@ -391,12 +380,7 @@ export const markPurchaseAsReceived = async (req, res) => {
       });
     }
 
-    if (!isSuperAdmin(req.user) && String(purchase.branch) !== String(getUserBranchId(req.user))) {
-      return res.status(403).json({
-        success: false,
-        message: "Forbidden: branch mismatch",
-      });
-    }
+    assertCanAccessBranch(req, purchase.branch);
 
     product.currentStock += purchase.quantity;
     updateProductStatus(product);
@@ -417,8 +401,7 @@ export const markPurchaseAsReceived = async (req, res) => {
     res.status(200).json({
       success: true,
       message: "Purchase received and stock added",
-      purchase,
-      product,
+      data: { purchase, product },
     });
   } catch (error) {
     res.status(500).json({
@@ -450,12 +433,7 @@ export const cancelPurchase = async (req, res) => {
       });
     }
 
-    if (!isSuperAdmin(req.user) && String(purchase.branch) !== String(getUserBranchId(req.user))) {
-      return res.status(403).json({
-        success: false,
-        message: "Forbidden: branch mismatch",
-      });
-    }
+    assertCanAccessBranch(req, purchase.branch);
 
     purchase.status = "Cancelled";
     await purchase.save();
@@ -463,7 +441,7 @@ export const cancelPurchase = async (req, res) => {
     res.status(200).json({
       success: true,
       message: "Purchase cancelled successfully",
-      purchase,
+      data: purchase,
     });
   } catch (error) {
     res.status(500).json({
@@ -506,9 +484,7 @@ export const createStockIn = async (req, res) => {
       ? req.body.branch || req.body.branchId || existingProduct.branch
       : getUserBranchId(req.user);
 
-    if (!isSuperAdmin(req.user) && String(existingProduct.branch) !== String(branch)) {
-      return res.status(403).json({ success: false, message: "Forbidden: product belongs to different branch" });
-    }
+    assertCanAccessBranch(req, existingProduct.branch);
 
     existingProduct.currentStock += parsedQuantity.value;
     updateProductStatus(existingProduct);
@@ -529,8 +505,7 @@ export const createStockIn = async (req, res) => {
     res.status(201).json({
       success: true,
       message: "Stock added successfully",
-      stockIn: populatedStockIn,
-      product: existingProduct,
+      data: { stockIn: populatedStockIn, product: existingProduct },
     });
   } catch (error) {
     res.status(500).json({
@@ -551,7 +526,7 @@ export const getStockIns = async (req, res) => {
 
     res.status(200).json({
       success: true,
-      stockIns,
+      data: stockIns,
     });
   } catch (error) {
     res.status(500).json({
@@ -601,9 +576,7 @@ export const createStockOut = async (req, res) => {
       ? req.body.branch || req.body.branchId || existingProduct.branch
       : getUserBranchId(req.user);
 
-    if (!isSuperAdmin(req.user) && String(existingProduct.branch) !== String(branch)) {
-      return res.status(403).json({ success: false, message: "Forbidden: product belongs to different branch" });
-    }
+    assertCanAccessBranch(req, existingProduct.branch);
 
     existingProduct.currentStock -= parsedQuantity.value;
     updateProductStatus(existingProduct);
@@ -624,8 +597,7 @@ export const createStockOut = async (req, res) => {
     res.status(201).json({
       success: true,
       message: "Stock deducted successfully",
-      stockOut: populatedStockOut,
-      product: existingProduct,
+      data: { stockOut: populatedStockOut, product: existingProduct },
     });
   } catch (error) {
     res.status(500).json({
@@ -646,7 +618,7 @@ export const getStockOuts = async (req, res) => {
 
     res.status(200).json({
       success: true,
-      stockOuts,
+      data: stockOuts,
     });
   } catch (error) {
     res.status(500).json({
@@ -717,7 +689,7 @@ export const getInventoryRecords = async (req, res) => {
 
     res.status(200).json({
       success: true,
-      records,
+      data: records,
     });
   } catch (error) {
     res.status(500).json({

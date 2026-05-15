@@ -152,7 +152,7 @@ function Dashboard() {
             <StatCard
               title="Average Rating"
               value={`${formatRating(overall.averageRating)} stars`}
-              subtitle={`${overall.totalFeedback} total reviews`}
+              subtitle={`${overall.totalFeedback} total feedback`}
               tone="yellow"
             />
           </div>
@@ -369,7 +369,7 @@ function Dashboard() {
         <DashboardSection title="Customer Feedback Report">
           <div className="dashboard-grid">
             <StatCard
-              title="Total Reviews"
+              title="Total Feedback"
               value={feedback.totalFeedback}
               subtitle="Customer feedback submitted"
               tone="blue"
@@ -391,7 +391,7 @@ function Dashboard() {
                 <tr>
                   <th className="dashboard-th">Branch</th>
                   <th className="dashboard-th">Average Rating</th>
-                  <th className="dashboard-th">Reviews</th>
+                  <th className="dashboard-th">Feedback</th>
                 </tr>
               </thead>
 
@@ -399,7 +399,7 @@ function Dashboard() {
                 {(feedback.byBranch || []).length === 0 ? (
                   <tr>
                     <td className="dashboard-td" colSpan="3">
-                      No branch reviews found.
+                      No branch feedback found.
                     </td>
                   </tr>
                 ) : (

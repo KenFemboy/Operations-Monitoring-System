@@ -14,7 +14,7 @@ function AverageRatingByBranchTable({ data }) {
             <th style={styles.th}>Branch</th>
             <th style={styles.th}>Average Rating</th>
             <th style={styles.th}>Stars</th>
-            <th style={styles.th}>Total Reviews</th>
+            <th style={styles.th}>Total Feedback</th>
           </tr>
         </thead>
 
@@ -40,7 +40,7 @@ function AverageRatingByBranchTable({ data }) {
                   </span>
                 </td>
 
-                <td style={styles.td}>{item.totalReviews}</td>
+                <td style={styles.td}>{item.totalFeedback}</td>
               </tr>
             ))
           )}

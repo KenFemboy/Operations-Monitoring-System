@@ -6,6 +6,7 @@ import adminFeedbackRoutes from "./adminFeedbackRoutes.js";
 import adminInventoryRoutes from "./adminInventoryRoutes.js";
 import adminPlantillaRoutes from "./adminPlantillaRoutes.js";
 import adminSalesRoutes from "./adminSalesRoutes.js";
+import adminArchiveRoutes from "./adminArchiveRoutes.js";
 
 // Admin API group. Every child route is branch-scoped.
 const router = express.Router();
@@ -17,5 +18,6 @@ router.use("/sales", adminSalesRoutes);
 router.use("/feedback", adminFeedbackRoutes);
 router.use("/dashboard", adminDashboardRoutes);
 router.use("/plantilla", adminPlantillaRoutes);
+router.use("/archive", adminArchiveRoutes);
 
 export default router;

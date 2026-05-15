@@ -22,7 +22,7 @@ function InventoryRecordsFilter({ onRecordsLoaded, branchId = "" }) {
 
       const res = await getInventoryRecords(startDate, endDate, filter.type, branchId);
 
-      onRecordsLoaded(res.data.records || []);
+      onRecordsLoaded(res.data.data || []);
     } catch (err) {
       console.error(err);
       alert(err.response?.data?.message || "Failed to fetch inventory records");
