@@ -14,6 +14,11 @@ export default function Sidebar({ isOpen, onClose, navGroups = adminNavigation }
 
       <aside className={`sd-sidebar ${isOpen ? "is-open" : ""}`}>
         <div className="sd-brand-wrap">
+          <img
+            className="sd-brand-logo"
+            src="/allys.png"
+            alt="Allys Logo"
+          />
           <p className="sd-brand-eyebrow">Operations Monitoring</p>
           <h1 className="sd-brand-title">Console</h1>
         </div>

@@ -4,15 +4,28 @@ import Modal from './Modal'
 
 const superAdminRoles = ['super_admin', 'superadmin']
 
-const getUserDisplayName = (user) => user?.name || user?.email || 'User'
+const getUserDisplayName = (user) => {
+  const rawName = user?.name || user?.email || 'User'
+  if (rawName.trim().toLowerCase() === 'ally super admin') {
+    return "Ally's Super Admin"
+  }
+  return rawName
+}
 
-const getInitials = (name) =>
-  name
-    .split(/\s+/)
-    .filter(Boolean)
-    .slice(0, 2)
-    .map((part) => part[0]?.toUpperCase())
-    .join('') || 'U'
+const getInitials = (name) => {
+  if (name.trim().toLowerCase() === "ally's super admin") {
+    return ''
+  }
+
+  return (
+    name
+      .split(/\s+/)
+      .filter(Boolean)
+      .slice(0, 2)
+      .map((part) => part[0]?.toUpperCase())
+      .join('') || 'U'
+  )
+}
 
 const getBranchDisplayName = (user) => {
   const populatedBranch = typeof user?.branchId === 'object' ? user.branchId : null
@@ -53,16 +66,17 @@ export default function TopNavbar({ title, user, onToggleSidebar, onLogout }) {
           </button>
 
           <div>
-            <p className="sd-navbar-label">Operations Console</p>
             <h2 className="sd-navbar-title">{title}</h2>
           </div>
         </div>
 
         <div className="sd-navbar-right">
           <div className="sd-user-summary" aria-label="Logged in user and branch">
-            <span className="sd-user-avatar" aria-hidden="true">
-              {getInitials(userDisplayName)}
-            </span>
+            {getInitials(userDisplayName) ? (
+              <span className="sd-user-avatar" aria-hidden="true">
+                {getInitials(userDisplayName)}
+              </span>
+            ) : null}
             <span className="sd-user-details">
               <span className="sd-user-label">Logged in as</span>
               <span className="sd-user-name">{userDisplayName}</span>
